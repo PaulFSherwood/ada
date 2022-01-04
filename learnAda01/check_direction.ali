@@ -3,11 +3,10 @@ M P W=b
 P ZX
 
 RN
-RV NO_DIRECT_BOOLEAN_OPERATORS
 RV NO_IO
 RV SPARK_05
 
-U check_direction%b	check_direction.adb	7676dcd1 NE OO SU
+U check_direction%b	check_direction.adb	1384961e NE OO SU
 W ada%s			ada.ads			ada.ali
 W ada.integer_text_io%s	a-inteio.ads		a-inteio.ali
 W ada.text_io%s		a-textio.adb		a-textio.ali
@@ -21,7 +20,7 @@ D a-tags.ads		20200312110721 491b781d ada.tags%s
 D a-textio.ads		20200312110721 881db35a ada.text_io%s
 D a-tiinio.ads		20200312110721 aa04e5d6 ada.text_io.integer_io%s
 D a-unccon.ads		20200312110721 0e9b276f ada.unchecked_conversion%s
-D check_direction.adb	20211224021023 0820e62f check_direction%b
+D check_direction.adb	20220103235635 6dd2ace0 check_direction%b
 D interfac.ads		20200312110721 5ab55268 interfaces%s
 D i-cstrea.ads		20200312110721 e53d8b8e interfaces.c_streams%s
 D system.ads		20200312110721 4635ec04 system%s
@@ -43,13 +42,12 @@ X 3 a-inteio.ads
 18K13*Integer_Text_IO[8|46] 10|2w10 2r35
 X 7 a-textio.ads
 49K13*Text_IO 471e16 10|1w10 1r27
-242U14*Put 10|8s5
-263U14*Put_Line 10|14s9 16s9 18s9 20s9 22s9 24s9 26s9 28s9 30s9
+242U14*Put 10|8s9
+263U14*Put_Line 10|14s17 16s17 18s17 20s17 22s17 24s17 26s17 28s17 30s17
 X 8 a-tiinio.ads
-56U14*Get 10|10s5[3|18]
-66U14*Put 10|11s5[3|18]
+56U14*Get 10|9s9[3|18]
+66U14*Put 10|10s9[3|18]
 X 10 check_direction.adb
-4U11*Check_Direction 4b11 32l5 32t20
-5i5 N{integer} 10m10 11r10 13r8 13r17 15r11 17r11 19r11 21r11 23r11 25r11
-. 27r11
+4U11*Check_Direction 4b11 34l5 34t20
+5i5 N{integer} 9m14 10r14 12r14
 
