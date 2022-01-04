@@ -4,12 +4,15 @@ P ZX
 
 RN
 RV NO_IO
+RV NO_DYNAMIC_SIZED_OBJECTS
 RV NO_IMPLEMENTATION_ATTRIBUTES
 RV SPARK_05
 
-U enums%b		enums.adb		8ee59413 NE OO SU
+U enums%b		enums.adb		3396f25c NE OO SU
 W ada%s			ada.ads			ada.ali
 W ada.text_io%s		a-textio.adb		a-textio.ali
+Z system.concat_2%s	s-conca2.adb		s-conca2.ali
+Z system.img_lli%s	s-imglli.adb		s-imglli.ali
 Z system.unsigned_types%s  s-unstyp.ads		s-unstyp.ali
 
 D ada.ads		20200312110721 76789da1 ada%s
@@ -19,13 +22,15 @@ D a-stream.ads		20200312110721 119b8fb3 ada.streams%s
 D a-tags.ads		20200312110721 491b781d ada.tags%s
 D a-textio.ads		20200312110721 881db35a ada.text_io%s
 D a-unccon.ads		20200312110721 0e9b276f ada.unchecked_conversion%s
-D enums.adb		20220104042341 06f82749 enums%b
+D enums.adb		20220104044609 bb8b4106 enums%b
 D interfac.ads		20200312110721 5ab55268 interfaces%s
 D i-cstrea.ads		20200312110721 e53d8b8e interfaces.c_streams%s
 D system.ads		20200312110721 4635ec04 system%s
+D s-conca2.ads		20200312110721 02a0d7d0 system.concat_2%s
 D s-crtl.ads		20200312110721 0ebbdb71 system.crtl%s
 D s-exctab.ads		20200312110721 54135002 system.exception_table%s
 D s-ficobl.ads		20200312110721 078245e4 system.file_control_block%s
+D s-imglli.ads		20200312110721 114f55d1 system.img_lli%s
 D s-parame.ads		20200312110721 48ec542b system.parameters%s
 D s-secsta.ads		20200312110721 20bbe636 system.secondary_stack%s
 D s-soflin.ads		20200312110721 a7318a92 system.soft_links%s
@@ -39,11 +44,12 @@ X 1 ada.ads
 16K9*Ada 20e8 8|1r6 2r5
 X 6 a-textio.ads
 49K13*Text_IO 471e16 8|1w10 2r9
-263U14*Put_Line 8|12s5 13s5
+263U14*Put_Line 8|14s5 15s5 16s5 17s5 18s5 19s5
 X 8 enums.adb
-4U11*Enums 4b11 14l5 14t10
-5E10 Example 5e43 6r9
-5n22 First{5E10} 7r9 12r32
-5n29 Second{5E10} 8r9 13r33
-5n37 Third{5E10} 9r9
+4U11*Enums 4b11 22l5 22t10
+6E10 Example 6e44 7r9 14r32 15r33 16r40 16r53 17r39 17r52 18r31 19r33
+6n22 First{6E10} 8r8
+6n29 'B'{6E10} 9r8
+6n34 'C'{6E10} 10r8 19r45
+6n39 Last{6E10} 11r8
 
