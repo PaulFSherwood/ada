@@ -7,7 +7,7 @@ RV NO_IO
 RV NO_DYNAMIC_SIZED_OBJECTS
 RV SPARK_05
 
-U int_demo%b		int_demo.adb		c2ab31d9 NE OO SU
+U int_demo%b		int_demo.adb		e67d59ef NE OO SU
 W ada%s			ada.ads			ada.ali
 W ada.text_io%s		a-textio.adb		a-textio.ali
 Z system.concat_2%s	s-conca2.adb		s-conca2.ali
@@ -20,7 +20,7 @@ D a-stream.ads		20200312110721 119b8fb3 ada.streams%s
 D a-tags.ads		20200312110721 491b781d ada.tags%s
 D a-textio.ads		20200312110721 881db35a ada.text_io%s
 D a-unccon.ads		20200312110721 0e9b276f ada.unchecked_conversion%s
-D int_demo.adb		20220104223117 4ab68283 int_demo%b
+D int_demo.adb		20220105005027 6e60eab5 int_demo%b
 D interfac.ads		20200312110721 5ab55268 interfaces%s
 D i-cstrea.ads		20200312110721 e53d8b8e interfaces.c_streams%s
 D system.ads		20200312110721 4635ec04 system%s
@@ -42,10 +42,13 @@ X 1 ada.ads
 16K9*Ada 20e8 8|1r6 2r5
 X 6 a-textio.ads
 49K13*Text_IO 471e16 8|1w10 2r9
-263U14*Put_Line 8|12s9 13s9 14s9 15s9
+263U14*Put_Line 8|16s9 17s9 18s9 19s9 21s9 23s9 28s25
 X 8 int_demo.adb
-4U11*Int_Demo 4b11 16l5 16t13
-5i9 A{integer} 12r42
-8I14 Percent<integer> 10r13 15r28
-10i9 P{8I14} 15r42
+4U11*Int_Demo 4b11 31l5 31t13
+5i9 A{integer} 16r42
+8I17 Percent{integer} 10r13 19r28 21r28 23r28 25r18
+10i9 P{8I17} 19r42 22r14
+12I17 Example{integer} 14r13
+14i9 E{12I17} 21r42 22m9 23r42
+25i13 I{8I17} 27r20 28r58
 
