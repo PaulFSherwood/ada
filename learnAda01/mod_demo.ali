@@ -7,7 +7,7 @@ RV NO_IO
 RV NO_DYNAMIC_SIZED_OBJECTS
 RV SPARK_05
 
-U mod_demo%b		mod_demo.adb		172050d1 NE OO SU
+U mod_demo%b		mod_demo.adb		15efdaa3 NE OO SU
 W ada%s			ada.ads			ada.ali
 W ada.text_io%s		a-textio.adb		a-textio.ali
 Z system.concat_2%s	s-conca2.adb		s-conca2.ali
@@ -24,7 +24,7 @@ D a-textio.ads		20200312110721 881db35a ada.text_io%s
 D a-unccon.ads		20200312110721 0e9b276f ada.unchecked_conversion%s
 D interfac.ads		20200312110721 5ab55268 interfaces%s
 D i-cstrea.ads		20200312110721 e53d8b8e interfaces.c_streams%s
-D mod_demo.adb		20220105033550 9f3de38b mod_demo%b
+D mod_demo.adb		20220105034747 9df269f9 mod_demo%b
 D system.ads		20200312110721 4635ec04 system%s
 D s-conca2.ads		20200312110721 02a0d7d0 system.concat_2%s
 D s-crtl.ads		20200312110721 0ebbdb71 system.crtl%s
@@ -45,8 +45,9 @@ X 1 ada.ads
 16K9*Ada 20e8 10|1r6 2r5
 X 6 a-textio.ads
 49K13*Text_IO 471e16 10|1w10 2r9
-263U14*Put_Line 10|7s5 8s5 9s5
+263U14*Put_Line 10|9s5 10s5 11s5 14s5
 X 10 mod_demo.adb
-4U11*Mod_Demo 4b11 10l5 10t13
-5M14 Modular 7r36 7r50 8r35 8r49 9r48
+4U11*Mod_Demo 4b11 15l5 15t13
+5M14 Modular 7r9 9r36 9r50 10r35 10r49 11r48 13r10 14r24
+7m5 M{5M14} 13m5 14r38
 
