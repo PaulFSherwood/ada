@@ -1,0 +1,55 @@
+V "GNAT Lib v9"
+M P W=b
+P ZX
+
+RN
+RV NO_FIXED_POINT
+RV NO_IO
+RV NO_DYNAMIC_SIZED_OBJECTS
+RV SPARK_05
+
+U fixed_demo%b		fixed_demo.adb		5ab4851d NE OO SU
+W ada%s			ada.ads			ada.ali
+W ada.text_io%s		a-textio.adb		a-textio.ali
+Z system.concat_2%s	s-conca2.adb		s-conca2.ali
+Z system.img_int%s	s-imgint.adb		s-imgint.ali
+Z system.img_lld%s	s-imglld.adb		s-imglld.ali
+Z system.img_real%s	s-imgrea.adb		s-imgrea.ali
+
+D ada.ads		20200312110721 76789da1 ada%s
+D a-except.ads		20200312110721 291912d5 ada.exceptions%s
+D a-ioexce.ads		20200312110721 e4a01f64 ada.io_exceptions%s
+D a-stream.ads		20200312110721 119b8fb3 ada.streams%s
+D a-tags.ads		20200312110721 491b781d ada.tags%s
+D a-textio.ads		20200312110721 881db35a ada.text_io%s
+D a-unccon.ads		20200312110721 0e9b276f ada.unchecked_conversion%s
+D fixed_demo.adb	20220105044525 d2a93647 fixed_demo%b
+D interfac.ads		20200312110721 5ab55268 interfaces%s
+D i-cstrea.ads		20200312110721 e53d8b8e interfaces.c_streams%s
+D system.ads		20200312110721 4635ec04 system%s
+D s-conca2.ads		20200312110721 02a0d7d0 system.concat_2%s
+D s-crtl.ads		20200312110721 0ebbdb71 system.crtl%s
+D s-exctab.ads		20200312110721 54135002 system.exception_table%s
+D s-ficobl.ads		20200312110721 078245e4 system.file_control_block%s
+D s-imgint.ads		20200312110721 02dbe0c2 system.img_int%s
+D s-imglld.ads		20200312110721 f3220969 system.img_lld%s
+D s-imgrea.ads		20200312110721 c7a851e2 system.img_real%s
+D s-parame.ads		20200312110721 48ec542b system.parameters%s
+D s-secsta.ads		20200312110721 20bbe636 system.secondary_stack%s
+D s-soflin.ads		20200312110721 a7318a92 system.soft_links%s
+D s-stache.ads		20200312110721 a37c21ec system.stack_checking%s
+D s-stalib.ads		20200312110721 09bd3940 system.standard_library%s
+D s-stoele.ads		20200312110721 2dc34a04 system.storage_elements%s
+D s-traent.ads		20200312110721 005bf670 system.traceback_entries%s
+D s-unstyp.ads		20200312110721 34867c83 system.unsigned_types%s
+D s-wchcon.ads		20200312110721 1b7d22d2 system.wch_con%s
+X 1 ada.ads
+16K9*Ada 20e8 8|1r6 2r5
+X 6 a-textio.ads
+49K13*Text_IO 471e16 8|1w10 2r9
+263U14*Put_Line 8|9s5 10s5 13s5 14s5 17s5 18s5 20s5 21s5
+X 8 fixed_demo.adb
+4U11*Fixed_Demo 4b11 22l5 22t15
+5O14 Ordinary 9r37 9r52 10r37 10r52 13r37 13r52 14r37 14r52
+7D10 Decimal 17r36 17r50 18r35 18r49 20r36 20r50 21r51
+
