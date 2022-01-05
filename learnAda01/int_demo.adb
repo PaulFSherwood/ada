@@ -22,6 +22,7 @@ begin
 	E := P;
 	Put_Line("E is " & Percent'Image(E));
 	
+	-- http://www.cs.uni.edu/~mccormic/AdaEssentials/if_statements.htm
 	for I in Percent'Range loop
 	-- for I in 2 .. 100 loop
 		if I mod 12 = 0 then
