@@ -1,0 +1,7 @@
+Is the language supported by the industry?
+Does the language have perspective of long term development?
+Is the language properly supported by tools?
+Does the language generate efficient code?
+Is the language supported on the target architectures?
+
+    All four languages, C, C++, Java, and Ada fulfill these requirements
