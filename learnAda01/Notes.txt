@@ -5,3 +5,12 @@ Does the language generate efficient code?
 Is the language supported on the target architectures?
 
     All four languages, C, C++, Java, and Ada fulfill these requirements
+
+
+
+What are the primary markets using this language?
+I s the language defined by public or private entity?
+What directs the evolution of the language?
+Can the language help write more reliable code?
+Can the language help wrte more maintainable code?
+
