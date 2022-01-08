@@ -1,0 +1,66 @@
+V "GNAT Lib v9"
+P ZX
+
+RN
+RV NO_FLOATING_POINT
+RV NO_ELABORATION_CODE
+RV SPARK_05
+
+U display%s		display.ads		3f70eaf9 EE OO PK
+Z system%s		system.ads		system.ali
+Z system.exception_table%s  s-exctab.adb	s-exctab.ali
+Z system.standard_library%s  s-stalib.adb	s-stalib.ali
+
+D ada.ads		20200312110721 76789da1 ada%s
+D a-unccon.ads		20200312110721 0e9b276f ada.unchecked_conversion%s
+D display.ads		20220108030828 3f70eaf9 display%s
+D system.ads		20200312110721 4635ec04 system%s
+D s-exctab.ads		20200312110721 54135002 system.exception_table%s
+D s-stalib.ads		20200312110721 09bd3940 system.standard_library%s
+X 3 display.ads
+20K9*Display 63E4 69l5 69e12
+22E9*Color_Type 22e78
+22n24*Black{22E9}
+22n31*Blue{22E9}
+22n37*Green{22E9}
+22n44*Cyan{22E9}
+22n50*Red{22E9}
+22n55*Magenta{22E9}
+22n64*Yellow{22E9}
+22n72*White{22E9}
+24I9*Key_Type<integer> 67c9
+26E9*Special_Key 48e18
+27n7*KEY_NONE{26E9}
+28n7*KEY_F1{26E9}
+29n7*KEY_F2{26E9}
+30n7*KEY_F3{26E9}
+31n7*KEY_F4{26E9}
+32n7*KEY_F5{26E9}
+33n7*KEY_F6{26E9}
+34n7*KEY_F7{26E9}
+35n7*KEY_F8{26E9}
+36n7*KEY_F9{26E9}
+37n7*KEY_F10{26E9}
+38n7*KEY_F11{26E9}
+39n7*KEY_F12{26E9}
+40n7*KEY_LEFT{26E9}
+41n7*KEY_UP{26E9}
+42n7*KEY_RIGHT{26E9}
+43n7*KEY_DOWN{26E9}
+44n7*KEY_PAGE_UP{26E9}
+45n7*KEY_PAGE_DOWN{26E9}
+46n7*KEY_HOME{26E9}
+47n7*KEY_END{26E9}
+48n7*KEY_INSERT{26E9}
+50X4*Display_Error
+52E9*Button_Type 52e37 56r16
+52n25*Left{52E9}
+52n31*Right{52E9} 59r74
+54R9*Mouse_Position 57e14 59r33
+55f7*X{float}
+55f10*Y{float}
+56e7*Button{52E9}
+59r4*No_Mouse_Position{54R9}
+63N4 Max_Shapes
+65N4 Special_Key_Shift
+

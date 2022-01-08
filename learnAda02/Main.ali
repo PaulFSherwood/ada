@@ -1,0 +1,44 @@
+V "GNAT Lib v9"
+M P W=b
+P ZX
+
+RN
+RV NO_DELAY
+RV NO_FIXED_POINT
+RV NO_FLOATING_POINT
+RV NO_RELATIVE_DELAY
+RV SPARK_05
+
+U main%b		Main.adb		64e74251 NE OO SU
+Z ada.calendar.delays%s	a-caldel.adb		a-caldel.ali
+W display%s		display.ads		display.ali
+W display.basic%s	display-basic.adb	display-basic.ali
+
+D ada.ads		20200312110721 76789da1 ada%s
+D a-calend.ads		20200312110721 b288ede8 ada.calendar%s
+D a-caldel.ads		20200312110721 9f20b83d ada.calendar.delays%s
+D a-unccon.ads		20200312110721 0e9b276f ada.unchecked_conversion%s
+D display.ads		20220108030828 3f70eaf9 display%s
+D display-basic.ads	20220108030910 08808d21 display.basic%s
+D Main.adb		20220108030525 53172589 main%b
+D system.ads		20200312110721 4635ec04 system%s
+D s-exctab.ads		20200312110721 54135002 system.exception_table%s
+D s-stalib.ads		20200312110721 09bd3940 system.standard_library%s
+X 5 display.ads
+20K9*Display 69e12 7|1w6 1r25 2r6 2r25
+22n31*Blue{22E9} 7|9r17
+X 6 display-basic.ads
+20K17*Basic 181e18 7|2w14 2r33
+22I9*Shape_Id<integer> 7|5r11
+29U14*Set_X 7|19s7
+33V13*Get_X{float} 7|13s10 15s13 19s20
+53V13*New_Circle{22I9} 7|5s23
+54f7 X{float} 7|6r7
+55f7 Y{float} 7|7r7
+56f7 Radius{float} 7|8r7
+57e7 Color{5|22E9} 7|9r7
+X 7 Main.adb
+4U11*Main 4b11 23l5 23t9
+5i4 Ball{6|22I9} 13r17 15r20 19m14 19r14 19r27
+10f4 Step{float} 14m10 16m10 19r35
+
