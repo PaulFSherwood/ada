@@ -8,7 +8,7 @@ RV NO_DYNAMIC_SIZED_OBJECTS
 RV NO_IMPLEMENTATION_ATTRIBUTES
 RV SPARK_05
 
-U arraysthree%b		arraysthree.adb		b46f2c24 NE OO SU
+U arraysthree%b		arraysthree.adb		082b6d5e NE OO SU
 W ada%s			ada.ads			ada.ali
 W ada.text_io%s		a-textio.adb		a-textio.ali
 Z system.concat_2%s	s-conca2.adb		s-conca2.ali
@@ -21,7 +21,7 @@ D a-stream.ads		20200312110721 119b8fb3 ada.streams%s
 D a-tags.ads		20200312110721 491b781d ada.tags%s
 D a-textio.ads		20200312110721 881db35a ada.text_io%s
 D a-unccon.ads		20200312110721 0e9b276f ada.unchecked_conversion%s
-D arraysthree.adb	20220107223940 3c729f7e arraysthree%b
+D arraysthree.adb	20220108012502 8036de04 arraysthree%b
 D interfac.ads		20200312110721 5ab55268 interfaces%s
 D i-cstrea.ads		20200312110721 e53d8b8e interfaces.c_streams%s
 D system.ads		20200312110721 4635ec04 system%s
@@ -43,11 +43,20 @@ X 1 ada.ads
 16K9*Ada 20e8 8|1r6 2r5
 X 6 a-textio.ads
 49K13*Text_IO 471e16 8|1w10 2r9
-263U14*Put_Line 8|11s5 12s5 13s9 14s9 15s9 16s9 17s9 18s9
+263U14*Put_Line 8|28s5 29s5 30s9 31s9 32s9 33s9 34s9 35s9 36s9 37s9
 X 8 arraysthree.adb
-4U11*ArraysThree 4b11 19l5 19t16
-5A10 CarttonEggs(integer)<integer> 8r10
-6A10 quartsPerGallon(integer)<integer> 9r10
-8a5 CA{5A10} 11r28 14r36 15r35
-9a5 QG{6A10} 12r28 17r36 18r35
+4U11*ArraysThree 4b11 44l5 44t16
+5I14 MyInt<integer> 6r28
+6A14 Tee(integer)<5I14> 7r13
+7a9 V{6A14} 27m9
+8A10 CarttonEggs(integer)<integer> 17r10
+9A10 quartsPerGallon(integer)<integer> 18r10
+10A14 comboArray(integer)<integer>
+11A14 T(integer)<integer> 13r14 14r14 15r14 24r13
+13a9 A1{11A14} 15r19
+14a9 A2{11A14} 15r24
+15a9 A3=15:22{11A14}
+17a5 CA{8A10} 28r28 31r36 32r35
+18a5 QG{9A10} 29r28 34r36 35r35
+24a9 W{11A14} 26m9 26r17 26r29
 
