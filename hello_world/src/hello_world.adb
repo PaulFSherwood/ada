@@ -27,6 +27,6 @@ begin
 
    -- Inspect them --
    for I in 1 .. Class'Length loop
-      Put_Line (Class (I).Name);
+      Put_Line (Class (I).Name & " is " & Class (I).Age'Image & " years old.");
    end loop;
 end Hello_World;
