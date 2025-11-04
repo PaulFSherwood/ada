@@ -1,49 +1,43 @@
 with Ada.Numerics.Elementary_Functions;
 
 with SDL.Video.Windows.Makers;
-with SDL.Video.Renderers.Makers;
 with SDL.Video.Rectangles;
+with SDL.Video.Renderers.Makers;
 with SDL.Events.Events;
 
-procedure Fractal_Tree is
+procedure Archimedean_Spiral is
 
-   Width   : constant := 600;
-   Height  : constant := 600;
-   Level   : constant := 13;
-   Length  : constant := 130.0;
-   X_Start : constant := 475.0;
-   Y_Start : constant := 580.0;
-   A_Start : constant := -1.54;
-   Angle_1 : constant := 0.10;
-   Angle_2 : constant := 0.35;
-   C_1     : constant := 0.71;
-   C_2     : constant := 0.87;
+   Width   : constant := 800;
+   Height  : constant := 800;
+   A       : constant := 4.2;
+   B       : constant := 3.2;
+   T_First : constant := 4.0;
+   T_Last  : constant := 100.0;
 
    Window   : SDL.Video.Windows.Window;
    Renderer : SDL.Video.Renderers.Renderer;
    Event    : SDL.Events.Events.Events;
 
-   procedure Draw_Tree (Level  : in Natural;
-                        Length : in Float;
-                        Angle  : in Float;
-                        X, Y   : in Float)
-   is
-      use SDL;
+   procedure Draw_Archimedean_Spiral is
+      use type SDL.C.int;
       use Ada.Numerics.Elementary_Functions;
-      Pi   : constant       := Ada.Numerics.Pi;
-      X_2  : constant Float := X + Length * Cos (Angle, 2.0 * Pi);
-      Y_2  : constant Float := Y + Length * Sin (Angle, 2.0 * Pi);
-      Line : constant SDL.Video.Rectangles.Line_Segment
-        := ((C.int (X), C.int (Y)), (C.int (X_2), C.int (Y_2)));
+      Pi   : constant := Ada.Numerics.Pi;
+      Step : constant := 0.002;
+      T    : Float;
+      R    : Float;
    begin
-      if Level > 0 then
-         Renderer.Set_Draw_Colour (Colour => (0, 220, 0, 255));
-         Renderer.Draw (Line => Line);
-
-         Draw_Tree (Level - 1, C_1 * Length, Angle + Angle_1, X_2, Y_2);
-         Draw_Tree (Level - 1, C_2 * Length, Angle - Angle_2, X_2, Y_2);
-      end if;
-   end Draw_Tree;
+      T := T_First;
+      loop
+         R := A + B * T;
+         Renderer.Draw
+           (Point =>
+              SDL.Video.Rectangles.Point'
+                (X => Width / 2 + SDL.C.int (R * Cos (T, 2.0 * Pi)),
+                 Y => Height / 2 - SDL.C.int (R * Sin (T, 2.0 * Pi))));
+         exit when T >= T_Last;
+         T := T + Step;
+      end loop;
+   end Draw_Archimedean_Spiral;
 
    procedure Wait is
       use type SDL.Events.Event_Types;
@@ -54,7 +48,6 @@ procedure Fractal_Tree is
                return;
             end if;
          end loop;
-         delay 0.100;
       end loop;
    end Wait;
 
@@ -63,19 +56,22 @@ begin
       return;
    end if;
 
-   SDL.Video.Windows.Makers.Create (Win      => Window,
-                                    Title    => "Fractal tree",
-                                    Position => SDL.Natural_Coordinates'(X => 10, Y => 10),
-                                    Size     => SDL.Positive_Sizes'(Width, Height),
-                                    Flags    => 0);
+   SDL.Video.Windows.Makers.Create
+     (Win      => Window,
+      Title    => "Archimedean spiral",
+      Position => SDL.Natural_Coordinates'(X => 10, Y => 10),
+      Size     => SDL.Positive_Sizes'(Width, Height),
+      Flags    => 0);
    SDL.Video.Renderers.Makers.Create (Renderer, Window.Get_Surface);
    Renderer.Set_Draw_Colour ((0, 0, 0, 255));
-   Renderer.Fill (Rectangle => (0, 0, Width, Height));
+   Renderer.Fill
+     (Rectangle => SDL.Video.Rectangles.Rectangle'(0, 0, Width, Height));
+   Renderer.Set_Draw_Colour ((0, 220, 0, 255));
 
-   Draw_Tree (Level, Length, A_Start, X_Start, Y_Start);
+   Draw_Archimedean_Spiral;
    Window.Update_Surface;
 
    Wait;
    Window.Finalize;
    SDL.Finalise;
-end Fractal_Tree;
+end Archimedean_Spiral;

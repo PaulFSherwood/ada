@@ -10,3 +10,6 @@ website = ""
 tags = []
 
 executables = ["archimedean_spiral"]
+
+[[depends-on]]
+sdlada = "^2.5.20"
