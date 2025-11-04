@@ -1,12 +1,24 @@
 with SDL.Video.Windows.Makers;
 with SDL.Video.Renderers.Makers;
 with SDL.Events.Events;
--- alr build -- -largs $(sdl2-config --libs)
+
+--  alr with
+--  alr search sdl
+--  alr with sdlada
+--  alr with --del sdlada
+--  alr with
+--  alr with sdlada
+--  alr with
+--
+--  ADD Linker arguments --
+--  alr build -- -largs $(sdl2-config --libs)
 
 procedure Sdl_Test is
    Screen_Width  : constant := 640;
    Screen_Height : constant := 480;
    Running       : Boolean := True;
+
+   -- pragma Linker_Options ("-lSDL2");
 
    Window   : SDL.Video.Windows.Window;
    Renderer : SDL.Video.Renderers.Renderer;
