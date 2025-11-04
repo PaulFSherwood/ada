@@ -1,6 +1,7 @@
 with SDL.Video.Windows.Makers;
 with SDL.Video.Renderers.Makers;
 with SDL.Events.Events;
+--  alr build -- -largs $(sdl2-config --libs)
 
 procedure Sdl_Test is
    Screen_Width  : constant := 640;
