@@ -10,3 +10,6 @@ website = ""
 tags = []
 
 executables = ["sdl_test"]
+
+[[depends-on]]
+sdlada = "^2.5.20"
