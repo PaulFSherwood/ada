@@ -23,7 +23,7 @@ begin
      (Win      => Window,
       Title    => "SDL !!!111!!!",
       Position => SDL.Natural_Coordinates'(X => 10, Y => 10),
-      Size     => SDL.Positive_Sizes'(Screen_Height, Screen_Width),
+      Size     => SDL.Positive_Sizes'(Screen_Width, Screen_Height),
       Flags    => 0);
    SDL.Video.Renderers.Makers.Create (Renderer, Window.Get_Surface);
    Renderer.Set_Draw_Colour ((64, 16, 48, 255));
