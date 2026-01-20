@@ -1,0 +1,7 @@
+Stage 1 - Minimal Ada program + SDL window
+Stage 2 - Entity IDs and Transform component
+Stage 3 - Velocity + Movement system
+Stage 4 - Renderable + Render system
+Stage 5 - Gravity component (presence / absence)
+Stage 6 - Input system
+Stage 7 - Map system + collision + landing

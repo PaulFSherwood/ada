@@ -1,0 +1,3 @@
+main.adb:1:06: error: file "sdl.ads" not found
+main.adb:1:06: error: "Main (body)" depends on "Application (spec)"
+main.adb:1:06: error: "Application (spec)" depends on "Sdl (spec)"
