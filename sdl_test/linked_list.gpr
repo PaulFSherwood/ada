@@ -19,7 +19,4 @@ project Linked_List is
       for Artifacts (".") use ("share");
    end Install;
 
-   package Linker is 
-      for Switches ("Ada") use ("-lSDL2");
-   end Linker;
 end Linked_List;

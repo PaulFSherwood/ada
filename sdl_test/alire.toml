@@ -1,4 +1,4 @@
-name = "sdl_test"
+name = "linked_list"
 description = ""
 version = "0.1.0-dev"
 
@@ -9,7 +9,7 @@ licenses = "MIT OR Apache-2.0 WITH LLVM-exception"
 website = ""
 tags = []
 
-executables = ["sdl_test"]
+executables = ["linked_list"]
 
 [[depends-on]]
 sdlada = "^2.5.20"

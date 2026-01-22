@@ -19,8 +19,8 @@ project Sdl_Test is
       for Artifacts (".") use ("share");
    end Install;
 
-   package Linker is 
-      for Switches ("Ada") use ("-lSDL2");
-   end Linker;
+   -- package Linker is 
+   --    for Switches ("Ada") use ("-lSDL2");
+   -- end Linker;
 
 end Sdl_Test;
