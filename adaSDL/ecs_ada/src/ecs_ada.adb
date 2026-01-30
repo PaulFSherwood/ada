@@ -53,22 +53,31 @@ begin
    --| Set renderer draw color (background)
    --| Rendering configuration is separated from game logic
    Renderer.Set_Draw_Colour ((32, 132, 64, 255));
-
+   --| Create a new ECS entity
+   --| Entities are lightweight identifiers without behavior
    ECS.Create_Entity (Player);
-
+   --| Main game loop
+   --| Explicit control flow without framework magic
    while Running loop
+      --| Pool and process all pending SDL Events
+      --| Deterministic, explicit input handling
       while SDL.Events.Events.Poll (Event) loop
+         --| Handel the quit event
+         --| Exit loop cleanly instead of forcing termination
          if Event.Common.Event_Type = SDL.Events.Quit then
             Running := False;
          end if;
       end loop;
-
+      --| Clearn screen by filling background Rectangle
+      --| Explicit render pass step
       Renderer.Fill
         (Rectangle => (0, 0, Screen_Width, Screen_Height));
-
+      --| Present rendered frame to the window
+      --| Rendering and presentation are separate steps
       Window.Update_Surface;
    end loop;
-
+   --| Clean up SDL resources
+   --| Explicit finalization ensures predictable shutdown.
    Window.Finalize;
    SDL.Finalise;
 
