@@ -1,0 +1,11 @@
+name = "loop_test"
+description = "how ada programs start, how game loops work."
+version = "0.1.0-dev"
+
+authors = ["Your Name"]
+maintainers = ["Your Name <example@example.com>"]
+licenses = "MIT OR Apache-2.0 WITH LLVM-exception"
+website = ""
+tags = []
+
+executables = ["loop_test"]
