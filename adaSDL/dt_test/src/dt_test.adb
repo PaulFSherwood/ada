@@ -1,16 +1,25 @@
-with Ada.Text_IO; use Ada.Text_IO;
+with Ada.Text_IO;    use Ada.Text_IO;
+with Ada.Real_Time; use Ada.Real_Time;
 
 procedure Dt_Test is
-    Total_Time : Duration := 0.00;
-    Elapsed_Time : Duration := 0.00;
-    Delay_Time : Duration := 5.0;
+    Start        : Time := Clock;
+    Last_Second  : Seconds_Count := -1;
+    Now          : Time;
+    Elapsed_Time : Time_Span;
+    Sec          : Seconds_Count;
 begin
     loop
-        Elapsed_Time := 0.00;
-        -- Put_Line ("Total time: " & Duration'Image (Total_Time) & " Elapsed_Time: " & Duration'Image (Elapsed_Time));
-        delay Delay_Time;
-        Elapsed_Time := Elapsed_Time + Delay_Time;
-        Total_Time := Total_Time + Elapsed_Time;
-        Put_Line ("Total time: " & Duration'Image (Total_Time) & " Elapsed_Time: " & Duration'Image (Elapsed_Time));
+        Now          := Clock;
+        Elapsed_Time := Now - Start;
+        Sec          := Seconds_Count (To_Duration (Elapsed_Time));
+
+        if Sec /= Last_Second then
+            -- Put_Line ("Total time: " & Duration'Image (Total_Time) & " Elapsed_Time: " & Duration'Image (Elapsed_Time));
+            Put_Line ("Elapsed seconds:" & Seconds_Count'Image (Sec));
+            Last_Second := Sec;
+        end if;
+
+        exit when Sec >= 5;
     end loop;
 end Dt_Test;
+
