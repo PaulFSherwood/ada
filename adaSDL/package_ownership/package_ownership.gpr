@@ -1,0 +1,22 @@
+with "config/package_ownership_config.gpr";
+project Package_Ownership is
+
+   for Source_Dirs use ("src/", "config/");
+   for Object_Dir use "obj/" & Package_Ownership_Config.Build_Profile;
+   for Create_Missing_Dirs use "True";
+   for Exec_Dir use "bin";
+   for Main use ("package_ownership.adb");
+
+   package Compiler is
+      for Default_Switches ("Ada") use Package_Ownership_Config.Ada_Compiler_Switches;
+   end Compiler;
+
+   package Binder is
+      for Switches ("Ada") use ("-Es"); --  Symbolic traceback
+   end Binder;
+
+   package Install is
+      for Artifacts (".") use ("share");
+   end Install;
+
+end Package_Ownership;
