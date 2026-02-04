@@ -1,0 +1,15 @@
+name = "sdl_loop"
+description = ""
+version = "0.1.0-dev"
+
+authors = ["test"]
+maintainers = ["test <test@test.com>"]
+maintainers-logins = ["test"]
+licenses = "MIT OR Apache-2.0 WITH LLVM-exception"
+website = ""
+tags = []
+
+executables = ["sdl_loop"]
+
+[[depends-on]]
+sdlada = "^2.5.20"

@@ -15,14 +15,13 @@ with Ada.Real_Time; use Ada.Real_Time;
 --| Avoid floats unless converting to Duration.
 --| To_Time_Span takes Duration, not Float.
 --
---
 
 procedure Loop_Structure is
    StartMs : Time;
    EndMs : Time;
    DelayMs : Time_Span;
    loopNumber : Integer := 0;
-   FrameRate : constant Integer := 60; --
+   FrameRate : constant Integer := 60;
    FrameMs : constant Time_Span := To_Time_Span (1.0 / Duration (FrameRate));
 begin
    loop
