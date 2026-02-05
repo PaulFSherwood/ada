@@ -28,14 +28,14 @@ begin
 
    Renderer.Set_Draw_Colour ((64, 16, 48, 255));
 
-   while Running loop
+   while Application.Running loop
       while SDL.Events.Events.Poll (Event) loop
          if Event.Common.Event_Type = SDL.Events.Quit then
-            Running := False;
+            Application.Running := False;
          end if;
       end loop;
 
-      Renderer.Fill (Rectangle => (0, 0, Screen_Width, Screen_Height));
+      Renderer.Fill (Rectangle => (0, 0, Application.SSW, Application.SSH));
       Window.Update_Surface;
    end loop;
    Window.Finalize;

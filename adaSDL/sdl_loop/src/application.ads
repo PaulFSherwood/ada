@@ -1,4 +1,7 @@
+with SDL.Video;
+
 package Application is
-   function SSW return Integer;
-   function SSH return Integer;
+   Running : Boolean := True;
+   function SSW return SDL.Video.Dimension;
+   function SSH return SDL.Video.Dimension;
 end Application;
