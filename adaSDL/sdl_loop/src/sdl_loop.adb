@@ -1,13 +1,9 @@
 with SDL.Video.Windows.Makers;
 with SDL.Video.Renderers.Makers;
 with SDL.Events.Events;
+with Application;
 
 procedure Sdl_Loop is
-   --  | Window setup
-   Screen_Height : constant := 800;
-   Screen_Width  : constant := 640;
-   --  | Program state
-   Running       : Boolean  := True;
    --  | SDL inital setup
    Window   : SDL.Video.Windows.Window;
    Renderer : SDL.Video.Renderers.Renderer;
@@ -24,7 +20,7 @@ begin
       (Win      => Window,
        Title    => "SDL Loop Test",
        Position => SDL.Natural_Coordinates'(X => 10, Y => 0),
-       Size     => SDL.Positive_Sizes'(Screen_Width, Screen_Height),
+       Size     => SDL.Positive_Sizes'(Application.SSW, Application.SSH),
        Flags    => 0);
 
    SDL.Video.Renderers.Makers.Create
