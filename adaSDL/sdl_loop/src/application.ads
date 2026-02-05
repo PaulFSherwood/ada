@@ -2,6 +2,6 @@ with SDL.Video;
 
 package Application is
    Running : Boolean := True;
-   function SSW return SDL.Video.Sizes.Dimension;
-   function SSH return SDL.Video.Sizes.Dimension;
+   function SSW return Natural;
+   function SSH return Natural;
 end Application;

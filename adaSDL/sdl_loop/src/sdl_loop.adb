@@ -20,7 +20,9 @@ begin
       (Win      => Window,
        Title    => "SDL Loop Test",
        Position => SDL.Natural_Coordinates'(X => 10, Y => 0),
-       Size     => SDL.Positive_Sizes'(Application.SSW, Application.SSH),
+       Size     => SDL.Positive_Sizes'
+        (SDL.Dimension (Application.SSW),
+         SDL.Dimension (Application.SSH)),
        Flags    => 0);
 
    SDL.Video.Renderers.Makers.Create
@@ -35,7 +37,7 @@ begin
          end if;
       end loop;
 
-      Renderer.Fill (Rectangle => (0, 0, Application.SSW, Application.SSH));
+      Renderer.Fill (Rectangle => (0, 0, SDL.Natural_Dimension (Application.SSW), SDL.Natural_Dimension (Application.SSH)));
       Window.Update_Surface;
    end loop;
    Window.Finalize;
