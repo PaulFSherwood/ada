@@ -1,4 +1,5 @@
 with SDL.Video;  --   For Dimension
+
 package body Application is
    --  | Window setup
    Screen_Height : constant SDL.Video.Dimension := 800;
@@ -8,7 +9,8 @@ package body Application is
    begin
       return Screen_Width;
    end SSW;
-   function SSH return Dimension SDL.Video.Dimension is
+
+   function SSH return SDL.Video.Dimension is
    begin
       return Screen_Height;
    end SSH;
