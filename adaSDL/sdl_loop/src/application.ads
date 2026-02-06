@@ -1,7 +1,12 @@
-with SDL.Video;
-
 package Application is
    Running : Boolean := True;
-   function SSW return Natural;
-   function SSH return Natural;
+
+   procedure Init;
+   procedure PollEvents;
+   procedure Render;
+   procedure Update;
+   procedure Shutdown;
+
+   function GetWidth return Natural;
+   function GetHeight return Natural;
 end Application;
