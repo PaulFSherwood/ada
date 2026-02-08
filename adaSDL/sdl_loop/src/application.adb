@@ -16,16 +16,6 @@ package body Application is
 
    use type SDL.Events.Event_Types;
 
-   function GetWidth return Natural is
-   begin
-      return Screen_Width;
-   end GetWidth;
-
-   function GetHeight return Natural is
-   begin
-      return Screen_Height;
-   end GetHeight;
-
    procedure Init is
    begin
       if not SDL.Initialise (Flags => SDL.Enable_Screen) then
@@ -75,5 +65,16 @@ package body Application is
       Window.Finalize;
       SDL.Finalise;
    end Shutdown;
+    
+   --  Helper functions to get variables.
+   function GetWidth return Natural is
+   begin
+      return Screen_Width;
+   end GetWidth;
+
+   function GetHeight return Natural is
+   begin
+      return Screen_Height;
+   end GetHeight;
 
 end Application;
