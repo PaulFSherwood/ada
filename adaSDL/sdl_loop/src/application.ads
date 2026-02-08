@@ -9,4 +9,5 @@ package Application is
 
    function GetWidth return Natural;
    function GetHeight return Natural;
+   function Is_Running return Boolean;
 end Application;

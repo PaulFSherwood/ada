@@ -76,5 +76,10 @@ package body Application is
    begin
       return Screen_Height;
    end GetHeight;
+   
+   function Is_Running return Boolean is
+   begin
+       return Running;
+   end Is_Running;
 
 end Application;

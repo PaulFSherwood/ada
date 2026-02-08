@@ -6,7 +6,7 @@ procedure Sdl_Loop is
 begin
    Application.Init;
 
-   while Application.Running loop
+   while Application.Is_Running loop
       Application.PollEvents;
       Application.Render;
       Application.Update;
