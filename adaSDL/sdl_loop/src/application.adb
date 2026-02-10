@@ -3,6 +3,7 @@ with SDL.Video;
 with SDL.Video.Windows.Makers;
 with SDL.Video.Renderers.Makers;
 with SDL.Events.Events;
+with Transform;
 
 package body Application is
 
@@ -15,6 +16,8 @@ package body Application is
    Event       : SDL.Events.Events.Events;
 
    use type SDL.Events.Event_Types;
+
+   Player_Transform : Transform.Transform;
 
    procedure Init is
    begin
@@ -57,6 +60,8 @@ package body Application is
 
    procedure Update is
    begin
+      Player_Transform.X := Player_Transform.X + 1.0;
+      Player_Transform.Y := Player_Transform.Y + 1.0;
       Window.Update_Surface;
    end Update;
 
@@ -65,7 +70,7 @@ package body Application is
       Window.Finalize;
       SDL.Finalise;
    end Shutdown;
-    
+
    --  Helper functions to get variables.
    function GetWidth return Natural is
    begin
@@ -76,10 +81,10 @@ package body Application is
    begin
       return Screen_Height;
    end GetHeight;
-   
+
    function Is_Running return Boolean is
    begin
-       return Running;
+      return Running;
    end Is_Running;
 
 end Application;
