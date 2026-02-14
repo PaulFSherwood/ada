@@ -11,9 +11,9 @@ package body Application is
    Screen_Height : constant Natural := 800;
    Screen_Width  : constant Natural := 640;
 
-   Window      : SDL.Video.Windows.Window;
-   Renderer    : SDL.Video.Renderers.Renderer;
-   Event       : SDL.Events.Events.Events;
+   Window   : SDL.Video.Windows.Window;
+   Renderer : SDL.Video.Renderers.Renderer;
+   Event    : SDL.Events.Events.Events;
 
    use type SDL.Events.Event_Types;
 
@@ -27,16 +27,15 @@ package body Application is
       end if;
 
       SDL.Video.Windows.Makers.Create
-      (Win        => Window,
-       Title      => "SDL Loop Test",
-       Position   => SDL.Natural_Coordinates'(X => 10, Y => 10),
-       Size       => SDL.Positive_Sizes'
-          (SDL.Dimension (GetWidth),
-           SDL.Dimension (GetHeight)),
-       Flags      => 0);
+        (Win      => Window,
+         Title    => "SDL Loop Test",
+         Position => SDL.Natural_Coordinates'(X => 10, Y => 10),
+         Size     =>
+           SDL.Positive_Sizes'
+             (SDL.Dimension (GetWidth), SDL.Dimension (GetHeight)),
+         Flags    => 0);
 
-      SDL.Video.Renderers.Makers.Create
-      (Renderer, Window.Get_Surface);
+      SDL.Video.Renderers.Makers.Create (Renderer, Window.Get_Surface);
 
       Renderer.Set_Draw_Colour ((64, 16, 48, 255));
    end Init;
@@ -53,15 +52,18 @@ package body Application is
    procedure Render is
    begin
       Renderer.Fill
-      (Rectangle => (0, 0,
-      SDL.Natural_Dimension (GetWidth),
-      SDL.Natural_Dimension (GetHeight)));
+        (Rectangle =>
+           (0,
+            0,
+            SDL.Natural_Dimension (GetWidth),
+            SDL.Natural_Dimension (GetHeight)));
    end Render;
 
    procedure Update is
    begin
       Player_Transform.X := Player_Transform.X + 1.0;
       Player_Transform.Y := Player_Transform.Y + 1.0;
+      Transform.Move_Player (Player_Transform);
       Window.Update_Surface;
    end Update;
 
