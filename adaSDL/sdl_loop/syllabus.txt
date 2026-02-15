@@ -1,0 +1,300 @@
+🎮 Project Syllabus — Subterranean ’84 (Ada Edition)
+
+Minimal thrust-based cave exploration
+Synthwave aesthetic
+Strict ECS in Ada + SDL
+
+Phase 0 — Runtime Skeleton
+Goal : Create a working SDL application loop with clean Ada package boundaries.
+
+Skills Learned :
+- Ada package structure
+- SDL initialization / shutdown
+- Event polling
+- Fixed timestep loop
+- Basic records
+- Procedure design
+- in vs in out
+- Application orchestration
+- Separating platform from logic
+
+Files Affected
+
+Existing:
+- main.adb
+- application.ads
+- application.adb
+- sdl_loop.adb
+- transform.ads
+- transform.adb
+- velocity.ads
+- velocity.adb
+
+What to Add
+Nothing new yet.
+Just clean:
+- Transform record
+- Velocity record
+- Update loop
+
+Tool Box (Must Know Before Phase 1) :
+✅ Ada records
+✅ Ada procedures
+✅ Parameter modes
+✅ Package spec vs body
+✅ SDL event loop
+✅ How dt is calculated
+✅ How Transform + Velocity interact
+
+Phase 1 — Movement Isolation
+Goal : Separate movement logic from data.
+
+Skills Learned :
+- Package responsibility separation
+- Deterministic update ordering
+- Mutating records via procedures
+- Eliminating logic from components
+- Simulation pipeline thinking
+
+Files Affected
+
+New:
+- movement.ads
+- movement.adb
+
+Modified:
+- application.adb
+
+What to Add
+- Create Movement package:
+- Procedure Move(Transform, Velocity, DT)
+
+Application calls:
+- Input
+- Movement
+- Render
+
+Transform no longer moves itself.
+
+Tool Box :
+✅ Procedures modifying records
+✅ Explicit call ordering
+✅ No SDL inside movement
+✅ No logic inside Transform or Velocity
+
+Phase 2 — Component Expansion
+Goal : Add remaining component records.
+
+Skills Learned :
+- Record composition
+- Component responsibility
+- Data-only design
+- Preparing ECS without building ECS
+- Files Affected
+
+New:
+- renderable.ads
+- collider.ads
+- gravity.ads
+
+Existing:
+- application.adb
+
+What to Add
+Add records:
+- Renderable (width, height, color)
+- Collider (width, height)
+- Gravity (strength)
+
+Still no ECS.
+Manual wiring.
+
+Tool Box :
+✅ Ada records
+✅ Default initialization
+✅ Passing multiple records through procedures
+
+Phase 3 — Entity Layer Introduction
+Goal : Replace “single player variables” with entity IDs.
+
+Skills Learned :
+- Entity abstraction
+- ID-based ownership
+- Container usage
+- Map-based component storage
+- Explicit access patterns
+
+Files Affected
+
+New:
+- ecs/entity.ads
+- ecs/entity_manager.ads
+- ecs/entity_manager.adb
+
+Modified:
+- application.adb
+- What to Add
+
+EntityManager:
+- CreateEntity
+- AddTransform
+- AddVelocity
+- HasX / GetX
+- Single entity only at first.
+
+Tool Box :
+✅ Ada containers
+✅ Hash maps
+✅ ID-based lookup
+✅ Removing globals
+
+Phase 4 — Systems Layer
+Goal : Convert procedural calls into ECS systems.
+
+Skills Learned
+- System isolation
+- Data flow architecture
+- Read/write discipline
+- ECS execution order
+
+Files Affected
+
+New:
+- systems/input.ads
+- systems/input.adb
+- systems/movement.ads
+- systems/movement.adb
+- systems/render.ads
+- systems/render.adb
+
+Modified:
+- application.adb
+
+What to Add
+
+Each system:
+- Takes EntityManager
+- Mutates components
+- Application orchestrates.
+
+Tool Box :
+✅ ECS fundamentals
+✅ No SDL outside render
+✅ Input modifies velocity
+✅ Movement modifies transform
+
+Phase 5 — Tile Map
+Goal : Introduce world geometry.
+
+Skills Learned
+- Tile grids
+- World → tile math
+- Camera offset rendering
+- Data-driven maps
+
+Files Affected
+
+New:
+- systems/map.ads
+- systems/map.adb
+- core/camera.ads
+
+Modified:
+- application.adb
+
+What to Add
+
+Map:
+- IsSolidAt
+- IsLandingAt
+- FindPlayerStart
+- Render
+
+Camera:
+- follows player
+
+Tool Box :
+✅ Spatial indexing
+✅ Coordinate transforms
+✅ Tile systems
+
+Phase 6 — Collision
+Goal : Introduce gameplay rules.
+
+Skills Learned
+- Collision detection
+- Component removal
+- Reset logic
+- State transitions
+
+Files Affected
+
+New:
+- systems/collision.ads
+- systems/collision.adb
+
+What to Add
+
+CollisionSystem:
+- wall crash
+- landing logic
+- gravity removal
+- velocity reset
+
+Tool Box :
+✅ System ordering
+✅ Gameplay rule encoding
+
+Phase 7 — Environmental Physics
+Goal : Add gravity modifiers and landing pads.
+
+Skills Learned
+- Environment-driven components
+- Runtime physics tuning
+- Emergent behavior
+
+Files Affected
+
+Modified:
+- map.adb
+- collision.adb
+- application.adb
+
+What to Add
+- water gravity inversion
+- variable gravity strength
+
+Tool Box :
+✅ Component toggling
+✅ Environmental modifiers
+
+Phase 8 — Visual Upgrade
+Goal : Replace rectangles with synthwave visuals.
+
+Skills Learned
+- Render layering
+- Effect passes
+- Visual abstraction
+
+Files Affected
+
+Modified:
+- render.adb
+
+What to Add
+- ship triangle
+- neon grid
+- glow
+- scanlines
+
+Tool Box :
+✅ Render pipelines
+✅ Effect isolation
+
+Architectural Laws (Always)
+- Components = dumb records
+- Systems mutate
+- Application orchestrates
+- Input → Velocity
+- Movement → Transform
+- Render owns SDL
