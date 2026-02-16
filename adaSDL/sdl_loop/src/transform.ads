@@ -7,6 +7,4 @@ package Transform is
       X : Float := 1.0;
       Y : Float := 1.0;
    end record;
-   procedure Move_Player (T : in out Transform; V : in Velocity);
-   procedure Update_Velocity (VX_Update : Float; VY_Update : Float; V : in out Velocity);
 end Transform;
