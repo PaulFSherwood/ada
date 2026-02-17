@@ -1,4 +1,5 @@
 package Transform is
+   procedure Dummy_Body;
    type Transform is record
       X : Float := 0.0;
       Y : Float := 0.0;

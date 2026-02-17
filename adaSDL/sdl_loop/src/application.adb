@@ -4,6 +4,7 @@ with SDL.Video.Windows.Makers;
 with SDL.Video.Renderers.Makers;
 with SDL.Events.Events;
 with Transform;
+with Movement;
 
 package body Application is
 
@@ -39,7 +40,7 @@ package body Application is
       SDL.Video.Renderers.Makers.Create (Renderer, Window.Get_Surface);
 
       Renderer.Set_Draw_Colour ((64, 16, 48, 255));
-      Transform.Update_Velocity (1.1, 1.1, Player_Velocity);
+      Movement.Update_Velocity (1.1, 1.1, Player_Velocity);
    end Init;
 
    procedure PollEvents is
@@ -63,7 +64,7 @@ package body Application is
 
    procedure Update is
    begin
-      Transform.Move_Player (Player_Transform, Player_Velocity);
+      Movement.Move_Player (Player_Transform, Player_Velocity);
       Window.Update_Surface;
    end Update;
 
