@@ -8,6 +8,7 @@ use SDL.Events.Keyboards;
 
 with Ada.Text_IO; use Ada.Text_IO;
 with Application;
+with Transform;
 
 package body Inputs is
 
@@ -24,11 +25,11 @@ package body Inputs is
          --  Key Down
          if Event.Common.Event_Type = SDL.Events.Keyboards.Key_Down then
             case Event.Keyboard.Key_Sym.Key_Code is
-               when Code_W => Put_Line ("W Pressed");
-               when Code_A => Put_Line ("A Pressed");
-               when Code_S => Put_Line ("S Pressed");
-               when Code_D => Put_Line ("D Pressed");
-               when others => null;
+               when Code_W => Put_Line ("W Pressed"); Transform.Speed := 1.0;
+               when Code_A => Put_Line ("A Pressed"); Transform.Speed := -1.0;
+               when Code_S => Put_Line ("S Pressed"); Transform.Speed := -1.0;
+               when Code_D => Put_Line ("D Pressed"); Transform.Speed := 1.0;
+               when others => null; Transform.Speed := 0.0;
             end case;
          end if;
 

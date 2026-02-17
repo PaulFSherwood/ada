@@ -1,0 +1,47 @@
+🔹 Ada Skill Level Assessment
+🟢 Noob (0–2 months)
+ - Struggles with spec vs body
+ - Confused by with vs use
+ - Doesn’t understand file naming
+ - Cannot interpret GNAT error messages
+***You are past this.
+
+🟡 Junior Ada Dev
+ - Understands packages/spec/body separation
+ - Can fix visibility issues
+ - Can read compiler diagnostics
+ - Can wire libraries (SDL) together
+ - Understands project files at a practical level
+***You are solidly here.
+
+🟠 Mid-Level Ada Dev
+ - Designs clean package architecture
+ - Uses child packages intentionally
+ - Understands generics well
+ - Uses tagged types and OOP cleanly
+ - Can reason about elaboration order
+ - Comfortable with tasking / protected types
+ - Knows GNAT build model deeply
+---You are approaching this, but not fully there yet.
+
+🔵 Senior Ada Engineer
+ - Designs large multi-package systems
+ - Understands Ravenscar / real-time constraints
+ - Uses tasking + protected objects confidently
+ - Designs reusable generic frameworks
+ - Can reason about memory layout and representation clauses
+ - Writes portable Ada
+ - Knows binder behavior and elaboration pitfalls
+ - Understands interfacing with C deeply
+---You are not here yet (and that’s normal).
+
+🟣 Senior Staff / Principal (Ada in defense)
+ - Architects systems
+ - Designs certifiable software
+ - Understands DO-178C implications
+ - Builds large GPR hierarchies cleanly
+ - Reviews others’ code for architecture
+ - Uses SPARK or formal verification where needed
+ - Deep real-time scheduling understanding
+ - Thinks in system boundaries, not files
+---That’s multiple years of focused Ada work.
