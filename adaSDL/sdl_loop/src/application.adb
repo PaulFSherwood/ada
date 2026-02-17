@@ -64,7 +64,7 @@ package body Application is
 
    procedure Update is
    begin
-      Movement.Move_Player (Player_Transform, Player_Velocity);
+      Movement.Move (Player_Transform, Player_Velocity, 1.0);
       Window.Update_Surface;
    end Update;
 
