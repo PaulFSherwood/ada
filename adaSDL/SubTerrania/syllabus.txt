@@ -24,7 +24,7 @@ Existing:
 - main.adb
 - application.ads
 - application.adb
-- sdl_loop.adb
+- subterrania.adb
 - transform.ads
 - transform.adb
 - velocity.ads

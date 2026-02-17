@@ -2,7 +2,7 @@ with SDL;
 with SDL.Events.Events;
 with Application;
 
-procedure Sdl_Loop is
+procedure SubTerrania is
 begin
    Application.Init;
 
@@ -12,4 +12,4 @@ begin
       Application.Update;
    end loop;
    Application.Shutdown;
-end Sdl_Loop;
+end SubTerrania;

@@ -1,14 +1,14 @@
-with "config/sdl_loop_config.gpr";
-project Sdl_Loop is
+with "config/subterrania_config.gpr";
+project subterrania is
 
    for Source_Dirs use ("src/", "config/");
-   for Object_Dir use "obj/" & Sdl_Loop_Config.Build_Profile;
+   for Object_Dir use "obj/" & subterrania_config.Build_Profile;
    for Create_Missing_Dirs use "True";
    for Exec_Dir use "bin";
-   for Main use ("sdl_loop.adb");
+   for Main use ("subterrania.adb");
 
    package Compiler is
-      for Default_Switches ("Ada") use Sdl_Loop_Config.Ada_Compiler_Switches;
+      for Default_Switches ("Ada") use subterrania_config.Ada_Compiler_Switches;
    end Compiler;
 
    package Binder is
@@ -23,4 +23,4 @@ project Sdl_Loop is
       for Switches ("Ada") use ("-lSDL2");
    end Linker;
 
-end Sdl_Loop;
+end subterrania;
