@@ -4,7 +4,7 @@ package body Entity_Manager is
    procedure StoreTransform
       (XVal : Float; 
       YVal : Float;
-      T : in Transform.Transform) is
+      T : in out Transform.Transform) is
       T.X := XVal;
       T.Y := YVal;
    end StoreTransform;

@@ -5,7 +5,7 @@ package Entity_Manager is
    procedure StoreTransform
       (XVal : Float;
       YVal : Float;
-      T : in Transform.Transform);
+      T : in out Transform.Transform);
    procedure StoreVelocity
       (XVal : Float;
       YVal : Float;
