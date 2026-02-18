@@ -307,3 +307,9 @@ Architectural Laws (Always)
 - Input → Velocity
 - Movement → Transform
 - Render owns SDL
+
+
+##################################################
+Notes:
+ KanbanBoard
+ Or edit Work_Flow_Pro
