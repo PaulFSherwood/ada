@@ -1,0 +1,1 @@
+sdl_loop.adb:2:16: warning: unit "SDL.Events.Events" is not referenced [-gnatwu]

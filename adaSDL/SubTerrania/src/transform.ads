@@ -8,5 +8,4 @@ package Transform is
       X : Float := 1.0;
       Y : Float := 1.0;
    end record;
-   Speed : Float := 0.0;
 end Transform;

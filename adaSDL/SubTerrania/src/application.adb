@@ -40,17 +40,7 @@ package body Application is
       SDL.Video.Renderers.Makers.Create (Renderer, Window.Get_Surface);
 
       Renderer.Set_Draw_Colour ((64, 16, 48, 255));
-      Movement.Update_Velocity (1.1, 1.1, Player_Velocity);
    end Init;
-
-   procedure PollEvents is
-   begin
-      while SDL.Events.Events.Poll (Event) loop
-         if Event.Common.Event_Type = SDL.Events.Quit then
-            Running := False;
-         end if;
-      end loop;
-   end PollEvents;
 
    procedure Render is
    begin

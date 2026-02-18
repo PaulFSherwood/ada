@@ -2,7 +2,6 @@ package Application is
    Running : Boolean := True;
 
    procedure Init;
-   procedure PollEvents;
    procedure Render;
    procedure Update;
    procedure Shutdown;

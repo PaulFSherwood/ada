@@ -1,0 +1,166 @@
+# THIS FILE IS GENERATED. DO NOT EDIT.
+
+[solution]
+[solution.context]
+solved = true
+[[solution.state]]
+crate = "libsdl2"
+fulfilment = "solved"
+pinned = false
+transitivity = "indirect"
+versions = "^2.0.0"
+[solution.state.release]
+description = "Simple DirectMedia Layer development files"
+maintainers = [
+"alejandro@mosteo.com",
+]
+maintainers-logins = [
+"mosteo",
+]
+name = "libsdl2"
+notes = "Provided by system package: libsdl2-dev"
+version = "2.0.20"
+[solution.state.release.origin]
+url = "system:libsdl2-dev"
+[[solution.state]]
+crate = "libsdl2_image"
+fulfilment = "solved"
+pinned = false
+transitivity = "indirect"
+versions = "^2.0.0"
+[solution.state.release]
+description = "Simple DirectMedia Layer development files - Image"
+maintainers = [
+"alejandro@mosteo.com",
+]
+maintainers-logins = [
+"mosteo",
+]
+name = "libsdl2_image"
+notes = "Provided by system package: libsdl2-image-dev"
+version = "2.0.5"
+[solution.state.release.origin]
+url = "system:libsdl2-image-dev"
+[[solution.state]]
+crate = "libsdl2_mixer"
+fulfilment = "solved"
+pinned = false
+transitivity = "indirect"
+versions = "^2.0.0"
+[solution.state.release]
+description = "Simple DirectMedia Layer development files - Mixer"
+maintainers = [
+"alejandro@mosteo.com",
+]
+maintainers-logins = [
+"mosteo",
+]
+name = "libsdl2_mixer"
+notes = "Provided by system package: libsdl2-mixer-dev"
+version = "2.0.4"
+[solution.state.release.origin]
+url = "system:libsdl2-mixer-dev"
+[[solution.state]]
+crate = "libsdl2_ttf"
+fulfilment = "solved"
+pinned = false
+transitivity = "indirect"
+versions = "^2.0.0"
+[solution.state.release]
+description = "Simple DirectMedia Layer development files - TTF"
+maintainers = [
+"alejandro@mosteo.com",
+]
+maintainers-logins = [
+"mosteo",
+]
+name = "libsdl2_ttf"
+notes = "Provided by system package: libsdl2-ttf-dev"
+version = "2.0.18"
+[solution.state.release.origin]
+url = "system:libsdl2-ttf-dev"
+[[solution.state]]
+crate = "make"
+fulfilment = "solved"
+pinned = false
+transitivity = "indirect"
+versions = "*"
+[solution.state.release]
+description = "Utility for directing compilation"
+maintainers = [
+"alejandro@mosteo.com",
+]
+maintainers-logins = [
+"mosteo",
+]
+name = "make"
+notes = "Provided by system package: make"
+version = "4.3.0"
+[solution.state.release.origin]
+url = "system:make"
+[[solution.state]]
+crate = "sdlada"
+fulfilment = "solved"
+pinned = false
+transitivity = "direct"
+versions = "^2.5.20"
+[solution.state.release]
+authors = [
+"Luke A. Guest",
+]
+description = "Ada 2012 SDL 2.x bindings."
+licenses = "Zlib"
+maintainers = [
+"Luke A. Guest <laguest@archeia.com>",
+]
+maintainers-logins = [
+"Lucretia",
+]
+name = "sdlada"
+project-files = [
+"build/gnat/sdlada.gpr",
+]
+tags = [
+"gamedev",
+"games",
+"portable",
+"cross-platform",
+]
+version = "2.5.20"
+website = "https://github.com/Lucretia/sdlada"
+[solution.state.release.gpr-externals]
+SDL_MODE = [
+"debug",
+"release",
+]
+SDL_PLATFORM = [
+"linux",
+"bsd",
+"windows",
+"macosx",
+"macos_homebrew",
+"macos_ports",
+"ios",
+"android",
+]
+[solution.state.release.gpr-set-externals]
+SDL_PLATFORM = "linux"
+[solution.state.release.origin]
+commit = "cd53c280e95697ad7f1b2151f1bad68742a0e7b8"
+url = "git+https://github.com/Lucretia/sdlada.git"
+[[solution.state.release.actions]]
+command = [
+"make",
+"-C",
+"./build/gnat",
+"tools",
+]
+directory = "."
+type = "pre-build"
+[[solution.state.release.depends-on]]
+libsdl2 = "^2.0.0"
+libsdl2_image = "^2.0.0"
+libsdl2_mixer = "^2.0.0"
+libsdl2_ttf = "^2.0.0"
+make = "*"
+

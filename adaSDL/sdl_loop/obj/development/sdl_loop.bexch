@@ -1,0 +1,29 @@
+[GENERATED OBJECT FILE]
+b__sdl_loop.o
+[PROJECT FILES]
+/home/sherwood/Documents/ada/adaSDL/sdl_loop/sdl_loop.gpr
+20260204010628 b838b1fba1292615798562725bd19f35
+/home/sherwood/.local/share/alire/builds/sdlada_2.5.20_cd53c280/f6d652da460f107c8a462d972623c5ea56d7437e3c97fb205477693e0bc1d818/build/gnat/sdlada.gpr
+20251104113453 f0a8c1ceb31098fa26a0221f82e6df5f
+/home/sherwood/Documents/ada/adaSDL/sdl_loop/config/sdl_loop_config.gpr
+20260204005009 5be4aafe243a50188d2c27a9f943330d
+[BOUND OBJECT FILES]
+/home/sherwood/Documents/ada/adaSDL/sdl_loop/obj/development/transform.o
+/home/sherwood/Documents/ada/adaSDL/sdl_loop/obj/development/application.o
+/home/sherwood/Documents/ada/adaSDL/sdl_loop/obj/development/sdl_loop.o
+[GENERATED SOURCE FILES]
+b__sdl_loop.ads
+b__sdl_loop.adb
+b__sdl_loop.ali
+[RESULTING OPTIONS]
+-L/home/sherwood/Documents/ada/adaSDL/sdl_loop/obj/development/
+-L/home/sherwood/Documents/ada/adaSDL/sdl_loop/obj/development/
+-L/home/sherwood/.local/share/alire/builds/sdlada_2.5.20_cd53c280/f6d652da460f107c8a462d972623c5ea56d7437e3c97fb205477693e0bc1d818/build/gnat/gen/debug/lib/
+-L/home/sherwood/.local/share/alire/toolchains/gnat_native_14.2.1_06bb3def/lib/gcc/x86_64-pc-linux-gnu/14.2.0/adalib/
+-static
+-static-libgcc
+/home/sherwood/.local/share/alire/toolchains/gnat_native_14.2.1_06bb3def/lib/gcc/x86_64-pc-linux-gnu/14.2.0/adalib/libgnarl.a
+/home/sherwood/.local/share/alire/toolchains/gnat_native_14.2.1_06bb3def/lib/gcc/x86_64-pc-linux-gnu/14.2.0/adalib/libgnat.a
+-lrt
+-lpthread
+-ldl

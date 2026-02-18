@@ -14,7 +14,8 @@ package body Inputs is
 
    Event : SDL.Events.Events.Events;
 
-   procedure PollEvents is
+   procedure PollEvents
+      (V : in out Transform.Velocity) is
    begin
       while SDL.Events.Events.Poll (Event) loop
          --  Quit event
@@ -25,11 +26,11 @@ package body Inputs is
          --  Key Down
          if Event.Common.Event_Type = SDL.Events.Keyboards.Key_Down then
             case Event.Keyboard.Key_Sym.Key_Code is
-               when Code_W => Put_Line ("W Pressed"); Transform.Speed := 1.0;
-               when Code_A => Put_Line ("A Pressed"); Transform.Speed := -1.0;
-               when Code_S => Put_Line ("S Pressed"); Transform.Speed := -1.0;
-               when Code_D => Put_Line ("D Pressed"); Transform.Speed := 1.0;
-               when others => null; Transform.Speed := 0.0;
+               when Code_W => Put_Line ("W Pressed"); V.X := 1.0;
+               when Code_A => Put_Line ("A Pressed"); V.Y := -1.0;
+               when Code_S => Put_Line ("S Pressed"); V.X := -1.0;
+               when Code_D => Put_Line ("D Pressed"); V.X := 1.0;
+               when others => null; V.X := 0.0; V.Y := 0.0;
             end case;
          end if;
 

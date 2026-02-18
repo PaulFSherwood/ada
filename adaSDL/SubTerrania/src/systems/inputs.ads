@@ -1,3 +1,5 @@
+with Transform;
+
 package Inputs is
-   procedure PollEvents;
+   procedure PollEvents (V : in out Transform.Velocity);
 end Inputs;

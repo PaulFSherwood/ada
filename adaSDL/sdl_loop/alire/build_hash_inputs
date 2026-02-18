@@ -1,0 +1,5 @@
+dependency:sdlada=2.5.20=f6d652da460f107c8a462d972623c5ea56d7437e3c97fb205477693e0bc1d818
+external:LIBRARY_TYPE=default
+external:SDL_LOOP_LIBRARY_TYPE=default
+profile:sdl_loop=DEVELOPMENT
+switches:sdl_loop=-Og,-fdata-sections,-ffunction-sections,-g,-gnatVa,-gnatW8,-gnatw.X,-gnatwa,-gnaty-d,-gnaty3,-gnatyA,-gnatyB,-gnatyI,-gnatyO,-gnatyS,-gnatya,-gnatyb,-gnatyc,-gnatye,-gnatyf,-gnatyh,-gnatyi,-gnatyk,-gnatyl,-gnatym,-gnatyn,-gnatyp,-gnatyr,-gnatyt,-gnatyu,-gnatyx
