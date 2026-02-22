@@ -8,14 +8,14 @@ use SDL.Events.Keyboards;
 
 with Ada.Text_IO; use Ada.Text_IO;
 with Application;
-with Transform;
+with ECS.Components.Velocity;
 
 package body Inputs is
 
    Event : SDL.Events.Events.Events;
 
    procedure PollEvents
-      (V : in out Transform.Velocity) is
+      (V : in out ECS.Components.Velocity.Velocity) is
    begin
       while SDL.Events.Events.Poll (Event) loop
          --  Quit event

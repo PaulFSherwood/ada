@@ -3,8 +3,6 @@ with SDL.Video;
 with SDL.Video.Windows.Makers;
 with SDL.Video.Renderers.Makers;
 with SDL.Events.Events;
-with Transform;
-with Movement;
 
 package body Application is
 
@@ -17,9 +15,6 @@ package body Application is
    Event    : SDL.Events.Events.Events;
 
    use type SDL.Events.Event_Types;
-
-   Player_Transform : Transform.Transform;
-   Player_Velocity  : Transform.Velocity;
 
    procedure Init is
    begin
@@ -54,7 +49,6 @@ package body Application is
 
    procedure Update is
    begin
-      Movement.Move (Player_Transform, Player_Velocity, 1.0);
       Window.Update_Surface;
    end Update;
 

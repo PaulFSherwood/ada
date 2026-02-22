@@ -2,10 +2,10 @@
 --  with SDL.Events.Events;
 with Application;
 with Inputs;
-with Transform;
+with ECS.Components.Velocity;
 
 procedure SubTerrania is
-   Player_Velocity : Transform.Velocity;
+   Player_Velocity : ECS.Components.Velocity.Velocity;
 begin
    Application.Init;
 
@@ -14,5 +14,6 @@ begin
       Application.Render;
       Application.Update;
    end loop;
+
    Application.Shutdown;
 end SubTerrania;
