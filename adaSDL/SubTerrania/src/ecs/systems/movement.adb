@@ -1,6 +1,6 @@
 --  with Ada.Text_IO; use Ada.Text_IO;
-with ECS.Components.Transform;
-with ECS.Components.Velocity;
+--  with ECS.Components.Transform;
+--  with ECS.Components.Velocity;
 
 package body Movement is
 

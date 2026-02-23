@@ -4,7 +4,7 @@ with SDL.Events.Events;
 with SDL.Events.Keyboards;
 
 with Ada.Text_IO; use Ada.Text_IO;
-with ECS.Components.Velocity;
+--  with ECS.Components.Velocity;
 
 use type SDL.Events.Event_Types;
 

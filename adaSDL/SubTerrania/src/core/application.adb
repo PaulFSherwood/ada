@@ -3,19 +3,19 @@ with SDL.Video;
 with SDL.Video.Windows.Makers;
 with SDL.Video.Renderers.Makers;
 
-with ECS.Components.Transform;
-with ECS.Components.Velocity;
-with ECS.Entity_System.Entity_Manager;
-with ECS.Entity_System.Entity;
+--  with ECS.Components.Transform;
+--  with ECS.Components.Velocity;
+--  with ECS.Entity_System.Entity_Manager;
+--  with ECS.Entity_System.Entity;
 with Movement;
 with Inputs;
 
 package body Application is
 
    package EM renames ECS.Entity_System.Entity_Manager;
-   package Entity renames ECS.Entity_System.Entity;
-   package Transform renames ECS.Components.Transform;
-   package Velocity renames ECS.Components.Velocity;
+   --  package Entity renames ECS.Entity_System.Entity;
+   --  package Transform renames ECS.Components.Transform;
+   --  package Velocity renames ECS.Components.Velocity;
 
    --  Window Setup
    Screen_Height : constant Natural := 800;

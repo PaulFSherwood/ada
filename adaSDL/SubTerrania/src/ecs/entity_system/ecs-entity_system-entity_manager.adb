@@ -42,8 +42,7 @@ package body ECS.Entity_System.Entity_Manager is
    begin
       return Mgr.Transforms.Reference (E);
    end Get_Transform;
-   
-   
+
    function Get_Velocity
      (Mgr : in out Entity_Manager_Type;
       E   : Entity.Entity_ID)
