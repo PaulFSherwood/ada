@@ -1,36 +1,55 @@
 with SDL;
 with SDL.Events;
-use SDL.Events;
 with SDL.Events.Events;
-
 with SDL.Events.Keyboards;
-use SDL.Events.Keyboards;
 
 with Ada.Text_IO; use Ada.Text_IO;
-with Application;
 with ECS.Components.Velocity;
+
+use type SDL.Events.Event_Types;
 
 package body Inputs is
 
    Event : SDL.Events.Events.Events;
 
    procedure PollEvents
-      (V : in out ECS.Components.Velocity.Velocity) is
+      (Running : in out Boolean;
+      V        : in out ECS.Components.Velocity.Velocity) is
    begin
       while SDL.Events.Events.Poll (Event) loop
          --  Quit event
          if Event.Common.Event_Type = SDL.Events.Quit then
-            Application.Running := False;
-         end if;
-
-         --  Key Down
-         if Event.Common.Event_Type = SDL.Events.Keyboards.Key_Down then
+            Running := False;
+         elsif Event.Common.Event_Type = SDL.Events.Keyboards.Key_Down then
             case Event.Keyboard.Key_Sym.Key_Code is
-               when Code_W => Put_Line ("W Pressed"); V.X := 1.0;
-               when Code_A => Put_Line ("A Pressed"); V.Y := -1.0;
-               when Code_S => Put_Line ("S Pressed"); V.X := -1.0;
-               when Code_D => Put_Line ("D Pressed"); V.X := 1.0;
-               when others => null; V.X := 0.0; V.Y := 0.0;
+               when SDL.Events.Keyboards.Code_W =>
+                  Put_Line ("W");
+                  V.Y := -2.0;
+               when SDL.Events.Keyboards.Code_S =>
+                  Put_Line ("S");
+                  V.Y := 2.0;
+               when SDL.Events.Keyboards.Code_A =>
+                  Put_Line ("A");
+                  V.X := -2.0;
+               when SDL.Events.Keyboards.Code_D =>
+                  Put_Line ("D");
+                  V.X := 2.0;
+               when others =>
+                  null;
+            end case;
+
+         elsif Event.Common.Event_Type = SDL.Events.Keyboards.Key_Up then
+            case Event.Keyboard.Key_Sym.Key_Code is
+               when SDL.Events.Keyboards.Code_W |
+                    SDL.Events.Keyboards.Code_S =>
+                  V.Y := 0.0;
+
+               when SDL.Events.Keyboards.Code_A |
+                    SDL.Events.Keyboards.Code_D =>
+                  V.X := 0.0;
+
+               when others =>
+                  null;
             end case;
          end if;
 

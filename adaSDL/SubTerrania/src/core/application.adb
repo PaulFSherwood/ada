@@ -8,6 +8,7 @@ with ECS.Components.Velocity;
 with ECS.Entity_System.Entity_Manager;
 with ECS.Entity_System.Entity;
 with Movement;
+with Inputs;
 
 package body Application is
 
@@ -79,10 +80,10 @@ package body Application is
          V : constant EM.Velocity_Map.Reference_Type :=
             EM.Get_Velocity (Mgr, Player);
       begin
+         Inputs.PollEvents (Running, V.Element.all);
          Movement.Move (T.Element.all, V.Element.all, 1.0);
       end;
 
-      Window.Update_Surface;
    end Update;
 
    --------------------------------------------------
@@ -110,6 +111,8 @@ package body Application is
             40,
             40));
       end;
+
+      Window.Update_Surface;
    end Render;
 
    procedure Shutdown is
