@@ -28,8 +28,6 @@ package body Application is
    --------------------------------------------------
 
    procedure Init is
-      T : access Transform.Transform;
-      V : access Velocity.Velocity;
    begin
       if not SDL.Initialise (Flags => SDL.Enable_Screen) then
          Running := False;
@@ -56,27 +54,33 @@ package body Application is
       EM.Add_Transform (Mgr, Player);
       EM.Add_Velocity  (Mgr, Player);
 
-      T := EM.Get_Transform (Mgr, Player);
-      V := EM.Get_Velocity  (Mgr, Player);
+      declare
+         T : constant EM.Transform_Map.Reference_Type :=
+            EM.Get_Transform (Mgr, Player);
+         V : constant EM.Velocity_Map.Reference_Type :=
+            EM.Get_Velocity (Mgr, Player);
+      begin
+         T.Element.all.X := 200.0;
+         T.Element.all.Y := 200.0;
 
-      T.X := 200.0;
-      T.Y := 200.0;
-
-      V.X := 2.0;
-      V.Y := 1.0;
+         V.Element.all.X := 2.0;
+         V.Element.all.Y := 1.0;
+      end;
    end Init;
 
    --------------------------------------------------
    --  UPDATE
    --------------------------------------------------
    procedure Update is
-      T : access Transform.Transform;
-      V : access Velocity.Velocity;
    begin
-      T := EM.Get_Transform (Mgr, Player);
-      V := EM.Get_Velocity  (Mgr, Player);
-
-      Movement.Move (T.Element, V.Element, 1.0);
+      declare
+         T : constant EM.Transform_Map.Reference_Type :=
+            EM.Get_Transform (Mgr, Player);
+         V : constant EM.Velocity_Map.Reference_Type :=
+            EM.Get_Velocity (Mgr, Player);
+      begin
+         Movement.Move (T.Element.all, V.Element.all, 1.0);
+      end;
 
       Window.Update_Surface;
    end Update;
@@ -85,7 +89,6 @@ package body Application is
    --  RENDER
    --------------------------------------------------
    procedure Render is
-      T : access Transform.Transform;
    begin
       Renderer.Fill
         (Rectangle =>
@@ -93,16 +96,20 @@ package body Application is
             0,
             SDL.Natural_Dimension (Screen_Width),
             SDL.Natural_Dimension (Screen_Height)));
-      T := EM.Get_Transform (Mgr, Player);
 
       Renderer.Set_Draw_Colour ((255, 0, 200, 255));
 
-      Renderer.Fill
-      (Rectangle =>
-      (SDL.Natural_Dimension (Integer (T.X)),
-      SDL.Natural_Dimension (Integer (T.Y)),
-      40,
-      40));
+      declare
+         T : constant EM.Transform_Map.Reference_Type :=
+            EM.Get_Transform (Mgr, Player);
+      begin
+         Renderer.Fill
+            (Rectangle =>
+            (SDL.Natural_Dimension (Integer (T.Element.all.X)),
+            SDL.Natural_Dimension  (Integer (T.Element.all.Y)),
+            40,
+            40));
+      end;
    end Render;
 
    procedure Shutdown is

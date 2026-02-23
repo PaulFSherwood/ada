@@ -4,6 +4,8 @@ with ECS.Components.Transform;
 with ECS.Components.Velocity;
 
 use type ECS.Entity_System.Entity.Entity_ID;
+use type ECS.Components.Transform.Transform;
+use type ECS.Components.Velocity.Velocity;
 
 package ECS.Entity_System.Entity_Manager is
 
