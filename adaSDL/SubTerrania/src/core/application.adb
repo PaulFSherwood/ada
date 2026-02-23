@@ -42,8 +42,8 @@ package body Application is
          Position => SDL.Natural_Coordinates'(X => 50, Y => 50),
          Size     =>
            SDL.Positive_Sizes'
-           (SDL.Dimension (GetWidth),
-           SDL.Dimension (GetHeight)),
+           (SDL.Dimension (Screen_Width),
+           SDL.Dimension (Screen_Height)),
          Flags    => 0);
 
       SDL.Video.Renderers.Makers.Create (Renderer, Window.Get_Surface);
@@ -76,7 +76,7 @@ package body Application is
       T := EM.Get_Transform (Mgr, Player);
       V := EM.Get_Velocity  (Mgr, Player);
 
-      Movement.Move (T.all, V.all, 1.0);
+      Movement.Move (T.Element, V.Element, 1.0);
 
       Window.Update_Surface;
    end Update;

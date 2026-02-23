@@ -38,17 +38,18 @@ package body ECS.Entity_System.Entity_Manager is
    function Get_Transform
      (Mgr : in out Entity_Manager_Type;
       E   : Entity.Entity_ID)
-      return access Transform.Transform is
+      return Transform_Map.Reference_Type is
    begin
-      return Mgr.Transforms.Reference (E).Element'Access;
+      return Mgr.Transforms.Reference (E);
    end Get_Transform;
-
+   
+   
    function Get_Velocity
      (Mgr : in out Entity_Manager_Type;
       E   : Entity.Entity_ID)
-      return access Velocity.Velocity is
+      return Velocity_Map.Reference_Type is
    begin
-      return Mgr.Velocities.Reference (E).Element'Access;
+      return Mgr.Velocities.Reference (E);
    end Get_Velocity;
 
 end ECS.Entity_System.Entity_Manager;
