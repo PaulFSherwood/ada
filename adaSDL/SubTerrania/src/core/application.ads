@@ -1,19 +1,16 @@
-with ECS.Entity_System.Entity_Manager;
 with ECS.Entity_System.Entity;
+with ECS.Entity_System.Entity_Manager;
 
 package Application is
 
    procedure Init;
-   procedure Render;
+   procedure Draw;
    procedure Update;
    procedure Shutdown;
 
    function Is_Running return Boolean;
 
 private
-
-   --  package EM renames ECS.Entity_System.Entity_Manager;
-   --  package Entity renames ECS.Entity_System.Entity;
 
    Mgr    : ECS.Entity_System.Entity_Manager.Entity_Manager_Type;
    Player : ECS.Entity_System.Entity.Entity_ID;

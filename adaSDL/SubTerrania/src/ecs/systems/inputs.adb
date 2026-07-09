@@ -1,59 +1,147 @@
-with SDL;
 with SDL.Events;
 with SDL.Events.Events;
 with SDL.Events.Keyboards;
 
-with Ada.Text_IO; use Ada.Text_IO;
---  with ECS.Components.Velocity;
-
-use type SDL.Events.Event_Types;
-
 package body Inputs is
+
+   use type SDL.Events.Event_Types;
+   use type Level.Game_Mode;
+   use type Level.Brush_Mode;
 
    Event : SDL.Events.Events.Events;
 
-   procedure PollEvents
-      (Running : in out Boolean;
-      V        : in out ECS.Components.Velocity.Velocity) is
+   W_Down : Boolean := False;
+   A_Down : Boolean := False;
+   S_Down : Boolean := False;
+   D_Down : Boolean := False;
+
+   procedure Handle_Key_Down
+     (State : in out Input_State;
+      Mode  : Level.Game_Mode;
+      Brush : Level.Brush_Mode) is
    begin
+      case Event.Keyboard.Key_Sym.Key_Code is
+         when SDL.Events.Keyboards.Code_E =>
+            State.Toggle_Mode := True;
+
+         when SDL.Events.Keyboards.Code_T =>
+            if Mode = Level.Editor_Mode then
+               State.Toggle_Brush := True;
+            end if;
+
+         when SDL.Events.Keyboards.Code_B =>
+            if Mode = Level.Editor_Mode then
+               State.Next_Tile := True;
+            end if;
+
+         when SDL.Events.Keyboards.Code_N =>
+            if Mode = Level.Editor_Mode then
+               if Brush = Level.Tile_Brush then
+                  State.Next_Tile := True;
+               else
+                  State.Next_Kind := True;
+               end if;
+            end if;
+
+         when SDL.Events.Keyboards.Code_M =>
+            if Mode = Level.Editor_Mode then
+               State.Next_Motion := True;
+            end if;
+
+         when SDL.Events.Keyboards.Code_P =>
+            if Mode = Level.Editor_Mode then
+               State.Place := True;
+            end if;
+
+         when SDL.Events.Keyboards.Code_O =>
+            if Mode = Level.Editor_Mode then
+               State.Delete := True;
+            end if;
+
+         when SDL.Events.Keyboards.Code_F =>
+            if Mode = Level.Editor_Mode then
+               State.Save_Level := True;
+            end if;
+
+         when SDL.Events.Keyboards.Code_L =>
+            if Mode = Level.Editor_Mode then
+               State.Load_Level := True;
+            end if;
+
+         when SDL.Events.Keyboards.Code_W =>
+            if Mode = Level.Editor_Mode then
+               State.Cursor_DY := -1.0;
+            end if;
+            W_Down := True;
+
+         when SDL.Events.Keyboards.Code_S =>
+            if Mode = Level.Editor_Mode then
+               State.Cursor_DY := 1.0;
+            end if;
+            S_Down := True;
+
+         when SDL.Events.Keyboards.Code_A =>
+            if Mode = Level.Editor_Mode then
+               State.Cursor_DX := -1.0;
+            end if;
+            A_Down := True;
+
+         when SDL.Events.Keyboards.Code_D =>
+            if Mode = Level.Editor_Mode then
+               State.Cursor_DX := 1.0;
+            end if;
+            D_Down := True;
+
+         when others =>
+            null;
+      end case;
+   end Handle_Key_Down;
+
+   procedure Handle_Key_Up is
+   begin
+      case Event.Keyboard.Key_Sym.Key_Code is
+         when SDL.Events.Keyboards.Code_W =>
+            W_Down := False;
+
+         when SDL.Events.Keyboards.Code_S =>
+            S_Down := False;
+
+         when SDL.Events.Keyboards.Code_A =>
+            A_Down := False;
+
+         when SDL.Events.Keyboards.Code_D =>
+            D_Down := False;
+
+         when others =>
+            null;
+      end case;
+   end Handle_Key_Up;
+
+   procedure Poll_Events
+     (State : out Input_State;
+      Mode  : Level.Game_Mode;
+      Brush : Level.Brush_Mode) is
+   begin
+      State := (others => <>);
+
       while SDL.Events.Events.Poll (Event) loop
-         --  Quit event
          if Event.Common.Event_Type = SDL.Events.Quit then
-            Running := False;
+            State.Quit_Requested := True;
+
          elsif Event.Common.Event_Type = SDL.Events.Keyboards.Key_Down then
-            case Event.Keyboard.Key_Sym.Key_Code is
-               when SDL.Events.Keyboards.Code_W =>
-                  Put_Line ("W");
-                  V.Y := -2.0;
-               when SDL.Events.Keyboards.Code_S =>
-                  Put_Line ("S");
-                  V.Y := 2.0;
-               when SDL.Events.Keyboards.Code_A =>
-                  Put_Line ("A");
-                  V.X := -2.0;
-               when SDL.Events.Keyboards.Code_D =>
-                  Put_Line ("D");
-                  V.X := 2.0;
-               when others =>
-                  null;
-            end case;
+            Handle_Key_Down (State, Mode, Brush);
 
          elsif Event.Common.Event_Type = SDL.Events.Keyboards.Key_Up then
-            case Event.Keyboard.Key_Sym.Key_Code is
-               when SDL.Events.Keyboards.Code_W |
-                    SDL.Events.Keyboards.Code_S =>
-                  V.Y := 0.0;
-
-               when SDL.Events.Keyboards.Code_A |
-                    SDL.Events.Keyboards.Code_D =>
-                  V.X := 0.0;
-
-               when others =>
-                  null;
-            end case;
+            Handle_Key_Up;
          end if;
-
       end loop;
-   end PollEvents;
+
+      if Mode = Level.Play_Mode then
+         State.Thrust := W_Down;
+         State.Brake := S_Down;
+         State.Turn_Left := A_Down;
+         State.Turn_Right := D_Down;
+      end if;
+   end Poll_Events;
 
 end Inputs;

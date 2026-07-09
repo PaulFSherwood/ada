@@ -1,8 +1,8 @@
 package ECS.Components.Collider is
 
    type Collider is record
-      Width  : Float := 10.0;
-      Height : Float := 10.0;
-   end Collider;
+      Width  : Float := 28.0;
+      Height : Float := 16.0;
+   end record;
 
 end ECS.Components.Collider;
