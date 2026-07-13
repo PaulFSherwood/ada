@@ -157,6 +157,8 @@ package body Application is
 
    procedure Configure_Player_From_Map;
    procedure Update_Camera;
+   procedure Start_Editor_Playtest;
+   procedure Toggle_Brush;
 
    procedure Place_Editor_Selection is
    begin
@@ -270,6 +272,180 @@ package body Application is
          Audio.Play_Sound (Audio.Menu_Select);
       end if;
    end Select_Palette_Item;
+
+   function Workspace_Tab_Selected
+     (State : Inputs.Input_State;
+      View  : out Gameplay.Editor_View)
+      return Boolean is
+      X       : constant Float := State.Mouse_X;
+      Y       : constant Float := State.Mouse_Y;
+      Tab_X   : Float := Editor_Layout.Workspace_Tab_X;
+      Tab_W   : constant Float := Editor_Layout.Workspace_Tab_W;
+      Tab_H   : constant Float := Editor_Layout.Workspace_Tab_H;
+      Tab_Gap : constant Float := Editor_Layout.Workspace_Tab_Gap;
+   begin
+      if Y < Editor_Layout.Workspace_Tab_Y
+        or else Y > Editor_Layout.Workspace_Tab_Y + Tab_H
+      then
+         return False;
+      end if;
+
+      if X >= Tab_X and then X <= Tab_X + Tab_W then
+         View := Gameplay.Terrain_View;
+         return True;
+      end if;
+      Tab_X := Tab_X + Tab_W + Tab_Gap;
+
+      if X >= Tab_X and then X <= Tab_X + Tab_W then
+         View := Gameplay.Objects_View;
+         return True;
+      end if;
+      Tab_X := Tab_X + Tab_W + Tab_Gap;
+
+      if X >= Tab_X and then X <= Tab_X + Tab_W then
+         View := Gameplay.Triggers_View;
+         return True;
+      end if;
+      Tab_X := Tab_X + Tab_W + Tab_Gap;
+
+      if X >= Tab_X and then X <= Tab_X + Tab_W then
+         View := Gameplay.Objectives_View;
+         return True;
+      end if;
+      Tab_X := Tab_X + Tab_W + Tab_Gap;
+
+      if X >= Tab_X and then X <= Tab_X + Tab_W then
+         View := Gameplay.Boss_View;
+         return True;
+      end if;
+      Tab_X := Tab_X + Tab_W + Tab_Gap;
+
+      if X >= Tab_X and then X <= Tab_X + Tab_W then
+         View := Gameplay.Player_View;
+         return True;
+      end if;
+      Tab_X := Tab_X + Tab_W + Tab_Gap;
+
+      if X >= Tab_X and then X <= Tab_X + Tab_W then
+         View := Gameplay.Enemies_View;
+         return True;
+      end if;
+      Tab_X := Tab_X + Tab_W + Tab_Gap;
+
+      if X >= Tab_X and then X <= Tab_X + Tab_W then
+         View := Gameplay.Weapons_View;
+         return True;
+      end if;
+      Tab_X := Tab_X + Tab_W + Tab_Gap;
+
+      if X >= Tab_X and then X <= Tab_X + Tab_W then
+         View := Gameplay.Audio_View;
+         return True;
+      end if;
+
+      return False;
+   end Workspace_Tab_Selected;
+
+   function Handle_Editor_Chrome_Click
+     (State : Inputs.Input_State)
+      return Boolean is
+      New_View : Gameplay.Editor_View := Current_View;
+      Loaded   : Boolean := False;
+   begin
+      if State.Mouse_Y <= Editor_Layout.Menu_Bar_Height then
+         if In_Box
+           (State.Mouse_X, State.Mouse_Y, Editor_Layout.Menu_File_X,
+            0.0, Editor_Layout.Menu_Item_W, Editor_Layout.Menu_Bar_Height)
+         then
+            Level.Save_Level (Tiles, Objects, Current_Level, Map_Path);
+            Audio.Play_Sound (Audio.Level_Saved);
+            return True;
+         elsif In_Box
+           (State.Mouse_X, State.Mouse_Y, Editor_Layout.Menu_Edit_X,
+            0.0, Editor_Layout.Menu_Item_W, Editor_Layout.Menu_Bar_Height)
+         then
+            Toggle_Brush;
+            Editor_Brush_Active := True;
+            return True;
+         elsif In_Box
+           (State.Mouse_X, State.Mouse_Y, Editor_Layout.Menu_View_X,
+            0.0, Editor_Layout.Menu_Item_W, Editor_Layout.Menu_Bar_Height)
+         then
+            Current_View := Gameplay.Next_View (Current_View);
+            Put_Line ("View " & Gameplay.View_Name (Current_View));
+            return True;
+         elsif In_Box
+           (State.Mouse_X, State.Mouse_Y, Editor_Layout.Menu_Level_X,
+            0.0, Editor_Layout.Menu_Item_W, Editor_Layout.Menu_Bar_Height)
+         then
+            Level.Load_Level
+              (Tiles, Objects, Current_Level, Map_Path, Loaded);
+            if Loaded then
+               Configure_Player_From_Map;
+               Audio.Play_Sound (Audio.Level_Loaded);
+            end if;
+            return True;
+         elsif In_Box
+           (State.Mouse_X, State.Mouse_Y, Editor_Layout.Menu_Test_X,
+            0.0, Editor_Layout.Menu_Item_W, Editor_Layout.Menu_Bar_Height)
+         then
+            Start_Editor_Playtest;
+            return True;
+         elsif In_Box
+           (State.Mouse_X, State.Mouse_Y, Editor_Layout.Menu_Help_X,
+            0.0, Editor_Layout.Menu_Item_W, Editor_Layout.Menu_Bar_Height)
+         then
+            Put_Line
+              ("Editor: click tabs, pan map, zoom wheel");
+            return True;
+         end if;
+      end if;
+
+      if In_Box
+        (State.Mouse_X, State.Mouse_Y, Editor_Layout.Save_Button_X,
+         Editor_Layout.Toolbar_Button_Y, Editor_Layout.Toolbar_Button_W,
+         Editor_Layout.Toolbar_Button_H)
+      then
+         Level.Save_Level (Tiles, Objects, Current_Level, Map_Path);
+         Audio.Play_Sound (Audio.Level_Saved);
+         return True;
+      elsif In_Box
+        (State.Mouse_X, State.Mouse_Y, Editor_Layout.Load_Button_X,
+         Editor_Layout.Toolbar_Button_Y, Editor_Layout.Toolbar_Button_W,
+         Editor_Layout.Toolbar_Button_H)
+      then
+         Level.Load_Level (Tiles, Objects, Current_Level, Map_Path, Loaded);
+         if Loaded then
+            Configure_Player_From_Map;
+            Audio.Play_Sound (Audio.Level_Loaded);
+         end if;
+         return True;
+      elsif In_Box
+        (State.Mouse_X, State.Mouse_Y, Editor_Layout.Test_Button_X,
+         Editor_Layout.Toolbar_Button_Y, Editor_Layout.Toolbar_Button_W,
+         Editor_Layout.Toolbar_Button_H)
+      then
+         Start_Editor_Playtest;
+         return True;
+      elsif In_Box
+        (State.Mouse_X, State.Mouse_Y, Editor_Layout.Grid_Button_X,
+         Editor_Layout.Toolbar_Button_Y, Editor_Layout.Toolbar_Button_W,
+         Editor_Layout.Toolbar_Button_H)
+      then
+         Put_Line ("Grid toggle will be wired next");
+         return True;
+      end if;
+
+      if Workspace_Tab_Selected (State, New_View) then
+         Current_View := New_View;
+         Editor_Brush_Active := False;
+         Audio.Play_Sound (Audio.Menu_Select);
+         Put_Line ("Workspace " & Gameplay.View_Name (Current_View));
+         return True;
+      end if;
+
+      return False;
+   end Handle_Editor_Chrome_Click;
 
    function Current_Input_Context return Inputs.Input_Context is
    begin
@@ -561,6 +737,10 @@ package body Application is
       end if;
 
       if State.Left_Click then
+         if Handle_Editor_Chrome_Click (State) then
+            return;
+         end if;
+
          Select_Palette_Item (State, Palette_Selected);
 
          if not Palette_Selected and then Mouse_In_Map_View (State) then

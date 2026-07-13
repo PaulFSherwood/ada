@@ -9,8 +9,13 @@ package Gameplay is
       Triggers_View,
       Objectives_View,
       Boss_View,
+      Player_View,
+      Enemies_View,
+      Weapons_View,
+      Powerups_View,
       Audio_View,
       Settings_View,
+      Build_Test_View,
       Beat_Em_Up_View);
 
    type Game_Template is

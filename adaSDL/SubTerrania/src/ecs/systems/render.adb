@@ -1132,6 +1132,38 @@ package body Render is
                Y + 54.0,
                2.0);
 
+         when Gameplay.Player_View =>
+            Draw_Text
+              (Renderer,
+               "SHIP SPRITE SHIELDS THRUST WEAPON SLOTS",
+               X + 10.0,
+               Y + 32.0,
+               2.0);
+
+         when Gameplay.Enemies_View =>
+            Draw_Text
+              (Renderer,
+               "ENEMY TEMPLATES AI HEALTH DROPS",
+               X + 10.0,
+               Y + 32.0,
+               2.0);
+
+         when Gameplay.Weapons_View =>
+            Draw_Text
+              (Renderer,
+               "WEAPON DAMAGE COOLDOWN CHARGE SOUNDS",
+               X + 10.0,
+               Y + 32.0,
+               2.0);
+
+         when Gameplay.Powerups_View =>
+            Draw_Text
+              (Renderer,
+               "POWERUP EFFECT PICKUP SOUND DURATION",
+               X + 10.0,
+               Y + 32.0,
+               2.0);
+
          when Gameplay.Audio_View =>
             Draw_Text
               (Renderer,
@@ -1144,6 +1176,14 @@ package body Render is
             Draw_Text
               (Renderer,
                "NAME TITLE NEXT LEVEL BRIEFING TEMPLATE",
+               X + 10.0,
+               Y + 32.0,
+               2.0);
+
+         when Gameplay.Build_Test_View =>
+            Draw_Text
+              (Renderer,
+               "BUILD RUN TEST LEVEL TEST BOSS",
                X + 10.0,
                Y + 32.0,
                2.0);
@@ -1184,6 +1224,40 @@ package body Render is
         (Renderer, "SUBTERRANIA EDITOR", W - 210.0, 8.0, 1.5);
    end Draw_Editor_Menu_Bar;
 
+   procedure Draw_Workspace_Tab
+     (Renderer : in out SDL.Video.Renderers.Renderer;
+      Label    : String;
+      Index    : Natural;
+      Selected : Boolean) is
+      X : constant Float :=
+        Editor_Layout.Workspace_Tab_X
+        + Float (Index)
+        * (Editor_Layout.Workspace_Tab_W
+           + Editor_Layout.Workspace_Tab_Gap);
+      Y : constant Float := Editor_Layout.Workspace_Tab_Y;
+   begin
+      if Selected then
+         Renderer.Set_Draw_Colour ((76, 86, 112, 255));
+      else
+         Renderer.Set_Draw_Colour ((42, 44, 52, 255));
+      end if;
+
+      Draw_Screen_Box
+        (Renderer,
+         X,
+         Y,
+         Editor_Layout.Workspace_Tab_W,
+         Editor_Layout.Workspace_Tab_H);
+
+      if Selected then
+         Renderer.Set_Draw_Colour ((255, 255, 255, 255));
+      else
+         Renderer.Set_Draw_Colour ((185, 190, 200, 255));
+      end if;
+
+      Draw_Text (Renderer, Label, X + 6.0, Y + 9.0, 1.05);
+   end Draw_Workspace_Tab;
+
    procedure Draw_Editor_Toolbar
      (Renderer       : in out SDL.Video.Renderers.Renderer;
       Screen_Width   : Natural;
@@ -1193,6 +1267,7 @@ package body Render is
       Current_Motion : Level.Motion_Kind;
       View           : Gameplay.Editor_View) is
       W : constant Float := Float (Screen_Width);
+      Y : constant Float := Editor_Layout.Toolbar_Button_Y;
    begin
       Renderer.Set_Draw_Colour ((35, 35, 42, 255));
       Draw_Screen_Box
@@ -1203,63 +1278,90 @@ package body Render is
          Editor_Layout.Toolbar_Height);
 
       Renderer.Set_Draw_Colour ((52, 52, 60, 255));
-      Draw_Screen_Box (Renderer, 12.0, 34.0, 42.0, 26.0);
-      Draw_Screen_Box (Renderer, 60.0, 34.0, 42.0, 26.0);
-      Draw_Screen_Box (Renderer, 108.0, 34.0, 42.0, 26.0);
-      Draw_Screen_Box (Renderer, 156.0, 34.0, 42.0, 26.0);
+      Draw_Screen_Box
+        (Renderer,
+         Editor_Layout.Save_Button_X,
+         Y,
+         Editor_Layout.Toolbar_Button_W,
+         Editor_Layout.Toolbar_Button_H);
+      Draw_Screen_Box
+        (Renderer,
+         Editor_Layout.Load_Button_X,
+         Y,
+         Editor_Layout.Toolbar_Button_W,
+         Editor_Layout.Toolbar_Button_H);
+      Draw_Screen_Box
+        (Renderer,
+         Editor_Layout.Test_Button_X,
+         Y,
+         Editor_Layout.Toolbar_Button_W,
+         Editor_Layout.Toolbar_Button_H);
+      Draw_Screen_Box
+        (Renderer,
+         Editor_Layout.Grid_Button_X,
+         Y,
+         Editor_Layout.Toolbar_Button_W,
+         Editor_Layout.Toolbar_Button_H);
 
       Renderer.Set_Draw_Colour ((230, 230, 230, 255));
-      Draw_Text (Renderer, "SAVE", 18.0, 42.0, 1.25);
-      Draw_Text (Renderer, "LOAD", 66.0, 42.0, 1.25);
-      Draw_Text (Renderer, "TEST", 114.0, 42.0, 1.25);
-      Draw_Text (Renderer, "GRID", 162.0, 42.0, 1.25);
+      Draw_Text (Renderer, "SAVE", Editor_Layout.Save_Button_X + 6.0,
+                 Y + 10.0, 1.05);
+      Draw_Text (Renderer, "LOAD", Editor_Layout.Load_Button_X + 6.0,
+                 Y + 10.0, 1.05);
+      Draw_Text (Renderer, "TEST", Editor_Layout.Test_Button_X + 6.0,
+                 Y + 10.0, 1.05);
+      Draw_Text (Renderer, "GRID", Editor_Layout.Grid_Button_X + 6.0,
+                 Y + 10.0, 1.05);
 
-      Renderer.Set_Draw_Colour ((18, 18, 22, 255));
-      Draw_Screen_Box (Renderer, 220.0, 34.0, 210.0, 26.0);
-      Renderer.Set_Draw_Colour ((230, 230, 230, 255));
+      Draw_Workspace_Tab
+        (Renderer, "LEVEL", 0, View = Gameplay.Terrain_View);
+      Draw_Workspace_Tab
+        (Renderer, "OBJ", 1, View = Gameplay.Objects_View);
+      Draw_Workspace_Tab
+        (Renderer, "TRIG", 2, View = Gameplay.Triggers_View);
+      Draw_Workspace_Tab
+        (Renderer, "GOALS", 3, View = Gameplay.Objectives_View);
+      Draw_Workspace_Tab
+        (Renderer, "BOSS", 4, View = Gameplay.Boss_View);
+      Draw_Workspace_Tab
+        (Renderer, "SHIP", 5, View = Gameplay.Player_View);
+      Draw_Workspace_Tab
+        (Renderer, "ENEMY", 6, View = Gameplay.Enemies_View);
+      Draw_Workspace_Tab
+        (Renderer, "WPN", 7, View = Gameplay.Weapons_View);
+      Draw_Workspace_Tab
+        (Renderer, "AUDIO", 8, View = Gameplay.Audio_View);
+
+      Renderer.Set_Draw_Colour ((220, 225, 235, 255));
       Draw_Text
         (Renderer,
-         "VIEW " & Gameplay.View_Name (View),
-         228.0,
-         42.0,
+         "MODE " & Gameplay.View_Name (View),
+         W - 230.0,
+         Y + 4.0,
          1.25);
 
-      Renderer.Set_Draw_Colour ((18, 18, 22, 255));
-      Draw_Screen_Box (Renderer, 445.0, 34.0, 180.0, 26.0);
-      Renderer.Set_Draw_Colour ((230, 230, 230, 255));
-      Draw_Text
-        (Renderer,
-         "BRUSH " & Brush_Name (Brush),
-         453.0,
-         42.0,
-         1.25);
-
-      Renderer.Set_Draw_Colour ((18, 18, 22, 255));
-      Draw_Screen_Box (Renderer, 640.0, 34.0, 280.0, 26.0);
-      Renderer.Set_Draw_Colour ((230, 230, 230, 255));
       if Brush = Level.Tile_Brush then
          Draw_Text
            (Renderer,
-            "SELECTED TILE " & Tile_Name (Current_Tile),
-            648.0,
-            42.0,
-            1.25);
+            "TILE " & Tile_Name (Current_Tile),
+            W - 230.0,
+            Y + 21.0,
+            1.05);
       else
          Draw_Text
            (Renderer,
-            "SELECTED OBJ " & Object_Name (Current_Kind),
-            648.0,
-            42.0,
-            1.25);
+            "OBJ " & Object_Name (Current_Kind),
+            W - 230.0,
+            Y + 21.0,
+            1.05);
       end if;
 
-      Renderer.Set_Draw_Colour ((230, 230, 230, 255));
       Draw_Text
         (Renderer,
          "MOTION " & Motion_Name (Current_Motion),
-         W - 175.0,
-         42.0,
-         1.25);
+         W - 120.0,
+         Y + 21.0,
+         1.05);
    end Draw_Editor_Toolbar;
 
    procedure Draw_Editor_Layers_Panel
@@ -1402,7 +1504,7 @@ package body Render is
       Renderer.Set_Draw_Colour ((180, 220, 255, 255));
       Draw_Text
         (Renderer,
-         "MOUSE TODO  KEYBOARD ACTIVE",
+         "MOUSE PAN ZOOM CLICK  KEYBOARD ALSO WORKS",
          12.0,
          Y + 8.0,
          1.25);
@@ -1423,14 +1525,68 @@ package body Render is
       Draw_Text (Renderer, "SAVED MANUALLY WITH F", 620.0, Y + 8.0, 1.25);
    end Draw_Editor_Status_Bar;
 
+   procedure Draw_Mini_Map
+     (Renderer : in out SDL.Video.Renderers.Renderer;
+      Camera_X : Float;
+      Camera_Y : Float) is
+      X       : constant Float := Editor_Layout.Mini_Map_Left;
+      Y       : constant Float := Editor_Layout.Mini_Map_Top;
+      W       : constant Float := Editor_Layout.Mini_Map_Width;
+      H       : constant Float := Editor_Layout.Mini_Map_Height;
+      Scale_X : constant Float := W / Level.World_Width;
+      Scale_Y : constant Float := H / Level.World_Height;
+      View_W  : constant Float := Editor_Layout.Map_Width / Active_Zoom;
+      View_H  : constant Float := Editor_Layout.Map_Height / Active_Zoom;
+   begin
+      Renderer.Set_Draw_Colour ((8, 10, 14, 255));
+      Draw_Screen_Box (Renderer, X, Y, W, H);
+
+      Renderer.Set_Draw_Colour ((40, 52, 70, 255));
+      Draw_Screen_Box (Renderer, X + 3.0, Y + 3.0, W - 6.0, H - 6.0);
+
+      Renderer.Set_Draw_Colour ((210, 230, 255, 255));
+      Draw_Text (Renderer, "MINI MAP", X + 8.0, Y + 8.0, 1.1);
+
+      Renderer.Set_Draw_Colour ((235, 235, 235, 255));
+      Draw_Screen_Box
+        (Renderer,
+         X + Camera_X * Scale_X,
+         Y + Camera_Y * Scale_Y,
+         Float'Max (8.0, View_W * Scale_X),
+         2.0);
+      Draw_Screen_Box
+        (Renderer,
+         X + Camera_X * Scale_X,
+         Y + (Camera_Y + View_H) * Scale_Y,
+         Float'Max (8.0, View_W * Scale_X),
+         2.0);
+      Draw_Screen_Box
+        (Renderer,
+         X + Camera_X * Scale_X,
+         Y + Camera_Y * Scale_Y,
+         2.0,
+         Float'Max (8.0, View_H * Scale_Y));
+      Draw_Screen_Box
+        (Renderer,
+         X + (Camera_X + View_W) * Scale_X,
+         Y + Camera_Y * Scale_Y,
+         2.0,
+         Float'Max (8.0, View_H * Scale_Y));
+   end Draw_Mini_Map;
+
    procedure Draw_Editor_Bottom_Workspace
      (Renderer      : in out SDL.Video.Renderers.Renderer;
       Screen_Width  : Natural;
       Screen_Height : Natural;
       View          : Gameplay.Editor_View;
-      Status        : Gameplay.Player_Status) is
-      Y : constant Float := Editor_Layout.Bottom_Panel_Top;
-      W : constant Float := Editor_Layout.Bottom_Panel_Width;
+      Status        : Gameplay.Player_Status;
+      Camera_X      : Float;
+      Camera_Y      : Float) is
+      pragma Unreferenced (Screen_Height);
+      Y      : constant Float := Editor_Layout.Bottom_Panel_Top;
+      W      : constant Float :=
+        Float (Screen_Width) - Editor_Layout.Bottom_Panel_Left;
+      Text_X : constant Float := Editor_Layout.Bottom_Panel_Left + 12.0;
    begin
       Renderer.Set_Draw_Colour ((18, 18, 24, 255));
       Draw_Screen_Box
@@ -1439,66 +1595,165 @@ package body Render is
          Y,
          W,
          Editor_Layout.Bottom_Panel_Height);
+
       Renderer.Set_Draw_Colour ((255, 255, 255, 255));
       Draw_Text
         (Renderer,
-         "WORKSPACE",
-         Editor_Layout.Bottom_Panel_Left + 12.0,
+         Gameplay.View_Name (View) & " WORKSPACE",
+         Text_X,
          Y + 12.0,
          1.5);
 
       case View is
+         when Gameplay.Terrain_View =>
+            Draw_Text
+              (Renderer,
+               "PAINT WALLS WATER LANDING START AND BASE TILES",
+               Text_X,
+               Y + 40.0,
+               1.25);
+            Draw_Text
+              (Renderer,
+               "LEFT CLICK MAP PLACES TILE  RIGHT CLICK SELECT MODE",
+               Text_X,
+               Y + 64.0,
+               1.25);
+
+         when Gameplay.Objects_View =>
+            Draw_Text
+              (Renderer,
+               "PLACE MINERS FUEL SHIELDS WEIGHTS GATES PLATFORMS",
+               Text_X,
+               Y + 40.0,
+               1.25);
+            Draw_Text
+              (Renderer,
+               "OBJECT PROPERTIES WILL EDIT NAME SPRITE AND LINKS",
+               Text_X,
+               Y + 64.0,
+               1.25);
+
+         when Gameplay.Triggers_View =>
+            Draw_Text
+              (Renderer,
+               "TRIGGER ZONES CONNECT CONDITIONS TO ACTIONS",
+               Text_X,
+               Y + 40.0,
+               1.25);
+            Draw_Text
+              (Renderer,
+               "EX ENTER BOSS ZONE CLOSE GATE SPAWN BOSS MUSIC",
+               Text_X,
+               Y + 64.0,
+               1.25);
+
+         when Gameplay.Objectives_View =>
+            Draw_Text
+              (Renderer,
+               "MISSION GOALS RESCUE DESTROY COLLECT RETURN BASE",
+               Text_X,
+               Y + 40.0,
+               1.25);
+
          when Gameplay.Boss_View =>
             Draw_Text
               (Renderer,
-               "BOSS PHASES  PATHS  ATTACK TIMELINE",
-               242.0,
+               "BOSS PHASES PATHS DAMAGE STATES ATTACK TIMELINE",
+               Text_X,
                Y + 40.0,
-               1.35);
+               1.25);
             Draw_Text
               (Renderer,
                "PHASE " & Integer'Image (Status.Boss_Phase)
                & "  HP " & Integer'Image (Status.Boss_HP),
-               242.0,
-               Y + 66.0,
-               1.35);
+               Text_X,
+               Y + 64.0,
+               1.25);
+
+         when Gameplay.Player_View =>
+            Draw_Text
+              (Renderer,
+               "PLAYER SHIP SPRITE THRUST SHIELDS FUEL SFX",
+               Text_X,
+               Y + 40.0,
+               1.25);
+            Draw_Text
+              (Renderer,
+               "DEFINE ENGINE THRUST AND SHIELD ANIMATIONS HERE",
+               Text_X,
+               Y + 64.0,
+               1.25);
+
+         when Gameplay.Enemies_View =>
+            Draw_Text
+              (Renderer,
+               "ENEMY TEMPLATES AI PATHS WEAPONS DROPS SOUNDS",
+               Text_X,
+               Y + 40.0,
+               1.25);
+
+         when Gameplay.Weapons_View =>
+            Draw_Text
+              (Renderer,
+               "WEAPON DAMAGE COOLDOWN PROJECTILE CHARGE AUDIO",
+               Text_X,
+               Y + 40.0,
+               1.25);
+            Draw_Text
+              (Renderer,
+               "FIRE GROUPS CAN SWAP WEAPONS AND SOUNDS",
+               Text_X,
+               Y + 64.0,
+               1.25);
+
+         when Gameplay.Powerups_View =>
+            Draw_Text
+              (Renderer,
+               "POWERUP EFFECTS PICKUP AUDIO DURATION STACKING",
+               Text_X,
+               Y + 40.0,
+               1.25);
 
          when Gameplay.Audio_View =>
             Draw_Text
               (Renderer,
-               "AUDIO BINS  MUSIC  SHIELDS  WEAPONS  UI",
-               242.0,
+               "MENU MUSIC LEVEL MUSIC BOSS MUSIC SFX BINS",
+               Text_X,
                Y + 40.0,
-               1.35);
+               1.25);
             Draw_Text
               (Renderer,
-               "REAL AUDIO FILES ARE LOCAL AND GITIGNORED",
-               242.0,
-               Y + 66.0,
-               1.35);
+               "AUDIO FILES STAY LOCAL AND ARE GITIGNORED",
+               Text_X,
+               Y + 64.0,
+               1.25);
+
+         when Gameplay.Settings_View =>
+            Draw_Text
+              (Renderer,
+               "LEVEL NAME TITLE NEXT LEVEL BACKGROUND BRIEFING",
+               Text_X,
+               Y + 40.0,
+               1.25);
+
+         when Gameplay.Build_Test_View =>
+            Draw_Text
+              (Renderer,
+               "TEST LEVEL TEST BOSS TEST FROM CURSOR BUILD GAME",
+               Text_X,
+               Y + 40.0,
+               1.25);
 
          when Gameplay.Beat_Em_Up_View =>
             Draw_Text
               (Renderer,
-               "BEAT EM UP LANES  WAVES  ARENAS  CAMERA LOCKS",
-               242.0,
+               "FUTURE LANES WAVES ARENAS CAMERA LOCKS COMBOS",
+               Text_X,
                Y + 40.0,
-               1.35);
-
-         when others =>
-            Draw_Text
-              (Renderer,
-               "TERRAIN  OBJECTS  TRIGGERS  OBJECTIVES",
-               242.0,
-               Y + 40.0,
-               1.35);
-            Draw_Text
-              (Renderer,
-               "V CHANGES VIEW  E PLAYTEST  Q MENU",
-               242.0,
-               Y + 66.0,
-               1.35);
+               1.25);
       end case;
+
+      Draw_Mini_Map (Renderer, Camera_X, Camera_Y);
    end Draw_Editor_Bottom_Workspace;
 
    procedure Draw_Frame
@@ -1652,7 +1907,9 @@ package body Render is
             Screen_Width,
             Screen_Height,
             View,
-            Status);
+            Status,
+            Camera_X,
+            Camera_Y);
          Draw_Editor_Status_Bar
            (Renderer,
             Screen_Width,

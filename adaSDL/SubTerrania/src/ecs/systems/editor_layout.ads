@@ -67,4 +67,34 @@ package Editor_Layout is
    Miner_Row_Y   : constant Float := Palette_Top + 228.0;
    Enemy_Row_Y   : constant Float := Palette_Top + 254.0;
    Powerup_Row_Y : constant Float := Palette_Top + 280.0;
+
+   --  Phase 10C clickable editor chrome.
+   Menu_File_X  : constant Float := 6.0;
+   Menu_Edit_X  : constant Float := 58.0;
+   Menu_View_X  : constant Float := 110.0;
+   Menu_Level_X : constant Float := 162.0;
+   Menu_Test_X  : constant Float := 228.0;
+   Menu_Help_X  : constant Float := 280.0;
+   Menu_Item_W  : constant Float := 50.0;
+
+   Toolbar_Button_Y : constant Float := Toolbar_Top + 6.0;
+   Toolbar_Button_W : constant Float := 44.0;
+   Toolbar_Button_H : constant Float := 28.0;
+
+   Save_Button_X : constant Float := 12.0;
+   Load_Button_X : constant Float := 62.0;
+   Test_Button_X : constant Float := 112.0;
+   Grid_Button_X : constant Float := 162.0;
+
+   Workspace_Tab_X      : constant Float := 230.0;
+   Workspace_Tab_Y      : constant Float := Toolbar_Top + 6.0;
+   Workspace_Tab_W      : constant Float := 66.0;
+   Workspace_Tab_H      : constant Float := 28.0;
+   Workspace_Tab_Gap    : constant Float := 5.0;
+
+   Mini_Map_Width  : constant Float := 220.0;
+   Mini_Map_Height : constant Float := 96.0;
+   Mini_Map_Left   : constant Float :=
+     Float (Window_Width) - Mini_Map_Width - 12.0;
+   Mini_Map_Top    : constant Float := Bottom_Panel_Top + 12.0;
 end Editor_Layout;

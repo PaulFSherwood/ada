@@ -26,9 +26,14 @@ package body Gameplay is
          when Objects_View    => return Triggers_View;
          when Triggers_View   => return Objectives_View;
          when Objectives_View => return Boss_View;
-         when Boss_View       => return Audio_View;
+         when Boss_View       => return Player_View;
+         when Player_View     => return Enemies_View;
+         when Enemies_View    => return Weapons_View;
+         when Weapons_View    => return Powerups_View;
+         when Powerups_View   => return Audio_View;
          when Audio_View      => return Settings_View;
-         when Settings_View   => return Beat_Em_Up_View;
+         when Settings_View   => return Build_Test_View;
+         when Build_Test_View => return Beat_Em_Up_View;
          when Beat_Em_Up_View => return Terrain_View;
       end case;
    end Next_View;
@@ -38,13 +43,18 @@ package body Gameplay is
       return String is
    begin
       case View is
-         when Terrain_View    => return "TERRAIN";
+         when Terrain_View    => return "LEVEL";
          when Objects_View    => return "OBJECTS";
          when Triggers_View   => return "TRIGGERS";
-         when Objectives_View => return "OBJECTIVES";
+         when Objectives_View => return "GOALS";
          when Boss_View       => return "BOSS";
+         when Player_View     => return "PLAYER";
+         when Enemies_View    => return "ENEMIES";
+         when Weapons_View    => return "WEAPONS";
+         when Powerups_View   => return "POWERUPS";
          when Audio_View      => return "AUDIO";
          when Settings_View   => return "SETTINGS";
+         when Build_Test_View => return "BUILD TEST";
          when Beat_Em_Up_View => return "BEAT EM UP";
       end case;
    end View_Name;
