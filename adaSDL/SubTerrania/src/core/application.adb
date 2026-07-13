@@ -30,8 +30,8 @@ package body Application is
       Map_Editor_Screen,
       Editor_Playtest_Screen);
 
-   Screen_Width  : constant Natural := 800;
-   Screen_Height : constant Natural := 600;
+   Screen_Width  : constant Natural := 1280;
+   Screen_Height : constant Natural := 720;
 
    DT             : constant Float := 1.0 / 60.0;
    Max_Fall_Speed : constant Float := 240.0;
@@ -67,6 +67,183 @@ package body Application is
 
    Camera_X : Float := 0.0;
    Camera_Y : Float := 0.0;
+
+   Editor_Zoom         : Float := 1.0;
+   Editor_Brush_Active : Boolean := False;
+
+   Editor_Map_Left   : constant Float := 210.0;
+   Editor_Map_Top    : constant Float := 98.0;
+   Editor_Map_Right  : constant Float := 1010.0;
+   Editor_Map_Bottom : constant Float := 610.0;
+
+   function In_Box
+     (X : Float;
+      Y : Float;
+      L : Float;
+      T : Float;
+      W : Float;
+      H : Float)
+      return Boolean is
+   begin
+      return X >= L
+        and then X <= L + W
+        and then Y >= T
+        and then Y <= T + H;
+   end In_Box;
+
+   function Mouse_In_Map_View
+     (State : Inputs.Input_State)
+      return Boolean is
+   begin
+      return State.Mouse_X >= Editor_Map_Left
+        and then State.Mouse_X <= Editor_Map_Right
+        and then State.Mouse_Y >= Editor_Map_Top
+        and then State.Mouse_Y <= Editor_Map_Bottom;
+   end Mouse_In_Map_View;
+
+   procedure Mouse_To_World
+     (State : Inputs.Input_State;
+      X     : out Float;
+      Y     : out Float) is
+   begin
+      X := (State.Mouse_X - Editor_Map_Left) / Editor_Zoom + Camera_X;
+      Y := (State.Mouse_Y - Editor_Map_Top) / Editor_Zoom + Camera_Y;
+      Level.Clamp_Point (X, Y, Level.World_Width, Level.World_Height);
+   end Mouse_To_World;
+
+   procedure Clamp_Editor_Camera is
+      Max_X : constant Float :=
+        Level.World_Width
+        - (Editor_Map_Right - Editor_Map_Left) / Editor_Zoom;
+      Max_Y : constant Float :=
+        Level.World_Height
+        - (Editor_Map_Bottom - Editor_Map_Top) / Editor_Zoom;
+   begin
+      if Camera_X < 0.0 then
+         Camera_X := 0.0;
+      elsif Camera_X > Max_X then
+         Camera_X := Max_X;
+      end if;
+
+      if Camera_Y < 0.0 then
+         Camera_Y := 0.0;
+      elsif Camera_Y > Max_Y then
+         Camera_Y := Max_Y;
+      end if;
+   end Clamp_Editor_Camera;
+
+   procedure Zoom_Editor_View
+     (Wheel : Float) is
+      Old_Zoom : constant Float := Editor_Zoom;
+   begin
+      if Wheel > 0.0 then
+         Editor_Zoom := Editor_Zoom * 1.15;
+      elsif Wheel < 0.0 then
+         Editor_Zoom := Editor_Zoom / 1.15;
+      end if;
+
+      if Editor_Zoom < 0.5 then
+         Editor_Zoom := 0.5;
+      elsif Editor_Zoom > 4.0 then
+         Editor_Zoom := 4.0;
+      end if;
+
+      if Editor_Zoom /= Old_Zoom then
+         Clamp_Editor_Camera;
+      end if;
+   end Zoom_Editor_View;
+
+   procedure Configure_Player_From_Map;
+   procedure Update_Camera;
+
+   procedure Place_Editor_Selection is
+   begin
+      if Brush = Level.Tile_Brush then
+         Level.Set_Tile_At_World
+           (Tiles,
+            Cursor_X,
+            Cursor_Y,
+            Current_Tile);
+
+         if Current_Tile = Level.Start_Tile then
+            Configure_Player_From_Map;
+            Update_Camera;
+         end if;
+      else
+         Level.Add_Object
+           (Objects,
+            Current_Kind,
+            Cursor_X,
+            Cursor_Y,
+            Current_Motion);
+      end if;
+   end Place_Editor_Selection;
+
+   procedure Delete_Editor_Selection is
+      Deleted : Boolean := False;
+   begin
+      if Brush = Level.Tile_Brush then
+         Level.Set_Tile_At_World
+           (Tiles,
+            Cursor_X,
+            Cursor_Y,
+            Level.Space_Tile);
+      else
+         Level.Delete_Object_At (Objects, Cursor_X, Cursor_Y, Deleted);
+         if Deleted then
+            Put_Line ("Deleted object");
+         end if;
+      end if;
+   end Delete_Editor_Selection;
+
+   procedure Select_Palette_Item
+     (State    : Inputs.Input_State;
+      Selected : out Boolean) is
+   begin
+      Selected := True;
+
+      if In_Box (State.Mouse_X, State.Mouse_Y, 20.0, 130.0, 150.0, 24.0) then
+         Brush := Level.Tile_Brush;
+         Current_Tile := Level.Wall_Tile;
+      elsif In_Box
+        (State.Mouse_X, State.Mouse_Y, 20.0, 156.0, 150.0, 24.0)
+      then
+         Brush := Level.Tile_Brush;
+         Current_Tile := Level.Water_Tile;
+      elsif In_Box
+        (State.Mouse_X, State.Mouse_Y, 20.0, 182.0, 150.0, 24.0)
+      then
+         Brush := Level.Tile_Brush;
+         Current_Tile := Level.Landing_Tile;
+      elsif In_Box
+        (State.Mouse_X, State.Mouse_Y, 20.0, 208.0, 150.0, 24.0)
+      then
+         Brush := Level.Tile_Brush;
+         Current_Tile := Level.Start_Tile;
+      elsif In_Box
+        (State.Mouse_X, State.Mouse_Y, 20.0, 270.0, 150.0, 24.0)
+      then
+         Brush := Level.Object_Brush;
+         Current_Kind := Level.Miner;
+      elsif In_Box
+        (State.Mouse_X, State.Mouse_Y, 20.0, 296.0, 150.0, 24.0)
+      then
+         Brush := Level.Object_Brush;
+         Current_Kind := Level.Enemy;
+      elsif In_Box
+        (State.Mouse_X, State.Mouse_Y, 20.0, 322.0, 150.0, 24.0)
+      then
+         Brush := Level.Object_Brush;
+         Current_Kind := Level.Powerup;
+      else
+         Selected := False;
+      end if;
+
+      if Selected then
+         Editor_Brush_Active := True;
+         Audio.Play_Sound (Audio.Menu_Select);
+      end if;
+   end Select_Palette_Item;
 
    function Current_Input_Context return Inputs.Input_Context is
    begin
@@ -185,6 +362,10 @@ package body Application is
       Current_Screen := Map_Editor_Screen;
       Cursor_X := Spawn_X;
       Cursor_Y := Spawn_Y;
+      Camera_X := Cursor_X - 300.0;
+      Camera_Y := Cursor_Y - 220.0;
+      Clamp_Editor_Camera;
+      Editor_Brush_Active := False;
       Audio.Play_Music (Audio.Editor_Music);
       Put_Line ("MAP EDITOR");
    end Return_To_Editor;
@@ -243,11 +424,14 @@ package body Application is
 
       Configure_Player_From_Map;
       Gameplay.Reset_For_Level (Status, Objects);
-      Update_Camera;
       Mode := Level.Editor_Mode;
       Current_Screen := Map_Editor_Screen;
       Cursor_X := Spawn_X;
       Cursor_Y := Spawn_Y;
+      Camera_X := Cursor_X - 300.0;
+      Camera_Y := Cursor_Y - 220.0;
+      Clamp_Editor_Camera;
+      Editor_Brush_Active := False;
       Audio.Play_Music (Audio.Editor_Music);
    end Start_Editor;
 
@@ -323,9 +507,23 @@ package body Application is
 
    procedure Handle_Editor_Input
      (State : Inputs.Input_State) is
-      Deleted : Boolean := False;
-      Loaded  : Boolean := False;
+      Loaded           : Boolean := False;
+      Palette_Selected : Boolean := False;
    begin
+      if State.Mouse_Wheel /= 0.0 then
+         Zoom_Editor_View (State.Mouse_Wheel);
+      end if;
+
+      if State.Middle_Down or else State.Right_Down then
+         Camera_X := Camera_X - State.Mouse_DX / Editor_Zoom;
+         Camera_Y := Camera_Y - State.Mouse_DY / Editor_Zoom;
+         Clamp_Editor_Camera;
+      end if;
+
+      if Mouse_In_Map_View (State) then
+         Mouse_To_World (State, Cursor_X, Cursor_Y);
+      end if;
+
       if State.Cursor_DX /= 0.0 or else State.Cursor_DY /= 0.0 then
          Cursor_X := Cursor_X + State.Cursor_DX * Cursor_Step;
          Cursor_Y := Cursor_Y + State.Cursor_DY * Cursor_Step;
@@ -336,17 +534,38 @@ package body Application is
             Level.World_Height);
       end if;
 
+      if State.Left_Click then
+         Select_Palette_Item (State, Palette_Selected);
+
+         if not Palette_Selected and then Mouse_In_Map_View (State) then
+            if Editor_Brush_Active then
+               Place_Editor_Selection;
+            else
+               Editor_Brush_Active := False;
+            end if;
+         end if;
+      end if;
+
+      if State.Right_Click then
+         Editor_Brush_Active := False;
+      end if;
+
       if State.Toggle_Brush then
          Toggle_Brush;
+         Editor_Brush_Active := True;
       end if;
 
       if State.Next_Tile then
          Current_Tile := Level.Next_Tile (Current_Tile);
+         Brush := Level.Tile_Brush;
+         Editor_Brush_Active := True;
          Put_Line ("Tile " & Level.Tile_Kind'Image (Current_Tile));
       end if;
 
       if State.Next_Kind then
          Current_Kind := Level.Next_Kind (Current_Kind);
+         Brush := Level.Object_Brush;
+         Editor_Brush_Active := True;
          Put_Line ("Object " & Level.Object_Kind'Image (Current_Kind));
       end if;
 
@@ -361,40 +580,12 @@ package body Application is
       end if;
 
       if State.Place then
-         if Brush = Level.Tile_Brush then
-            Level.Set_Tile_At_World
-              (Tiles,
-               Cursor_X,
-               Cursor_Y,
-               Current_Tile);
-
-            if Current_Tile = Level.Start_Tile then
-               Configure_Player_From_Map;
-               Update_Camera;
-            end if;
-         else
-            Level.Add_Object
-              (Objects,
-               Current_Kind,
-               Cursor_X,
-               Cursor_Y,
-               Current_Motion);
-         end if;
+         Editor_Brush_Active := True;
+         Place_Editor_Selection;
       end if;
 
       if State.Delete then
-         if Brush = Level.Tile_Brush then
-            Level.Set_Tile_At_World
-              (Tiles,
-               Cursor_X,
-               Cursor_Y,
-               Level.Space_Tile);
-         else
-            Level.Delete_Object_At (Objects, Cursor_X, Cursor_Y, Deleted);
-            if Deleted then
-               Put_Line ("Deleted object");
-            end if;
-         end if;
+         Delete_Editor_Selection;
       end if;
 
       if State.Save_Level then
@@ -652,6 +843,8 @@ package body Application is
                Current_Motion,
                Camera_X,
                Camera_Y,
+               Editor_Zoom,
+               Editor_Brush_Active,
                T.Element.all,
                R.Element.all,
                Gravity_Is_On,

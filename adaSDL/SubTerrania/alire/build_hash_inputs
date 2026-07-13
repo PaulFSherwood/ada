@@ -1,0 +1,5 @@
+dependency:sdlada=2.5.20=b806e89a70826130f309c821b0062d4880d742c187463f2005eec1b7a4d4d286
+external:LIBRARY_TYPE=default
+external:SUBTERRANIA_LIBRARY_TYPE=default
+profile:subterrania=DEVELOPMENT
+switches:subterrania=-Og,-fdata-sections,-ffunction-sections,-g,-gnatVa,-gnatW8,-gnatw.X,-gnatwa,-gnaty-d,-gnaty3,-gnatyA,-gnatyB,-gnatyI,-gnatyO,-gnatyS,-gnatya,-gnatyb,-gnatyc,-gnatye,-gnatyf,-gnatyh,-gnatyi,-gnatyk,-gnatyl,-gnatym,-gnatyn,-gnatyp,-gnatyr,-gnatyt,-gnatyu,-gnatyx

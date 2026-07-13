@@ -1,7 +1,5 @@
 with Ada.Strings.Unbounded;
 
-with Gameplay;
-
 with Mission1_Background;
 with Sprites;
 with SDL.Video.Palettes;
@@ -9,6 +7,10 @@ with SDL.Video.Palettes;
 package body Render is
 
    package US renames Ada.Strings.Unbounded;
+
+   Active_Zoom     : Float := 1.0;
+   Active_Offset_X : Float := 0.0;
+   Active_Offset_Y : Float := 0.0;
 
    use type Level.Game_Mode;
    use type Level.Brush_Mode;
@@ -44,11 +46,29 @@ package body Render is
    begin
       Renderer.Fill
         (Rectangle =>
-           (To_Dim (X - Camera_X),
-            To_Dim (Y - Camera_Y),
-            To_Dim (W),
-            To_Dim (H)));
+           (To_Dim ((X - Camera_X) * Active_Zoom + Active_Offset_X),
+            To_Dim ((Y - Camera_Y) * Active_Zoom + Active_Offset_Y),
+            To_Dim (W * Active_Zoom),
+            To_Dim (H * Active_Zoom)));
    end Draw_Box;
+
+   procedure Draw_Box_Outline
+     (Renderer : in out SDL.Video.Renderers.Renderer;
+      X        : Float;
+      Y        : Float;
+      W        : Float;
+      H        : Float;
+      Camera_X : Float;
+      Camera_Y : Float) is
+      Edge : constant Float := 2.0;
+   begin
+      Draw_Box (Renderer, X, Y, W, Edge, Camera_X, Camera_Y);
+      Draw_Box
+        (Renderer, X, Y + H - Edge, W, Edge, Camera_X, Camera_Y);
+      Draw_Box (Renderer, X, Y, Edge, H, Camera_X, Camera_Y);
+      Draw_Box
+        (Renderer, X + W - Edge, Y, Edge, H, Camera_X, Camera_Y);
+   end Draw_Box_Outline;
 
    procedure Draw_Centered_Box
      (Renderer : in out SDL.Video.Renderers.Renderer;
@@ -711,9 +731,13 @@ package body Render is
           (Float'Floor
              (Camera_Y / Float (Mission1_Background.Cell_Size))) + 1;
       Last_X : constant Integer :=
-        First_X + Screen_Width / Mission1_Background.Cell_Size + 2;
+        First_X
+        + Integer (Float (Screen_Width) / Active_Zoom)
+        / Mission1_Background.Cell_Size + 4;
       Last_Y : constant Integer :=
-        First_Y + Screen_Height / Mission1_Background.Cell_Size + 2;
+        First_Y
+        + Integer (Float (Screen_Height) / Active_Zoom)
+        / Mission1_Background.Cell_Size + 4;
       Draw_X : Float;
       Draw_Y : Float;
       Red    : Cell_Channel;
@@ -797,56 +821,101 @@ package body Render is
       Current_Kind   : Level.Object_Kind;
       Current_Motion : Level.Motion_Kind;
       Camera_X       : Float;
-      Camera_Y       : Float) is
+      Camera_Y       : Float;
+      Brush_Active   : Boolean) is
       Cursor_Size : constant Float := 32.0;
+      Tile_X      : constant Float :=
+        Float
+          (Integer
+             (Float'Floor (Cursor_X / Float (Level.Tile_Size)))
+           * Level.Tile_Size);
+      Tile_Y      : constant Float :=
+        Float
+          (Integer
+             (Float'Floor (Cursor_Y / Float (Level.Tile_Size)))
+           * Level.Tile_Size);
    begin
       if Brush = Level.Tile_Brush then
-         Set_Tile_Colour (Renderer, Current_Tile);
-         Draw_Box
-           (Renderer,
-            Float
-              (Integer
-                 (Float'Floor
-                    (Cursor_X / Float (Level.Tile_Size)))
-               * Level.Tile_Size),
-            Float
-              (Integer
-                 (Float'Floor
-                    (Cursor_Y / Float (Level.Tile_Size)))
-               * Level.Tile_Size),
-            Cursor_Size,
-            Cursor_Size,
-            Camera_X,
-            Camera_Y);
+         if Brush_Active then
+            Set_Tile_Colour (Renderer, Current_Tile);
+            Draw_Box
+              (Renderer,
+               Tile_X,
+               Tile_Y,
+               Cursor_Size,
+               Cursor_Size,
+               Camera_X,
+               Camera_Y);
+         else
+            Renderer.Set_Draw_Colour ((255, 255, 255, 255));
+            Draw_Box_Outline
+              (Renderer,
+               Tile_X,
+               Tile_Y,
+               Cursor_Size,
+               Cursor_Size,
+               Camera_X,
+               Camera_Y);
+         end if;
       else
-         Set_Object_Colour (Renderer, Current_Kind);
-         Draw_Centered_Box
-           (Renderer,
-            Cursor_X,
-            Cursor_Y,
-            Cursor_Size,
-            Cursor_Size,
-            Camera_X,
-            Camera_Y);
+         if Brush_Active then
+            Set_Object_Colour (Renderer, Current_Kind);
+            Draw_Centered_Box
+              (Renderer,
+               Cursor_X,
+               Cursor_Y,
+               Cursor_Size,
+               Cursor_Size,
+               Camera_X,
+               Camera_Y);
+         else
+            Renderer.Set_Draw_Colour ((255, 255, 255, 255));
+            Draw_Box_Outline
+              (Renderer,
+               Cursor_X - Cursor_Size / 2.0,
+               Cursor_Y - Cursor_Size / 2.0,
+               Cursor_Size,
+               Cursor_Size,
+               Camera_X,
+               Camera_Y);
+         end if;
       end if;
 
-      Renderer.Set_Draw_Colour ((255, 255, 255, 255));
-      case Current_Motion is
-         when Level.Static =>
-            Draw_Centered_Box
-              (Renderer, Cursor_X, Cursor_Y, 8.0, 8.0, Camera_X, Camera_Y);
+      if Brush_Active then
+         Renderer.Set_Draw_Colour ((255, 255, 255, 255));
+         case Current_Motion is
+            when Level.Static =>
+               Draw_Centered_Box
+                 (Renderer,
+                  Cursor_X,
+                  Cursor_Y,
+                  8.0,
+                  8.0,
+                  Camera_X,
+                  Camera_Y);
 
-         when Level.Patrol_X =>
-            Draw_Centered_Box
-              (Renderer, Cursor_X, Cursor_Y, 48.0, 4.0, Camera_X, Camera_Y);
+            when Level.Patrol_X =>
+               Draw_Centered_Box
+                 (Renderer,
+                  Cursor_X,
+                  Cursor_Y,
+                  48.0,
+                  4.0,
+                  Camera_X,
+                  Camera_Y);
 
-         when Level.Patrol_Y =>
-            Draw_Centered_Box
-              (Renderer, Cursor_X, Cursor_Y, 4.0, 48.0, Camera_X, Camera_Y);
-      end case;
+            when Level.Patrol_Y =>
+               Draw_Centered_Box
+                 (Renderer,
+                  Cursor_X,
+                  Cursor_Y,
+                  4.0,
+                  48.0,
+                  Camera_X,
+                  Camera_Y);
+         end case;
+      end if;
    end Draw_Editor_Cursor;
-
-
 
    procedure Draw_HUD
      (Renderer : in out SDL.Video.Renderers.Renderer;
@@ -912,8 +981,10 @@ package body Render is
       Draw_Text
         (Renderer,
          "BOSS HP" & Integer'Image (Status.Boss_HP),
-         Status.Boss_X - Camera_X - 40.0,
-         Status.Boss_Y - Camera_Y - 45.0,
+         (Status.Boss_X - Camera_X) * Active_Zoom
+         + Active_Offset_X - 40.0,
+         (Status.Boss_Y - Camera_Y) * Active_Zoom
+         + Active_Offset_Y - 45.0,
          2.0);
    end Draw_Boss;
 
@@ -1010,6 +1081,311 @@ package body Render is
       Draw_Text (Renderer, "V NEXT VIEW", X + 390.0, Y + 54.0, 2.0);
    end Draw_Editor_View_Panel;
 
+   procedure Draw_Editor_Menu_Bar
+     (Renderer     : in out SDL.Video.Renderers.Renderer;
+      Screen_Width : Natural) is
+      W : constant Float := Float (Screen_Width);
+   begin
+      Renderer.Set_Draw_Colour ((24, 24, 28, 255));
+      Draw_Screen_Box (Renderer, 0.0, 0.0, W, 24.0);
+
+      Renderer.Set_Draw_Colour ((220, 220, 220, 255));
+      Draw_Text (Renderer, "FILE", 10.0, 7.0, 1.5);
+      Draw_Text (Renderer, "EDIT", 62.0, 7.0, 1.5);
+      Draw_Text (Renderer, "VIEW", 114.0, 7.0, 1.5);
+      Draw_Text (Renderer, "LEVEL", 166.0, 7.0, 1.5);
+      Draw_Text (Renderer, "TEST", 232.0, 7.0, 1.5);
+      Draw_Text (Renderer, "HELP", 284.0, 7.0, 1.5);
+      Draw_Text (Renderer, "SUBTERRANIA EDITOR", W - 210.0, 7.0, 1.5);
+   end Draw_Editor_Menu_Bar;
+
+   procedure Draw_Editor_Toolbar
+     (Renderer       : in out SDL.Video.Renderers.Renderer;
+      Screen_Width   : Natural;
+      Brush          : Level.Brush_Mode;
+      Current_Tile   : Level.Tile_Kind;
+      Current_Kind   : Level.Object_Kind;
+      Current_Motion : Level.Motion_Kind;
+      View           : Gameplay.Editor_View) is
+      W : constant Float := Float (Screen_Width);
+   begin
+      Renderer.Set_Draw_Colour ((35, 35, 42, 255));
+      Draw_Screen_Box (Renderer, 0.0, 24.0, W, 46.0);
+
+      Renderer.Set_Draw_Colour ((52, 52, 60, 255));
+      Draw_Screen_Box (Renderer, 12.0, 34.0, 42.0, 26.0);
+      Draw_Screen_Box (Renderer, 60.0, 34.0, 42.0, 26.0);
+      Draw_Screen_Box (Renderer, 108.0, 34.0, 42.0, 26.0);
+      Draw_Screen_Box (Renderer, 156.0, 34.0, 42.0, 26.0);
+
+      Renderer.Set_Draw_Colour ((230, 230, 230, 255));
+      Draw_Text (Renderer, "SAVE", 18.0, 42.0, 1.25);
+      Draw_Text (Renderer, "LOAD", 66.0, 42.0, 1.25);
+      Draw_Text (Renderer, "TEST", 114.0, 42.0, 1.25);
+      Draw_Text (Renderer, "GRID", 162.0, 42.0, 1.25);
+
+      Renderer.Set_Draw_Colour ((18, 18, 22, 255));
+      Draw_Screen_Box (Renderer, 220.0, 34.0, 210.0, 26.0);
+      Renderer.Set_Draw_Colour ((230, 230, 230, 255));
+      Draw_Text
+        (Renderer,
+         "VIEW " & Gameplay.View_Name (View),
+         228.0,
+         42.0,
+         1.25);
+
+      Renderer.Set_Draw_Colour ((18, 18, 22, 255));
+      Draw_Screen_Box (Renderer, 445.0, 34.0, 180.0, 26.0);
+      Renderer.Set_Draw_Colour ((230, 230, 230, 255));
+      Draw_Text
+        (Renderer,
+         "BRUSH " & Brush_Name (Brush),
+         453.0,
+         42.0,
+         1.25);
+
+      Renderer.Set_Draw_Colour ((18, 18, 22, 255));
+      Draw_Screen_Box (Renderer, 640.0, 34.0, 280.0, 26.0);
+      Renderer.Set_Draw_Colour ((230, 230, 230, 255));
+      if Brush = Level.Tile_Brush then
+         Draw_Text
+           (Renderer,
+            "SELECTED TILE " & Tile_Name (Current_Tile),
+            648.0,
+            42.0,
+            1.25);
+      else
+         Draw_Text
+           (Renderer,
+            "SELECTED OBJ " & Object_Name (Current_Kind),
+            648.0,
+            42.0,
+            1.25);
+      end if;
+
+      Renderer.Set_Draw_Colour ((230, 230, 230, 255));
+      Draw_Text
+        (Renderer,
+         "MOTION " & Motion_Name (Current_Motion),
+         W - 175.0,
+         42.0,
+         1.25);
+   end Draw_Editor_Toolbar;
+
+   procedure Draw_Editor_Layers_Panel
+     (Renderer : in out SDL.Video.Renderers.Renderer) is
+   begin
+      Renderer.Set_Draw_Colour ((16, 20, 24, 255));
+      Draw_Screen_Box (Renderer, 10.0, 410.0, 200.0, 150.0);
+      Renderer.Set_Draw_Colour ((255, 255, 255, 255));
+      Draw_Text (Renderer, "LAYERS", 20.0, 420.0, 1.6);
+      Draw_Text (Renderer, "VIS LOCK NAME", 20.0, 448.0, 1.25);
+      Draw_Text (Renderer, "ON  NO   BACKGROUND", 20.0, 470.0, 1.25);
+      Draw_Text (Renderer, "ON  NO   TERRAIN", 20.0, 492.0, 1.25);
+      Draw_Text (Renderer, "ON  NO   OBJECTS", 20.0, 514.0, 1.25);
+      Draw_Text (Renderer, "ON  NO   TRIGGERS", 20.0, 536.0, 1.25);
+   end Draw_Editor_Layers_Panel;
+
+   procedure Draw_Editor_Properties_Panel
+     (Renderer     : in out SDL.Video.Renderers.Renderer;
+      Screen_Width : Natural;
+      Brush        : Level.Brush_Mode;
+      Current_Tile : Level.Tile_Kind;
+      Current_Kind : Level.Object_Kind;
+      View         : Gameplay.Editor_View;
+      Status       : Gameplay.Player_Status;
+      Info         : Level.Level_Info) is
+      X : constant Float := Float (Screen_Width) - 260.0;
+   begin
+      Renderer.Set_Draw_Colour ((18, 18, 23, 255));
+      Draw_Screen_Box (Renderer, X, 72.0, 250.0, 488.0);
+
+      Renderer.Set_Draw_Colour ((255, 255, 255, 255));
+      Draw_Text (Renderer, "PROPERTIES", X + 12.0, 86.0, 1.7);
+      Draw_Text (Renderer, "VIEW", X + 12.0, 122.0, 1.25);
+      Draw_Text
+        (Renderer,
+         Gameplay.View_Name (View),
+         X + 76.0,
+         122.0,
+         1.25);
+      Draw_Text (Renderer, "BRUSH", X + 12.0, 148.0, 1.25);
+      Draw_Text (Renderer, Brush_Name (Brush), X + 76.0, 148.0, 1.25);
+
+      if Brush = Level.Tile_Brush then
+         Draw_Text (Renderer, "TILE", X + 12.0, 174.0, 1.25);
+         Draw_Text
+           (Renderer,
+            Tile_Name (Current_Tile),
+            X + 76.0,
+            174.0,
+            1.25);
+      else
+         Draw_Text (Renderer, "OBJECT", X + 12.0, 174.0, 1.25);
+         Draw_Text
+           (Renderer,
+            Object_Name (Current_Kind),
+            X + 76.0,
+            174.0,
+            1.25);
+      end if;
+
+      Draw_Text (Renderer, "LEVEL", X + 12.0, 220.0, 1.25);
+      Draw_Text
+        (Renderer,
+         US.To_String (Info.Stage_Name),
+         X + 12.0,
+         242.0,
+         1.25);
+      Draw_Text
+        (Renderer,
+         US.To_String (Info.Title),
+         X + 12.0,
+         264.0,
+         1.25);
+      Draw_Text
+        (Renderer,
+         "NEXT " & US.To_String (Info.Next_Level),
+         X + 12.0,
+         286.0,
+         1.25);
+
+      Draw_Text (Renderer, "GAME STATE", X + 12.0, 330.0, 1.25);
+      Draw_Text
+        (Renderer,
+         "FUEL " & Integer'Image (Integer (Status.Fuel)),
+         X + 12.0,
+         352.0,
+         1.25);
+      Draw_Text
+        (Renderer,
+         "SHIELD " & Integer'Image (Integer (Status.Shield)),
+         X + 12.0,
+         374.0,
+         1.25);
+      Draw_Text
+        (Renderer,
+         "BOSS PHASE " & Integer'Image (Status.Boss_Phase),
+         X + 12.0,
+         396.0,
+         1.25);
+      Draw_Text
+        (Renderer,
+         "BOSS HP " & Integer'Image (Status.Boss_HP),
+         X + 12.0,
+         418.0,
+         1.25);
+
+      Draw_Text (Renderer, "FUTURE", X + 12.0, 462.0, 1.25);
+      Draw_Text (Renderer, "EDIT ANIMATIONS", X + 12.0, 484.0, 1.25);
+      Draw_Text (Renderer, "WEAPONS SHIELDS", X + 12.0, 506.0, 1.25);
+      Draw_Text (Renderer, "BOSS TIMELINE", X + 12.0, 528.0, 1.25);
+   end Draw_Editor_Properties_Panel;
+
+   procedure Draw_Editor_Status_Bar
+     (Renderer      : in out SDL.Video.Renderers.Renderer;
+      Screen_Width  : Natural;
+      Screen_Height : Natural;
+      Cursor_X      : Float;
+      Cursor_Y      : Float;
+      Camera_X      : Float;
+      Camera_Y      : Float) is
+      Y : constant Float := Float (Screen_Height) - 28.0;
+   begin
+      Renderer.Set_Draw_Colour ((20, 27, 36, 255));
+      Draw_Screen_Box (Renderer, 0.0, Y, Float (Screen_Width), 28.0);
+      Renderer.Set_Draw_Colour ((180, 220, 255, 255));
+      Draw_Text
+        (Renderer,
+         "MOUSE TODO  KEYBOARD ACTIVE",
+         12.0,
+         Y + 8.0,
+         1.25);
+      Draw_Text
+        (Renderer,
+         "CUR " & Integer'Image (Integer (Cursor_X))
+         & "," & Integer'Image (Integer (Cursor_Y)),
+         260.0,
+         Y + 8.0,
+         1.25);
+      Draw_Text
+        (Renderer,
+         "CAM " & Integer'Image (Integer (Camera_X))
+         & "," & Integer'Image (Integer (Camera_Y)),
+         430.0,
+         Y + 8.0,
+         1.25);
+      Draw_Text (Renderer, "SAVED MANUALLY WITH F", 620.0, Y + 8.0, 1.25);
+   end Draw_Editor_Status_Bar;
+
+   procedure Draw_Editor_Bottom_Workspace
+     (Renderer      : in out SDL.Video.Renderers.Renderer;
+      Screen_Width  : Natural;
+      Screen_Height : Natural;
+      View          : Gameplay.Editor_View;
+      Status        : Gameplay.Player_Status) is
+      Y : constant Float := Float (Screen_Height) - 150.0;
+      W : constant Float := Float (Screen_Width) - 500.0;
+   begin
+      Renderer.Set_Draw_Colour ((18, 18, 24, 255));
+      Draw_Screen_Box (Renderer, 230.0, Y, W, 112.0);
+      Renderer.Set_Draw_Colour ((255, 255, 255, 255));
+      Draw_Text (Renderer, "WORKSPACE", 242.0, Y + 12.0, 1.5);
+
+      case View is
+         when Gameplay.Boss_View =>
+            Draw_Text
+              (Renderer,
+               "BOSS PHASES  PATHS  ATTACK TIMELINE",
+               242.0,
+               Y + 40.0,
+               1.35);
+            Draw_Text
+              (Renderer,
+               "PHASE " & Integer'Image (Status.Boss_Phase)
+               & "  HP " & Integer'Image (Status.Boss_HP),
+               242.0,
+               Y + 66.0,
+               1.35);
+
+         when Gameplay.Audio_View =>
+            Draw_Text
+              (Renderer,
+               "AUDIO BINS  MUSIC  SHIELDS  WEAPONS  UI",
+               242.0,
+               Y + 40.0,
+               1.35);
+            Draw_Text
+              (Renderer,
+               "REAL AUDIO FILES ARE LOCAL AND GITIGNORED",
+               242.0,
+               Y + 66.0,
+               1.35);
+
+         when Gameplay.Beat_Em_Up_View =>
+            Draw_Text
+              (Renderer,
+               "BEAT EM UP LANES  WAVES  ARENAS  CAMERA LOCKS",
+               242.0,
+               Y + 40.0,
+               1.35);
+
+         when others =>
+            Draw_Text
+              (Renderer,
+               "TERRAIN  OBJECTS  TRIGGERS  OBJECTIVES",
+               242.0,
+               Y + 40.0,
+               1.35);
+            Draw_Text
+              (Renderer,
+               "V CHANGES VIEW  E PLAYTEST  Q MENU",
+               242.0,
+               Y + 66.0,
+               1.35);
+      end case;
+   end Draw_Editor_Bottom_Workspace;
+
    procedure Draw_Frame
      (Renderer       : in out SDL.Video.Renderers.Renderer;
       Screen_Width   : Natural;
@@ -1025,6 +1401,8 @@ package body Render is
       Current_Motion : Level.Motion_Kind;
       Camera_X       : Float;
       Camera_Y       : Float;
+      View_Zoom      : Float;
+      Brush_Active   : Boolean;
       Player_T       : ECS.Components.Transform.Transform;
       Player_R       : ECS.Components.Renderable.Renderable;
       Gravity_On     : Boolean;
@@ -1033,6 +1411,16 @@ package body Render is
       Status         : Gameplay.Player_Status;
       View           : Gameplay.Editor_View) is
    begin
+      if Mode = Level.Editor_Mode then
+         Active_Zoom := View_Zoom;
+         Active_Offset_X := 210.0;
+         Active_Offset_Y := 98.0;
+      else
+         Active_Zoom := 1.0;
+         Active_Offset_X := 0.0;
+         Active_Offset_Y := 0.0;
+      end if;
+
       Renderer.Set_Draw_Colour ((15, 15, 20, 255));
       Renderer.Fill
         (Rectangle =>
@@ -1080,22 +1468,6 @@ package body Render is
       end if;
 
       if Mode = Level.Editor_Mode then
-         Renderer.Set_Draw_Colour ((0, 0, 0, 255));
-         Draw_Screen_Box (Renderer, 0.0, 0.0, 220.0, 600.0);
-         Renderer.Set_Draw_Colour ((255, 255, 255, 255));
-         Draw_Text
-           (Renderer,
-            US.To_String (Info.Stage_Name),
-            12.0,
-            380.0,
-            2.0);
-         Draw_Text
-           (Renderer,
-            US.To_String (Info.Title),
-            12.0,
-            400.0,
-            2.0);
-
          Draw_Editor_Cursor
            (Renderer,
             Brush,
@@ -1105,7 +1477,18 @@ package body Render is
             Current_Kind,
             Current_Motion,
             Camera_X,
-            Camera_Y);
+            Camera_Y,
+            Brush_Active);
+
+         Draw_Editor_Menu_Bar (Renderer, Screen_Width);
+         Draw_Editor_Toolbar
+           (Renderer,
+            Screen_Width,
+            Brush,
+            Current_Tile,
+            Current_Kind,
+            Current_Motion,
+            View);
 
          Draw_Editor_Palette
            (Renderer,
@@ -1113,19 +1496,30 @@ package body Render is
             Current_Tile,
             Current_Kind,
             Current_Motion);
-
-         Draw_Editor_Legend
+         Draw_Editor_Layers_Panel (Renderer);
+         Draw_Editor_Properties_Panel
            (Renderer,
             Screen_Width,
             Brush,
             Current_Tile,
             Current_Kind,
-            Current_Motion);
-
-         Draw_Editor_View_Panel
+            View,
+            Status,
+            Info);
+         Draw_Editor_Bottom_Workspace
            (Renderer,
+            Screen_Width,
+            Screen_Height,
             View,
             Status);
+         Draw_Editor_Status_Bar
+           (Renderer,
+            Screen_Width,
+            Screen_Height,
+            Cursor_X,
+            Cursor_Y,
+            Camera_X,
+            Camera_Y);
       end if;
    end Draw_Frame;
 

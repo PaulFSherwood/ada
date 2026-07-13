@@ -29,6 +29,18 @@ package Inputs is
       Cursor_DX      : Float := 0.0;
       Cursor_DY      : Float := 0.0;
 
+      Mouse_X        : Float := 0.0;
+      Mouse_Y        : Float := 0.0;
+      Mouse_DX       : Float := 0.0;
+      Mouse_DY       : Float := 0.0;
+      Mouse_Wheel    : Float := 0.0;
+      Left_Click     : Boolean := False;
+      Right_Click    : Boolean := False;
+      Middle_Click   : Boolean := False;
+      Left_Down      : Boolean := False;
+      Right_Down     : Boolean := False;
+      Middle_Down    : Boolean := False;
+
       Thrust         : Boolean := False;
       Brake          : Boolean := False;
       Turn_Left      : Boolean := False;

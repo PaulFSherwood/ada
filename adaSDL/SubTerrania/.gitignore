@@ -1,4 +1,18 @@
-/obj/
-/bin/
-/alire/
-/config/
+# Alire / GNAT build output
+obj/
+bin/
+config/
+alire/builds/
+
+# Local copyrighted or licensed audio assets.
+# Keep folder .keep files, but do not commit real music/sfx.
+assets/audio/**/*.mp3
+assets/audio/**/*.wav
+assets/audio/**/*.ogg
+assets/audio/**/*.flac
+!assets/audio/**/.keep
+
+# Editor backups
+*~
+*.bak
+*.swp

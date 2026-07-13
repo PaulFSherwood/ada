@@ -1,11 +1,12 @@
 with SDL.Events;
 with SDL.Events.Events;
 with SDL.Events.Keyboards;
+with SDL.Events.Mice;
 
 package body Inputs is
 
    use type SDL.Events.Event_Types;
-   use type Input_Context;
+   use type SDL.Events.Mice.Buttons;
    use type Level.Brush_Mode;
 
    Event : SDL.Events.Events.Events;
@@ -14,6 +15,14 @@ package body Inputs is
    A_Down : Boolean := False;
    S_Down : Boolean := False;
    D_Down : Boolean := False;
+
+   Mouse_X      : Float := 0.0;
+   Mouse_Y      : Float := 0.0;
+   Last_Mouse_X : Float := 0.0;
+   Last_Mouse_Y : Float := 0.0;
+   Left_Down    : Boolean := False;
+   Right_Down   : Boolean := False;
+   Middle_Down  : Boolean := False;
 
    procedure Handle_Menu_Key_Down
      (State : in out Input_State) is
@@ -164,12 +173,79 @@ package body Inputs is
       end case;
    end Handle_Key_Up;
 
+   procedure Handle_Mouse_Motion
+     (State : in out Input_State) is
+      New_X : constant Float := Float (Event.Mouse_Motion.X);
+      New_Y : constant Float := Float (Event.Mouse_Motion.Y);
+   begin
+      Mouse_X := New_X;
+      Mouse_Y := New_Y;
+      State.Mouse_X := Mouse_X;
+      State.Mouse_Y := Mouse_Y;
+      State.Mouse_DX := Mouse_X - Last_Mouse_X;
+      State.Mouse_DY := Mouse_Y - Last_Mouse_Y;
+      Last_Mouse_X := Mouse_X;
+      Last_Mouse_Y := Mouse_Y;
+   end Handle_Mouse_Motion;
+
+   procedure Handle_Mouse_Button_Down
+     (State : in out Input_State) is
+   begin
+      Mouse_X := Float (Event.Mouse_Button.X);
+      Mouse_Y := Float (Event.Mouse_Button.Y);
+      State.Mouse_X := Mouse_X;
+      State.Mouse_Y := Mouse_Y;
+
+      case Event.Mouse_Button.Button is
+         when SDL.Events.Mice.Left =>
+            Left_Down := True;
+            State.Left_Click := True;
+
+         when SDL.Events.Mice.Right =>
+            Right_Down := True;
+            State.Right_Click := True;
+
+         when SDL.Events.Mice.Middle =>
+            Middle_Down := True;
+            State.Middle_Click := True;
+
+         when others =>
+            null;
+      end case;
+   end Handle_Mouse_Button_Down;
+
+   procedure Handle_Mouse_Button_Up is
+   begin
+      case Event.Mouse_Button.Button is
+         when SDL.Events.Mice.Left =>
+            Left_Down := False;
+
+         when SDL.Events.Mice.Right =>
+            Right_Down := False;
+
+         when SDL.Events.Mice.Middle =>
+            Middle_Down := False;
+
+         when others =>
+            null;
+      end case;
+   end Handle_Mouse_Button_Up;
+
+   procedure Handle_Mouse_Wheel
+     (State : in out Input_State) is
+   begin
+      State.Mouse_Wheel :=
+        State.Mouse_Wheel + Float (Event.Mouse_Wheel.Y);
+   end Handle_Mouse_Wheel;
+
    procedure Poll_Events
      (State   : out Input_State;
       Context : Input_Context;
       Brush   : Level.Brush_Mode) is
    begin
       State := (others => <>);
+      State.Mouse_X := Mouse_X;
+      State.Mouse_Y := Mouse_Y;
 
       while SDL.Events.Events.Poll (Event) loop
          if Event.Common.Event_Type = SDL.Events.Quit then
@@ -180,8 +256,24 @@ package body Inputs is
 
          elsif Event.Common.Event_Type = SDL.Events.Keyboards.Key_Up then
             Handle_Key_Up;
+
+         elsif Event.Common.Event_Type = SDL.Events.Mice.Motion then
+            Handle_Mouse_Motion (State);
+
+         elsif Event.Common.Event_Type = SDL.Events.Mice.Button_Down then
+            Handle_Mouse_Button_Down (State);
+
+         elsif Event.Common.Event_Type = SDL.Events.Mice.Button_Up then
+            Handle_Mouse_Button_Up;
+
+         elsif Event.Common.Event_Type = SDL.Events.Mice.Wheel then
+            Handle_Mouse_Wheel (State);
          end if;
       end loop;
+
+      State.Left_Down := Left_Down;
+      State.Right_Down := Right_Down;
+      State.Middle_Down := Middle_Down;
 
       if Context = Play_Context then
          State.Thrust := W_Down;

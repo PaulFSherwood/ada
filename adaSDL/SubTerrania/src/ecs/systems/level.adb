@@ -1,4 +1,3 @@
-with Ada.Strings.Unbounded;
 with Ada.Text_IO; use Ada.Text_IO;
 
 package body Level is
@@ -509,8 +508,9 @@ package body Level is
       Prefix : String)
       return Boolean is
    begin
-      return Last >= Prefix'Length
-        and then Line (1 .. Prefix'Length) = Prefix;
+      return Last >= Line'First + Prefix'Length - 1
+        and then Line
+          (Line'First .. Line'First + Prefix'Length - 1) = Prefix;
    end Starts_With;
 
    function Tail_After

@@ -23,6 +23,8 @@ package Render is
       Current_Motion : Level.Motion_Kind;
       Camera_X       : Float;
       Camera_Y       : Float;
+      View_Zoom      : Float;
+      Brush_Active   : Boolean;
       Player_T       : ECS.Components.Transform.Transform;
       Player_R       : ECS.Components.Renderable.Renderable;
       Gravity_On     : Boolean;
