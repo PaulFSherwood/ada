@@ -12,7 +12,8 @@ package Movement is
       Brake      : Boolean;
       Left       : Boolean;
       Right      : Boolean;
-      DT         : Float);
+      DT         : Float;
+      Thrust_Scale : Float := 1.0);
 
    procedure Configure_Gravity
      (G     : in out ECS.Components.Gravity.Gravity;

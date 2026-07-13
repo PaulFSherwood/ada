@@ -1,10 +1,21 @@
+with Ada.Strings.Unbounded;
 with Ada.Text_IO; use Ada.Text_IO;
 
 package body Level is
 
+   package US renames Ada.Strings.Unbounded;
+
    package Object_Kind_IO is new Ada.Text_IO.Enumeration_IO (Object_Kind);
    package Motion_Kind_IO is new Ada.Text_IO.Enumeration_IO (Motion_Kind);
    package Float_IO is new Ada.Text_IO.Float_IO (Float);
+
+   function Default_Level_Info return Level_Info is
+   begin
+      return
+        (Stage_Name => US.To_Unbounded_String ("stage01"),
+         Title      => US.To_Unbounded_String ("Mission 1"),
+         Next_Level => US.To_Unbounded_String ("stage02.map"));
+   end Default_Level_Info;
 
    function World_Width return Float is
    begin
@@ -34,11 +45,17 @@ package body Level is
       return Object_Kind is
    begin
       case K is
-         when Miner    => return Enemy;
-         when Enemy    => return Powerup;
-         when Powerup  => return Goal;
-         when Goal     => return Platform;
-         when Platform => return Miner;
+         when Miner      => return Enemy;
+         when Enemy      => return Powerup;
+         when Powerup    => return Fuel;
+         when Fuel       => return Shield;
+         when Shield     => return Weight;
+         when Weight     => return Goal;
+         when Goal       => return Base;
+         when Base       => return Gate;
+         when Gate       => return Platform;
+         when Platform   => return Boss_Spawn;
+         when Boss_Spawn => return Miner;
       end case;
    end Next_Kind;
 
@@ -123,14 +140,29 @@ package body Level is
             Obj.H := 32.0;
             Obj.Speed := 70.0;
 
-         when Powerup =>
+         when Powerup | Fuel | Shield =>
             Obj.W := 24.0;
             Obj.H := 24.0;
             Obj.Motion := Static;
 
-         when Goal =>
+         when Weight =>
+            Obj.W := 26.0;
+            Obj.H := 26.0;
+            Obj.Motion := Static;
+
+         when Goal | Base =>
             Obj.W := 40.0;
             Obj.H := 60.0;
+            Obj.Motion := Static;
+
+         when Gate =>
+            Obj.W := 32.0;
+            Obj.H := 120.0;
+            Obj.Motion := Static;
+
+         when Boss_Spawn =>
+            Obj.W := 48.0;
+            Obj.H := 48.0;
             Obj.Motion := Static;
 
          when Platform =>
@@ -207,7 +239,8 @@ package body Level is
 
    procedure Build_Test_Level
      (Tiles   : out Tile_Map;
-      Objects : out Object_Array) is
+      Objects : out Object_Array;
+      Info    : out Level_Info) is
       Raw : constant array (Tile_Y) of String (1 .. Map_Width) :=
         (
          "0000000000000000000000000000000000000000",
@@ -247,6 +280,7 @@ package body Level is
          "0000111000000111111110000000001111100000",
          "0000100000000000000100000000000000000000");
    begin
+      Info := Default_Level_Info;
       Clear_Objects (Objects);
 
       for Y in Tile_Y loop
@@ -459,13 +493,49 @@ package body Level is
       Float_IO.Put (File, V, Fore => 1, Aft => 2, Exp => 0);
    end Save_Float;
 
+   procedure Save_Info
+     (File : File_Type;
+      Info : Level_Info) is
+   begin
+      Put_Line (File, "LEVEL");
+      Put_Line (File, "NAME " & US.To_String (Info.Stage_Name));
+      Put_Line (File, "TITLE " & US.To_String (Info.Title));
+      Put_Line (File, "NEXT " & US.To_String (Info.Next_Level));
+   end Save_Info;
+
+   function Starts_With
+     (Line   : String;
+      Last   : Natural;
+      Prefix : String)
+      return Boolean is
+   begin
+      return Last >= Prefix'Length
+        and then Line (1 .. Prefix'Length) = Prefix;
+   end Starts_With;
+
+   function Tail_After
+     (Line   : String;
+      Last   : Natural;
+      Prefix : String)
+      return String is
+      First : constant Natural := Prefix'Length + 1;
+   begin
+      if Last < First then
+         return "";
+      else
+         return Line (First .. Last);
+      end if;
+   end Tail_After;
+
    procedure Save_Level
      (Tiles   : Tile_Map;
       Objects : Object_Array;
+      Info    : Level_Info;
       Path    : String) is
       File : File_Type;
    begin
       Create (File, Out_File, Path);
+      Save_Info (File, Info);
       Put_Line (File, "TILES");
 
       for Y in Tile_Y loop
@@ -507,6 +577,7 @@ package body Level is
    procedure Load_Level
      (Tiles   : out Tile_Map;
       Objects : out Object_Array;
+      Info    : out Level_Info;
       Path    : String;
       Loaded  : out Boolean) is
       File : File_Type;
@@ -514,11 +585,32 @@ package body Level is
       Last : Natural;
    begin
       Loaded := False;
+      Info := Default_Level_Info;
       Clear_Tiles (Tiles);
       Clear_Objects (Objects);
       Open (File, In_File, Path);
 
       Get_Line (File, Line, Last);
+
+      if Starts_With (Line, Last, "LEVEL") then
+         loop
+            exit when End_Of_File (File);
+            Get_Line (File, Line, Last);
+
+            if Starts_With (Line, Last, "NAME ") then
+               Info.Stage_Name :=
+                 US.To_Unbounded_String (Tail_After (Line, Last, "NAME "));
+            elsif Starts_With (Line, Last, "TITLE ") then
+               Info.Title :=
+                 US.To_Unbounded_String (Tail_After (Line, Last, "TITLE "));
+            elsif Starts_With (Line, Last, "NEXT ") then
+               Info.Next_Level :=
+                 US.To_Unbounded_String (Tail_After (Line, Last, "NEXT "));
+            elsif Starts_With (Line, Last, "TILES") then
+               exit;
+            end if;
+         end loop;
+      end if;
 
       for Y in Tile_Y loop
          Get_Line (File, Line, Last);
@@ -571,7 +663,7 @@ package body Level is
          end if;
 
          Loaded := False;
-         Build_Test_Level (Tiles, Objects);
+         Build_Test_Level (Tiles, Objects, Info);
          Put_Line ("Load failed, rebuilt test level: " & Path);
    end Load_Level;
 

@@ -4,6 +4,7 @@ with SDL.Video.Renderers;
 with ECS.Components.Renderable;
 with ECS.Components.Transform;
 with Level;
+with Gameplay;
 
 package Render is
 
@@ -24,6 +25,23 @@ package Render is
       Camera_Y       : Float;
       Player_T       : ECS.Components.Transform.Transform;
       Player_R       : ECS.Components.Renderable.Renderable;
-      Gravity_On     : Boolean);
+      Gravity_On     : Boolean;
+      Is_Playtest    : Boolean;
+      Info           : Level.Level_Info;
+      Status         : Gameplay.Player_Status;
+      View           : Gameplay.Editor_View);
+
+   procedure Draw_Main_Menu
+     (Renderer      : in out SDL.Video.Renderers.Renderer;
+      Screen_Width  : Natural;
+      Screen_Height : Natural;
+      Selected      : Positive);
+
+   procedure Draw_Load_Menu
+     (Renderer      : in out SDL.Video.Renderers.Renderer;
+      Screen_Width  : Natural;
+      Screen_Height : Natural;
+      Selected      : Positive;
+      Info          : Level.Level_Info);
 
 end Render;

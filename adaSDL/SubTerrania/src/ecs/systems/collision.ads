@@ -10,7 +10,11 @@ package Collision is
       Landed       : Boolean := False;
       Miner_Count  : Natural := 0;
       Power_Count  : Natural := 0;
+      Fuel_Count   : Natural := 0;
+      Shield_Count : Natural := 0;
+      Weight_Count : Natural := 0;
       Goal_Reached : Boolean := False;
+      At_Base      : Boolean := False;
    end record;
 
    procedure Check_Player

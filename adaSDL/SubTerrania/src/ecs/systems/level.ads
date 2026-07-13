@@ -1,3 +1,5 @@
+with Ada.Strings.Unbounded;
+
 package Level is
 
    Tile_Size           : constant Positive := 32;
@@ -8,6 +10,17 @@ package Level is
      (World_Width_Pixels + Tile_Size - 1) / Tile_Size;
    Map_Height : constant Positive :=
      (World_Height_Pixels + Tile_Size - 1) / Tile_Size;
+
+   type Level_Info is record
+      Stage_Name : Ada.Strings.Unbounded.Unbounded_String :=
+        Ada.Strings.Unbounded.To_Unbounded_String ("stage01");
+      Title      : Ada.Strings.Unbounded.Unbounded_String :=
+        Ada.Strings.Unbounded.To_Unbounded_String ("Mission 1");
+      Next_Level : Ada.Strings.Unbounded.Unbounded_String :=
+        Ada.Strings.Unbounded.To_Unbounded_String ("stage02.map");
+   end record;
+
+   function Default_Level_Info return Level_Info;
 
    type Game_Mode is
      (Play_Mode,
@@ -28,8 +41,14 @@ package Level is
      (Miner,
       Enemy,
       Powerup,
+      Fuel,
+      Shield,
+      Weight,
       Goal,
-      Platform);
+      Base,
+      Gate,
+      Platform,
+      Boss_Spawn);
 
    type Motion_Kind is
      (Static,
@@ -80,7 +99,8 @@ package Level is
 
    procedure Build_Test_Level
      (Tiles   : out Tile_Map;
-      Objects : out Object_Array);
+      Objects : out Object_Array;
+      Info    : out Level_Info);
 
    function Tile_At_World
      (Tiles : Tile_Map;
@@ -150,11 +170,13 @@ package Level is
    procedure Save_Level
      (Tiles   : Tile_Map;
       Objects : Object_Array;
+      Info    : Level_Info;
       Path    : String);
 
    procedure Load_Level
      (Tiles   : out Tile_Map;
       Objects : out Object_Array;
+      Info    : out Level_Info;
       Path    : String;
       Loaded  : out Boolean);
 

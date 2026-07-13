@@ -108,6 +108,21 @@ package body Collision is
                   Result.Power_Count := Result.Power_Count + 1;
                   Put_Line ("Powerup collected");
 
+               when Level.Fuel =>
+                  Objects (I).Used := False;
+                  Result.Fuel_Count := Result.Fuel_Count + 1;
+                  Put_Line ("Fuel collected");
+
+               when Level.Shield =>
+                  Objects (I).Used := False;
+                  Result.Shield_Count := Result.Shield_Count + 1;
+                  Put_Line ("Shield collected");
+
+               when Level.Weight =>
+                  Objects (I).Used := False;
+                  Result.Weight_Count := Result.Weight_Count + 1;
+                  Put_Line ("Heavy cargo collected");
+
                when Level.Enemy =>
                   Reset_Player (T, V, Reset_X, Reset_Y);
                   Gravity_On := True;
@@ -117,6 +132,18 @@ package body Collision is
                when Level.Goal =>
                   Result.Goal_Reached := True;
                   Put_Line ("Goal reached");
+
+               when Level.Base =>
+                  Result.At_Base := True;
+
+               when Level.Gate =>
+                  Reset_Player (T, V, Reset_X, Reset_Y);
+                  Gravity_On := True;
+                  Result.Crashed := True;
+                  Put_Line ("Blocked by gate");
+
+               when Level.Boss_Spawn =>
+                  null;
 
                when Level.Platform =>
                   if V.Y >= 0.0 and then T.Y < Objects (I).Y then

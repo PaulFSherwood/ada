@@ -7,21 +7,22 @@ package body Movement is
       Brake      : Boolean;
       Left       : Boolean;
       Right      : Boolean;
-      DT         : Float) is
+      DT         : Float;
+      Thrust_Scale : Float := 1.0) is
       Thrust_Accel : constant Float := 260.0;
       Strafe_Accel : constant Float := 180.0;
       Drag         : constant Float := 0.96;
    begin
       if Left then
-         V.X := V.X - Strafe_Accel * DT;
+         V.X := V.X - Strafe_Accel * Thrust_Scale * DT;
       end if;
 
       if Right then
-         V.X := V.X + Strafe_Accel * DT;
+         V.X := V.X + Strafe_Accel * Thrust_Scale * DT;
       end if;
 
       if Thrust then
-         V.Y := V.Y - Thrust_Accel * DT;
+         V.Y := V.Y - Thrust_Accel * Thrust_Scale * DT;
       elsif not Has_Gravity then
          null;
       end if;
