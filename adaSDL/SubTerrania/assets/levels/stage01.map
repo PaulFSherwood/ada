@@ -3,7 +3,7 @@ NAME STAGE01
 TITLE MISSION 1
 NEXT STAGE02.MAP
 BACKGROUND assets/images/maps/sub-terrania-mission-1.png
-MUSIC assets/audio/music/mission01.ogg
+MUSIC assets/audio/music/005 - Sub-Terrania Soundtrack - Crystal Space 1 - Level 1.mp3
 BOSS_MUSIC assets/audio/music/boss01.ogg
 TILES
 0000000000000000000000000000000000000000

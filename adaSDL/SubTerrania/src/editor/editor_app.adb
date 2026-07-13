@@ -56,40 +56,6 @@ package body Editor_App is
         (Get_Object (Gtk_Builder (Builder), Name));
    end UI_Entry;
 
-   function Entry_Text
-     (Name    : String;
-      Default : String := "") return String is
-      Obj : constant Glib.Object.GObject :=
-        Get_Object (Gtk_Builder (Builder), Name);
-   begin
-      if Obj = null then
-         Ada.Text_IO.Put_Line ("Missing UI entry: " & Name);
-         return Default;
-      end if;
-
-      return Gtk_Entry (Obj).Get_Text;
-   exception
-      when others =>
-         Ada.Text_IO.Put_Line ("Could not read UI entry: " & Name);
-         return Default;
-   end Entry_Text;
-
-   procedure Set_Entry_Text
-     (Name : String;
-      Text : String) is
-      Obj : constant Glib.Object.GObject :=
-        Get_Object (Gtk_Builder (Builder), Name);
-   begin
-      if Obj = null then
-         Ada.Text_IO.Put_Line ("Missing UI entry: " & Name);
-      else
-         Gtk_Entry (Obj).Set_Text (Text);
-      end if;
-   exception
-      when others =>
-         Ada.Text_IO.Put_Line ("Could not set UI entry: " & Name);
-   end Set_Entry_Text;
-
    function UI_Label (Name : String) return Gtk_Label is
    begin
       return Gtk_Label
@@ -108,7 +74,7 @@ package body Editor_App is
         (Get_Object (Gtk_Builder (Builder), "inspector_notebook"));
    end Inspectors;
 
-   procedure Ada.Text_IO.Put_Line (Text : String) is
+   procedure Log (Text : String) is
       View   : constant Gtk_Text_View := Gtk_Text_View
         (Get_Object (Gtk_Builder (Builder), "output_text_view"));
       Buffer : constant Gtk_Text_Buffer := View.Get_Buffer;
@@ -205,7 +171,7 @@ package body Editor_App is
      (Name    : String;
       Default : Float) return Float is
    begin
-      return Float'Value (Entry_Text (Name, Float'Image (Default)));
+      return Float'Value (UI_Entry (Name).Get_Text);
    exception
       when others =>
          return Default;
@@ -226,14 +192,14 @@ package body Editor_App is
          if Ada.Text_IO.Is_Open (File) then
             Ada.Text_IO.Close (File);
          end if;
-         Ada.Text_IO.Put_Line ("Could not save " & Path);
+         Log ("Could not save " & Path);
    end Save_Definition;
 
    function Entry_Line
      (Key  : String;
       Name : String) return String is
    begin
-      return Key & " " & Entry_Text (Name) & ASCII.LF;
+      return Key & " " & UI_Entry (Name).Get_Text & ASCII.LF;
    end Entry_Line;
 
    function Read_Value
@@ -285,7 +251,7 @@ package body Editor_App is
               (Read_Value (Path, Key, Field.Get_Text));
          end;
       else
-         Ada.Text_IO.Put_Line ("Missing UI entry: " & Entry_Name);
+         Log ("Missing UI entry: " & Entry_Name);
       end if;
    end Load_Entry;
 
@@ -464,7 +430,7 @@ package body Editor_App is
          & Entry_Line ("LEVEL_MUSIC", "level_music_entry")
          & Entry_Line ("BOSS_MUSIC", "audio_boss_music_entry"));
 
-      Ada.Text_IO.Put_Line ("Player, enemy, boss, weapon, powerup and audio data saved");
+      Log ("Player, enemy, boss, weapon, powerup and audio data saved");
    end Save_Project_Assets;
 
    procedure Run_Command
@@ -474,7 +440,7 @@ package body Editor_App is
       pragma Unreferenced (Result);
    begin
       Result := C_System (Interfaces.C.To_C (Command));
-      Ada.Text_IO.Put_Line (Message);
+      Log (Message);
    end Run_Command;
 
    procedure On_New
@@ -485,7 +451,7 @@ package body Editor_App is
       Update_Level_UI;
       Editor_Canvas.Rebuild;
       Set_Document (0, 0, "New level created");
-      Ada.Text_IO.Put_Line ("New level created");
+      Log ("New level created");
    end On_New;
 
    procedure On_Open
@@ -508,9 +474,9 @@ package body Editor_App is
          Update_Level_UI;
          Editor_Canvas.Rebuild;
          Set_Document (0, 0, "Opened " & Path);
-         Ada.Text_IO.Put_Line ("Opened " & Path);
+         Log ("Opened " & Path);
       else
-         Ada.Text_IO.Put_Line ("Could not open " & Path);
+         Log ("Could not open " & Path);
       end if;
    end On_Open;
 
@@ -521,7 +487,7 @@ package body Editor_App is
       Apply_Level_UI;
       Editor_State.Save;
       Save_Project_Assets;
-      Ada.Text_IO.Put_Line ("Saved " & Editor_State.Level_Path);
+      Log ("Saved " & Editor_State.Level_Path);
    end On_Save;
 
    procedure On_Save_As
@@ -538,7 +504,7 @@ package body Editor_App is
          Apply_Level_UI;
          Editor_State.Save_As (Path);
          Save_Project_Assets;
-         Ada.Text_IO.Put_Line ("Saved " & Path);
+         Log ("Saved " & Path);
       end if;
    end On_Save_As;
 
@@ -558,9 +524,9 @@ package body Editor_App is
       if Changed then
          Update_Level_UI;
          Editor_Canvas.Rebuild;
-         Ada.Text_IO.Put_Line ("Undo");
+         Log ("Undo");
       else
-         Ada.Text_IO.Put_Line ("Nothing to undo");
+         Log ("Nothing to undo");
       end if;
    end On_Undo;
 
@@ -573,9 +539,9 @@ package body Editor_App is
       if Changed then
          Update_Level_UI;
          Editor_Canvas.Rebuild;
-         Ada.Text_IO.Put_Line ("Redo");
+         Log ("Redo");
       else
-         Ada.Text_IO.Put_Line ("Nothing to redo");
+         Log ("Nothing to redo");
       end if;
    end On_Redo;
 
@@ -593,9 +559,9 @@ package body Editor_App is
 
       if Changed then
          Editor_Canvas.Rebuild;
-         Ada.Text_IO.Put_Line ("Selected entity geometry applied");
+         Log ("Selected entity geometry applied");
       else
-         Ada.Text_IO.Put_Line ("Select an entity before applying geometry");
+         Log ("Select an entity before applying geometry");
       end if;
    end On_Apply_Selected_Geometry;
 
@@ -606,13 +572,13 @@ package body Editor_App is
         Editor_State.Selection;
    begin
       if Sel.Kind = Editor_State.Nothing_Selected then
-         Ada.Text_IO.Put_Line ("Nothing selected");
+         Log ("Nothing selected");
          return;
       end if;
 
       Editor_State.Erase_At (Sel.World_X, Sel.World_Y);
       Editor_Canvas.Rebuild;
-      Ada.Text_IO.Put_Line ("Selection deleted");
+      Log ("Selection deleted");
    end On_Delete_Selection;
 
    procedure On_Fullscreen
@@ -634,7 +600,7 @@ package body Editor_App is
       pragma Unreferenced (Data);
    begin
       Editor_Canvas.Fit_Map;
-      Ada.Text_IO.Put_Line ("Map fitted to viewport");
+      Log ("Map fitted to viewport");
    end On_Fit_Map;
 
    procedure On_Grid_Menu_Toggled
@@ -647,7 +613,7 @@ package body Editor_App is
    begin
       Editor_State.Set_Grid_Visible (Visible);
       Editor_Canvas.Rebuild;
-      Ada.Text_IO.Put_Line ("Grid setting changed");
+      Log ("Grid setting changed");
    end On_Grid_Menu_Toggled;
 
    procedure On_Grid_Toolbar_Toggled
@@ -660,7 +626,7 @@ package body Editor_App is
    begin
       Editor_State.Set_Grid_Visible (Visible);
       Editor_Canvas.Rebuild;
-      Ada.Text_IO.Put_Line ("Grid setting changed");
+      Log ("Grid setting changed");
    end On_Grid_Toolbar_Toggled;
 
    procedure Set_Tool
@@ -827,7 +793,7 @@ package body Editor_App is
       pragma Unreferenced (Data);
    begin
       Apply_Level_UI;
-      Ada.Text_IO.Put_Line ("Level properties applied");
+      Log ("Level properties applied");
    end On_Apply_Level_Properties;
 
    procedure On_Save_Project_Assets
@@ -852,8 +818,8 @@ package body Editor_App is
    begin
       Browse_Into
         ("music_entry", "Select level music", "assets/audio/music");
-      Set_Entry_Text
-        ("level_music_entry", Entry_Text ("music_entry"));
+      UI_Entry ("level_music_entry").Set_Text
+        (UI_Entry ("music_entry").Get_Text);
    end On_Browse_Level_Music;
 
    procedure On_Browse_Boss_Music
@@ -864,10 +830,10 @@ package body Editor_App is
         ("level_boss_music_entry",
          "Select boss music",
          "assets/audio/music");
-      Set_Entry_Text
-        ("boss_music_entry", Entry_Text ("level_boss_music_entry"));
-      Set_Entry_Text
-        ("audio_boss_music_entry", Entry_Text ("level_boss_music_entry"));
+      UI_Entry ("boss_music_entry").Set_Text
+        (UI_Entry ("level_boss_music_entry").Get_Text);
+      UI_Entry ("audio_boss_music_entry").Set_Text
+        (UI_Entry ("level_boss_music_entry").Get_Text);
    end On_Browse_Boss_Music;
 
    procedure On_Browse_Menu_Music
@@ -914,21 +880,21 @@ package body Editor_App is
    begin
       Editor_State.Set_Tool (Editor_State.Trigger_Tool);
       Documents.Set_Current_Page (0);
-      Ada.Text_IO.Put_Line ("Trigger box tool active. Draw the trigger on the map.");
+      Log ("Trigger box tool active. Draw the trigger on the map.");
    end On_Add_Trigger;
 
    procedure On_Add_Objective
      (Data : access Gtkada_Builder_Record'Class) is
       pragma Unreferenced (Data);
    begin
-      Ada.Text_IO.Put_Line ("Objective added to the project definition");
+      Log ("Objective added to the project definition");
    end On_Add_Objective;
 
    procedure On_Add_Event
      (Data : access Gtkada_Builder_Record'Class) is
       pragma Unreferenced (Data);
    begin
-      Ada.Text_IO.Put_Line ("Timeline event added");
+      Log ("Timeline event added");
    end On_Add_Event;
 
    procedure On_Playtest
@@ -956,11 +922,11 @@ package body Editor_App is
    begin
       if Ada.Directories.Exists ("assets/levels/stage01.map")
         and then Ada.Directories.Exists
-          (Entry_Text ("background_entry"))
+          (UI_Entry ("background_entry").Get_Text)
       then
-         Ada.Text_IO.Put_Line ("Project validation passed");
+         Log ("Project validation passed");
       else
-         Ada.Text_IO.Put_Line ("Validation warning: level or background is missing");
+         Log ("Validation warning: level or background is missing");
       end if;
    end On_Validate;
 
@@ -968,7 +934,8 @@ package body Editor_App is
      (Data : access Gtkada_Builder_Record'Class) is
       pragma Unreferenced (Data);
    begin
-      Ada.Text_IO.Put_Line ("Select/Brush/Eraser/Pan are toolbar tools. "
+      Log
+        ("Select/Brush/Eraser/Pan are toolbar tools. "
          & "Mouse wheel zooms. Right-click cancels a brush. "
          & "Open Player, Enemy, Boss, Weapon or Audio from Project.");
    end On_Help;
@@ -977,7 +944,8 @@ package body Editor_App is
      (Data : access Gtkada_Builder_Record'Class) is
       pragma Unreferenced (Data);
    begin
-      Ada.Text_IO.Put_Line ("SubTerrania Editor — native GtkAda project editor "
+      Log
+        ("SubTerrania Editor — native GtkAda project editor "
          & "with an SDL game runtime");
    end On_About;
 
@@ -1127,7 +1095,7 @@ package body Editor_App is
         (Get_Object (Gtk_Builder (Builder), "main_window"));
       Window.Show_All;
       Set_Document (0, 0, "Level Editor ready");
-      Ada.Text_IO.Put_Line ("Professional editor shell loaded");
+      Log ("Professional editor shell loaded");
    end Initialize;
 
 end Editor_App;

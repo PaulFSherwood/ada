@@ -46,7 +46,6 @@ package body Editor_Canvas is
    Canvas     : Canvas_View;
    Model      : List_Canvas_Model;
    Minimap    : Minimap_View;
-   View_Ready : Boolean := False;
 
    Background_Item : Abstract_Item;
 
@@ -186,25 +185,29 @@ package body Editor_Canvas is
 
    procedure Add_Grid is
       Style : constant Drawing_Style := Gtk_New
-        (Fill   => Create_Rgba_Pattern ((0.0, 0.0, 0.0, 0.0)),
-         Stroke => (0.25, 0.48, 0.70, 0.32));
-      Rect  : Rect_Item;
+        (Stroke => (0.25, 0.48, 0.70, 0.28));
+      Line  : Polyline_Item;
    begin
       if not Editor_State.Grid_Visible then
          return;
       end if;
 
-      for Y in Level.Tile_Y loop
-         for X in Level.Tile_X loop
-            Rect := Gtk_New_Rect
-              (Style  => Style,
-               Width  => Gdouble (Level.Tile_Size),
-               Height => Gdouble (Level.Tile_Size));
-            Rect.Set_Position
-              ((Gdouble ((Integer (X) - 1) * Level.Tile_Size),
-                Gdouble ((Integer (Y) - 1) * Level.Tile_Size)));
-            Model.Add (Rect);
-         end loop;
+      for X in 0 .. Level.Map_Width loop
+         Line := Gtk_New_Polyline
+           (Style,
+            ((Gdouble (X * Level.Tile_Size), 0.0),
+             (Gdouble (X * Level.Tile_Size),
+              Gdouble (Level.World_Height_Pixels))));
+         Model.Add (Line);
+      end loop;
+
+      for Y in 0 .. Level.Map_Height loop
+         Line := Gtk_New_Polyline
+           (Style,
+            ((0.0, Gdouble (Y * Level.Tile_Size)),
+             (Gdouble (Level.World_Width_Pixels),
+              Gdouble (Y * Level.Tile_Size))));
+         Model.Add (Line);
       end loop;
    end Add_Grid;
 
@@ -391,28 +394,18 @@ package body Editor_Canvas is
 
    procedure Rebuild is
       New_Model : List_Canvas_Model;
-      Visible   : Model_Rectangle := No_Rectangle;
    begin
-      if View_Ready then
-         Visible := Canvas.Get_Visible_Area;
-      end if;
-
       Gtk_New (New_Model);
       New_Model.Set_Selection_Mode (Selection_Single);
       Model := New_Model;
 
       Add_Background;
-      Add_Tiles;
       Add_Grid;
+      Add_Tiles;
       Add_Objects;
 
       Canvas.Set_Model (Model);
       Unref (Model);
-
-      if View_Ready then
-         Canvas.Scroll_Into_View (Visible);
-      end if;
-
       Refresh_Inspector;
       Set_Status ("Ready");
    end Rebuild;
@@ -441,7 +434,6 @@ package body Editor_Canvas is
         (Get_Object (Gtk_Builder (Builder), "map_canvas_frame"));
       Minimap_Frame := Gtk_Frame
         (Get_Object (Gtk_Builder (Builder), "minimap_frame"));
-      Minimap_Frame.Set_Size_Request (240, 150);
 
       Canvas := new Canvas_View_Record;
       Gtkada.Canvas_View.Initialize (Canvas);
@@ -464,7 +456,6 @@ package body Editor_Canvas is
       Map_Frame.Add (Scrolled);
 
       Gtk_New (Minimap);
-      Minimap.Set_Size_Request (220, 130);
       Minimap.Monitor (Canvas);
       Minimap_Frame.Add (Minimap);
 
@@ -472,7 +463,6 @@ package body Editor_Canvas is
       Map_Frame.Show_All;
       Minimap_Frame.Show_All;
       Fit_Map;
-      View_Ready := True;
    end Initialize;
 
 end Editor_Canvas;

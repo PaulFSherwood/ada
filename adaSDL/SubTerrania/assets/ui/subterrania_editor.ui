@@ -154,14 +154,6 @@
                       <child><object class="GtkEntry" id="boss_phase2_path_entry"><property name="text">Boss_01_Phase2</property></object></child>
                       <child><object class="GtkEntry" id="boss_phase3_hp_entry"><property name="text">HP_BELOW 80</property></object></child>
                       <child><object class="GtkEntry" id="boss_phase3_path_entry"><property name="text">Boss_01_Phase3</property></object></child>
-                      <child><object class="GtkLabel"><property name="label">Boss path waypoint 1: X / Y / Time</property><property name="xalign">0</property></object></child>
-                      <child><object class="GtkEntry" id="path1_x"><property name="text">320</property></object></child>
-                      <child><object class="GtkEntry" id="path1_y"><property name="text">160</property></object></child>
-                      <child><object class="GtkEntry" id="path1_t"><property name="text">1.5</property></object></child>
-                      <child><object class="GtkLabel"><property name="label">Boss path waypoint 2: X / Y / Time</property><property name="xalign">0</property></object></child>
-                      <child><object class="GtkEntry" id="path2_x"><property name="text">760</property></object></child>
-                      <child><object class="GtkEntry" id="path2_y"><property name="text">220</property></object></child>
-                      <child><object class="GtkEntry" id="path2_t"><property name="text">3.0</property></object></child>
                       <child><object class="GtkEntry" id="boss_normal_animation_entry"><property name="text">normal</property></object></child>
                       <child><object class="GtkEntry" id="boss_damaged_animation_entry"><property name="text">damaged</property></object></child>
                       <child><object class="GtkEntry" id="boss_critical_animation_entry"><property name="text">critical</property></object></child>
@@ -213,7 +205,7 @@
                         <child><object class="GtkTextView" id="output_text_view"><property name="editable">false</property><property name="monospace">true</property></object></child>
                       </object>
                     </child>
-                    <child><object class="GtkFrame" id="minimap_frame"><property name="label">Minimap</property><property name="width-request">240</property><property name="height-request">150</property></object></child>
+                    <child><object class="GtkFrame" id="minimap_frame"><property name="label">Minimap</property><property name="width-request">220</property></object></child>
                   </object>
                 </child>
               </object>
