@@ -1,4 +1,5 @@
 with Ada.Text_IO; use Ada.Text_IO;
+with Interfaces.C;
 
 with App_Paths;
 with Audio;
@@ -16,6 +17,10 @@ with Render;
 with Editor_Layout;
 
 package body Application is
+
+   function C_System
+     (Command : Interfaces.C.char_array) return Interfaces.C.int
+   with Import, Convention => C, External_Name => "system";
 
    package EM renames ECS.Entity_System.Entity_Manager;
    package Render_System renames Render;
@@ -644,6 +649,17 @@ package body Application is
       Audio.Play_Music (Audio.Menu_Music);
    end Return_To_Main_Menu;
 
+   procedure Launch_Native_Editor is
+      Result : Interfaces.C.int;
+      pragma Unreferenced (Result);
+   begin
+      Result := C_System
+        (Interfaces.C.To_C
+           ("sh -c 'tools/run_editor.sh > "
+            & "/tmp/subterrania-editor.log 2>&1 &'"));
+      Put_Line ("NATIVE EDITOR LAUNCHED");
+   end Launch_Native_Editor;
+
    procedure Handle_Main_Menu_Input
      (State : Inputs.Input_State) is
    begin
@@ -669,7 +685,7 @@ package body Application is
                Load_Menu_Item := 1;
 
             when 3 =>
-               Start_Editor;
+               Launch_Native_Editor;
 
             when others =>
                Running := False;

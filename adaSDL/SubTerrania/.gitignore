@@ -37,3 +37,4 @@ assets/audio/**/*.flac
 
 # Old root-level level file after migration
 /level01.map
+backups/

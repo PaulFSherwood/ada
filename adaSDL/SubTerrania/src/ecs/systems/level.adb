@@ -13,7 +13,13 @@ package body Level is
       return
         (Stage_Name => US.To_Unbounded_String ("stage01"),
          Title      => US.To_Unbounded_String ("Mission 1"),
-         Next_Level => US.To_Unbounded_String ("stage02.map"));
+         Next_Level => US.To_Unbounded_String ("stage02.map"),
+         Background_Image => US.To_Unbounded_String
+           ("assets/images/maps/sub-terrania-mission-1.png"),
+         Music => US.To_Unbounded_String
+           ("assets/audio/music/mission01.ogg"),
+         Boss_Music => US.To_Unbounded_String
+           ("assets/audio/music/boss01.ogg"));
    end Default_Level_Info;
 
    function World_Width return Float is
@@ -500,6 +506,10 @@ package body Level is
       Put_Line (File, "NAME " & US.To_String (Info.Stage_Name));
       Put_Line (File, "TITLE " & US.To_String (Info.Title));
       Put_Line (File, "NEXT " & US.To_String (Info.Next_Level));
+      Put_Line
+        (File, "BACKGROUND " & US.To_String (Info.Background_Image));
+      Put_Line (File, "MUSIC " & US.To_String (Info.Music));
+      Put_Line (File, "BOSS_MUSIC " & US.To_String (Info.Boss_Music));
    end Save_Info;
 
    function Starts_With
@@ -606,6 +616,18 @@ package body Level is
             elsif Starts_With (Line, Last, "NEXT ") then
                Info.Next_Level :=
                  US.To_Unbounded_String (Tail_After (Line, Last, "NEXT "));
+            elsif Starts_With (Line, Last, "BACKGROUND ") then
+               Info.Background_Image :=
+                 US.To_Unbounded_String
+                   (Tail_After (Line, Last, "BACKGROUND "));
+            elsif Starts_With (Line, Last, "MUSIC ") then
+               Info.Music :=
+                 US.To_Unbounded_String
+                   (Tail_After (Line, Last, "MUSIC "));
+            elsif Starts_With (Line, Last, "BOSS_MUSIC ") then
+               Info.Boss_Music :=
+                 US.To_Unbounded_String
+                   (Tail_After (Line, Last, "BOSS_MUSIC "));
             elsif Starts_With (Line, Last, "TILES") then
                exit;
             end if;

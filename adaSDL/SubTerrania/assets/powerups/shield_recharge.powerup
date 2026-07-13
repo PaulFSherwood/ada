@@ -1,0 +1,6 @@
+POWERUP Shield_Recharge
+NAME Shield_Recharge
+VALUE 25
+DURATION 0
+PICKUP_SOUND assets/audio/sfx/pickups/shield.ogg
+

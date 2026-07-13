@@ -4,96 +4,6 @@
 [solution.context]
 solved = true
 [[solution.state]]
-crate = "gtkada"
-fulfilment = "solved"
-pinned = false
-transitivity = "direct"
-versions = "^26.0.0"
-[solution.state.release]
-authors = [
-"AdaCore",
-]
-description = "An Ada graphical toolkit based on Gtk+"
-licenses = "GPL-3.0-or-later WITH GCC-exception-3.1"
-long-description = "This crate requires Gtk3+ >= 3.24.24"
-maintainers = [
-"chouteau@adacore.com",
-"reznikmm@gmail.com",
-"sagaert@adacore.com",
-]
-maintainers-logins = [
-"Fabien-Chouteau",
-"reznikmm",
-"AldanTanneo",
-]
-name = "gtkada"
-project-files = [
-"src/gtkada.gpr",
-]
-tags = [
-"gtk",
-"gui",
-]
-version = "26.0.0"
-website = "https://github.com/adacore/gtkada"
-[solution.state.release.configuration]
-auto_gpr_with = true
-disabled = true
-generate_ada = true
-generate_c = true
-generate_gpr = true
-output_dir = "config"
-[solution.state.release.gpr-externals]
-LIBRARY_TYPE = [
-"static",
-"static-pic",
-"relocatable",
-]
-[solution.state.release.origin]
-hashes = [
-"sha512:489d17d3fdd14c912c1691d80a08d335089c4d25a6b526737afda9cccbb9a79e1444e0a4696e3067f6132fb0d3adc9fa52e9403d058de871b485d83de1baa765",
-]
-url = "https://github.com/AdaCore/gtkada/archive/refs/tags/v26.0.0.zip"
-[[solution.state.release.actions]]
-command = [
-"bash",
-"-c",
-"PATH=${DISTRIB_ROOT}/mingw64/bin:${PATH} ./configure",
-]
-directory = "."
-type = "post-fetch"
-[[solution.state.release.actions]]
-command = [
-"make",
-"src/gtkada-intl.adb",
-]
-directory = "."
-type = "post-fetch"
-[[solution.state.release.depends-on]]
-libgtk3 = ">=3.24.24"
-make = "*"
-pkg_config = "*"
-[[solution.state]]
-crate = "libgtk3"
-fulfilment = "solved"
-pinned = false
-transitivity = "indirect"
-versions = ">=3.24.24"
-[solution.state.release]
-description = "GObject-based multi-platform GUI toolkit (v3)"
-licenses = "LGPL-3.0-only"
-maintainers = [
-"chouteau@adacore.com",
-]
-maintainers-logins = [
-"Fabien-Chouteau",
-]
-name = "libgtk3"
-notes = "Provided by system package: libgtk-3-dev"
-version = "3.24.41"
-[solution.state.release.origin]
-url = "system:libgtk-3-dev"
-[[solution.state]]
 crate = "libsdl2"
 fulfilment = "solved"
 pinned = false
@@ -188,26 +98,6 @@ notes = "Provided by system package: make"
 version = "4.3.0"
 [solution.state.release.origin]
 url = "system:make"
-[[solution.state]]
-crate = "pkg_config"
-fulfilment = "solved"
-pinned = false
-transitivity = "indirect"
-versions = "*"
-[solution.state.release]
-description = ""
-licenses = "LGPL-3.0-only"
-maintainers = [
-"chouteau@adacore.com",
-]
-maintainers-logins = [
-"Fabien-Chouteau",
-]
-name = "pkg_config"
-notes = "Provided by system package: pkg-config"
-version = "1.8.1"
-[solution.state.release.origin]
-url = "system:pkg-config"
 [[solution.state]]
 crate = "sdlada"
 fulfilment = "solved"

@@ -18,6 +18,15 @@ package Level is
         Ada.Strings.Unbounded.To_Unbounded_String ("Mission 1");
       Next_Level : Ada.Strings.Unbounded.Unbounded_String :=
         Ada.Strings.Unbounded.To_Unbounded_String ("stage02.map");
+      Background_Image : Ada.Strings.Unbounded.Unbounded_String :=
+        Ada.Strings.Unbounded.To_Unbounded_String
+          ("assets/images/maps/sub-terrania-mission-1.png");
+      Music : Ada.Strings.Unbounded.Unbounded_String :=
+        Ada.Strings.Unbounded.To_Unbounded_String
+          ("assets/audio/music/mission01.ogg");
+      Boss_Music : Ada.Strings.Unbounded.Unbounded_String :=
+        Ada.Strings.Unbounded.To_Unbounded_String
+          ("assets/audio/music/boss01.ogg");
    end record;
 
    function Default_Level_Info return Level_Info;

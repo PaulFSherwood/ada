@@ -1,3 +1,4 @@
+dependency:gtkada=26.0.0=5b0a6c228d630e36e6dc7a2e55ab79e0ec87b01c42118c60761c64f4c6d5669c
 dependency:sdlada=2.5.20=b806e89a70826130f309c821b0062d4880d742c187463f2005eec1b7a4d4d286
 external:LIBRARY_TYPE=default
 external:SUBTERRANIA_LIBRARY_TYPE=default

@@ -1,0 +1,10 @@
+WEAPON Laser
+NAME Laser
+DAMAGE 10
+COOLDOWN 0.25
+PROJECTILE_SPEED 500
+CHARGE_STATES 0.0, 0.5, 1.5
+FIRE_SOUND assets/audio/sfx/weapons/laser_fire.ogg
+HIT_SOUND assets/audio/sfx/weapons/laser_hit.ogg
+CHARGE_SOUND assets/audio/sfx/weapons/laser_charge.ogg
+

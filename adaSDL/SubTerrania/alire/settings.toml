@@ -1,2 +1,2 @@
-last_build_profile = "libsdl2=RELEASE,libsdl2_image=RELEASE,libsdl2_mixer=RELEASE,libsdl2_ttf=RELEASE,make=RELEASE,sdlada=RELEASE,subterrania=DEVELOPMENT"
+last_build_profile = "gtkada=RELEASE,libgtk3=RELEASE,libsdl2=RELEASE,libsdl2_image=RELEASE,libsdl2_mixer=RELEASE,libsdl2_ttf=RELEASE,make=RELEASE,pkg_config=RELEASE,sdlada=RELEASE,subterrania=DEVELOPMENT"
 

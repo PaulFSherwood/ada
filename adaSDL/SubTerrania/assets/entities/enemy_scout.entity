@@ -1,0 +1,11 @@
+ENTITY Enemy_Scout
+COMPONENT Transform
+COMPONENT Renderable
+COMPONENT Collider
+COMPONENT Health
+COMPONENT Weapon
+COMPONENT AI_Controller
+NAME Enemy_Scout
+HEALTH 100
+FIRE_RATE 1.2
+

@@ -13,6 +13,3 @@ executables = ["subterrania"]
 
 [[depends-on]]
 sdlada = "^2.5.20"
-
-[[depends-on]]
-gtkada = "^26.0.0"

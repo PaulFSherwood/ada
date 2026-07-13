@@ -1,0 +1,18 @@
+ENTITY Player_Ship
+COMPONENT Transform
+COMPONENT Renderable
+COMPONENT Collider
+COMPONENT Velocity
+COMPONENT Gravity
+COMPONENT Fuel
+COMPONENT Shield
+NAME RescueShip01
+SPRITE assets/images/sprites/ship01.png
+THRUST 260.0
+DRAG 0.96
+FUEL_MAX 100
+SHIELD_MAX 100
+ENGINE_SOUND assets/audio/sfx/ship/thrust.ogg
+SHIELD_HIT_SOUND assets/audio/sfx/shields/hit.ogg
+SHIELD_LOW_SOUND assets/audio/sfx/shields/low.ogg
+
