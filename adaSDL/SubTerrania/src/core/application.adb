@@ -1,5 +1,6 @@
 with Ada.Text_IO; use Ada.Text_IO;
 
+with App_Paths;
 with Audio;
 with SDL;
 with SDL.Video;
@@ -12,6 +13,7 @@ with Inputs;
 with Level;
 with Movement;
 with Render;
+with Editor_Layout;
 
 package body Application is
 
@@ -30,13 +32,13 @@ package body Application is
       Map_Editor_Screen,
       Editor_Playtest_Screen);
 
-   Screen_Width  : constant Natural := 1280;
-   Screen_Height : constant Natural := 720;
+   Screen_Width  : constant Natural := Editor_Layout.Window_Width;
+   Screen_Height : constant Natural := Editor_Layout.Window_Height;
 
    DT             : constant Float := 1.0 / 60.0;
    Max_Fall_Speed : constant Float := 240.0;
 
-   Map_Path : constant String := "level01.map";
+   Map_Path : constant String := App_Paths.Default_Level_Path;
 
    Window   : SDL.Video.Windows.Window;
    Renderer : SDL.Video.Renderers.Renderer;
@@ -71,10 +73,10 @@ package body Application is
    Editor_Zoom         : Float := 1.0;
    Editor_Brush_Active : Boolean := False;
 
-   Editor_Map_Left   : constant Float := 210.0;
-   Editor_Map_Top    : constant Float := 98.0;
-   Editor_Map_Right  : constant Float := 1010.0;
-   Editor_Map_Bottom : constant Float := 610.0;
+   Editor_Map_Left   : constant Float := Editor_Layout.Map_Left;
+   Editor_Map_Top    : constant Float := Editor_Layout.Map_Top;
+   Editor_Map_Right  : constant Float := Editor_Layout.Map_Right;
+   Editor_Map_Bottom : constant Float := Editor_Layout.Map_Bottom;
 
    function In_Box
      (X : Float;
@@ -202,36 +204,60 @@ package body Application is
    begin
       Selected := True;
 
-      if In_Box (State.Mouse_X, State.Mouse_Y, 20.0, 130.0, 150.0, 24.0) then
+      if In_Box
+        (State.Mouse_X,
+         State.Mouse_Y,
+         Editor_Layout.Palette_Row_X,
+         Editor_Layout.Wall_Row_Y,
+         Editor_Layout.Palette_Row_Width,
+         Editor_Layout.Palette_Row_Height) then
          Brush := Level.Tile_Brush;
          Current_Tile := Level.Wall_Tile;
       elsif In_Box
-        (State.Mouse_X, State.Mouse_Y, 20.0, 156.0, 150.0, 24.0)
+        (State.Mouse_X, State.Mouse_Y, Editor_Layout.Palette_Row_X,
+         Editor_Layout.Water_Row_Y,
+         Editor_Layout.Palette_Row_Width,
+         Editor_Layout.Palette_Row_Height)
       then
          Brush := Level.Tile_Brush;
          Current_Tile := Level.Water_Tile;
       elsif In_Box
-        (State.Mouse_X, State.Mouse_Y, 20.0, 182.0, 150.0, 24.0)
+        (State.Mouse_X, State.Mouse_Y, Editor_Layout.Palette_Row_X,
+         Editor_Layout.Landing_Row_Y,
+         Editor_Layout.Palette_Row_Width,
+         Editor_Layout.Palette_Row_Height)
       then
          Brush := Level.Tile_Brush;
          Current_Tile := Level.Landing_Tile;
       elsif In_Box
-        (State.Mouse_X, State.Mouse_Y, 20.0, 208.0, 150.0, 24.0)
+        (State.Mouse_X, State.Mouse_Y, Editor_Layout.Palette_Row_X,
+         Editor_Layout.Start_Row_Y,
+         Editor_Layout.Palette_Row_Width,
+         Editor_Layout.Palette_Row_Height)
       then
          Brush := Level.Tile_Brush;
          Current_Tile := Level.Start_Tile;
       elsif In_Box
-        (State.Mouse_X, State.Mouse_Y, 20.0, 270.0, 150.0, 24.0)
+        (State.Mouse_X, State.Mouse_Y, Editor_Layout.Palette_Row_X,
+         Editor_Layout.Miner_Row_Y,
+         Editor_Layout.Palette_Row_Width,
+         Editor_Layout.Palette_Row_Height)
       then
          Brush := Level.Object_Brush;
          Current_Kind := Level.Miner;
       elsif In_Box
-        (State.Mouse_X, State.Mouse_Y, 20.0, 296.0, 150.0, 24.0)
+        (State.Mouse_X, State.Mouse_Y, Editor_Layout.Palette_Row_X,
+         Editor_Layout.Enemy_Row_Y,
+         Editor_Layout.Palette_Row_Width,
+         Editor_Layout.Palette_Row_Height)
       then
          Brush := Level.Object_Brush;
          Current_Kind := Level.Enemy;
       elsif In_Box
-        (State.Mouse_X, State.Mouse_Y, 20.0, 322.0, 150.0, 24.0)
+        (State.Mouse_X, State.Mouse_Y, Editor_Layout.Palette_Row_X,
+         Editor_Layout.Powerup_Row_Y,
+         Editor_Layout.Palette_Row_Width,
+         Editor_Layout.Palette_Row_Height)
       then
          Brush := Level.Object_Brush;
          Current_Kind := Level.Powerup;
@@ -687,6 +713,15 @@ package body Application is
             Current_Level,
             Map_Path,
             Loaded);
+
+         if not Loaded then
+            Level.Load_Level
+              (Tiles,
+               Objects,
+               Current_Level,
+               App_Paths.Legacy_Level_Path,
+               Loaded);
+         end if;
 
          if not Loaded then
             Level.Build_Test_Level (Tiles, Objects, Current_Level);

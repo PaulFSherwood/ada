@@ -1,5 +1,7 @@
+with Ada.Characters.Handling;
 with Ada.Strings.Unbounded;
 
+with Editor_Layout;
 with Mission1_Background;
 with Sprites;
 with SDL.Video.Palettes;
@@ -329,7 +331,12 @@ package body Render is
       Pen_X : Float := X;
    begin
       for Ch of Text loop
-         Draw_Char (Renderer, Ch, Pen_X, Y, Scale);
+         Draw_Char
+           (Renderer,
+            Ada.Characters.Handling.To_Upper (Ch),
+            Pen_X,
+            Y,
+            Scale);
          Pen_X := Pen_X + 6.0 * Scale;
       end loop;
    end Draw_Text;
@@ -583,12 +590,14 @@ package body Render is
       Current_Tile   : Level.Tile_Kind;
       Current_Kind   : Level.Object_Kind;
       Current_Motion : Level.Motion_Kind) is
-      X     : constant Float := 10.0;
-      Y     : constant Float := 10.0;
-      Scale : constant Float := 2.0;
+      X     : constant Float := Editor_Layout.Palette_Left;
+      Y     : constant Float := Editor_Layout.Palette_Top;
+      Scale : constant Float := 1.7;
    begin
       Renderer.Set_Draw_Colour ((0, 0, 0, 255));
-      Draw_Screen_Box (Renderer, X, Y, 190.0, 360.0);
+      Draw_Screen_Box
+        (Renderer, X, Y, Editor_Layout.Palette_Width,
+         Editor_Layout.Palette_Height);
 
       Renderer.Set_Draw_Colour ((255, 255, 255, 255));
       Draw_Text (Renderer, "PALETTE", X + 10.0, Y + 10.0, Scale);
@@ -602,41 +611,111 @@ package body Render is
       Draw_Text (Renderer, "TILE", X + 10.0, Y + 70.0, Scale);
 
       Set_Tile_Colour (Renderer, Level.Wall_Tile);
-      Draw_Screen_Box (Renderer, X + 10.0, Y + 92.0, 18.0, 18.0);
+      Draw_Screen_Box
+        (Renderer,
+         X + 18.0,
+         Editor_Layout.Wall_Row_Y,
+         18.0,
+         18.0);
       Renderer.Set_Draw_Colour ((255, 255, 255, 255));
-      Draw_Text (Renderer, "WALL", X + 36.0, Y + 94.0, Scale);
+      Draw_Text
+        (Renderer,
+         "WALL",
+         X + 48.0,
+         Editor_Layout.Wall_Row_Y + 2.0,
+         Scale);
 
       Set_Tile_Colour (Renderer, Level.Water_Tile);
-      Draw_Screen_Box (Renderer, X + 10.0, Y + 118.0, 18.0, 18.0);
+      Draw_Screen_Box
+        (Renderer,
+         X + 18.0,
+         Editor_Layout.Water_Row_Y,
+         18.0,
+         18.0);
       Renderer.Set_Draw_Colour ((255, 255, 255, 255));
-      Draw_Text (Renderer, "WATER", X + 36.0, Y + 120.0, Scale);
+      Draw_Text
+        (Renderer,
+         "WATER",
+         X + 48.0,
+         Editor_Layout.Water_Row_Y + 2.0,
+         Scale);
 
       Set_Tile_Colour (Renderer, Level.Landing_Tile);
-      Draw_Screen_Box (Renderer, X + 10.0, Y + 144.0, 18.0, 18.0);
+      Draw_Screen_Box
+        (Renderer,
+         X + 18.0,
+         Editor_Layout.Landing_Row_Y,
+         18.0,
+         18.0);
       Renderer.Set_Draw_Colour ((255, 255, 255, 255));
-      Draw_Text (Renderer, "LAND", X + 36.0, Y + 146.0, Scale);
+      Draw_Text
+        (Renderer,
+         "LAND",
+         X + 48.0,
+         Editor_Layout.Landing_Row_Y + 2.0,
+         Scale);
 
       Set_Tile_Colour (Renderer, Level.Start_Tile);
-      Draw_Screen_Box (Renderer, X + 10.0, Y + 170.0, 18.0, 18.0);
+      Draw_Screen_Box
+        (Renderer,
+         X + 18.0,
+         Editor_Layout.Start_Row_Y,
+         18.0,
+         18.0);
       Renderer.Set_Draw_Colour ((255, 255, 255, 255));
-      Draw_Text (Renderer, "START", X + 36.0, Y + 172.0, Scale);
+      Draw_Text
+        (Renderer,
+         "START",
+         X + 48.0,
+         Editor_Layout.Start_Row_Y + 2.0,
+         Scale);
 
       Draw_Text (Renderer, "OBJECT", X + 10.0, Y + 210.0, Scale);
 
       Set_Object_Colour (Renderer, Level.Miner);
-      Draw_Screen_Box (Renderer, X + 10.0, Y + 232.0, 18.0, 18.0);
+      Draw_Screen_Box
+        (Renderer,
+         X + 18.0,
+         Editor_Layout.Miner_Row_Y,
+         18.0,
+         18.0);
       Renderer.Set_Draw_Colour ((255, 255, 255, 255));
-      Draw_Text (Renderer, "MINER", X + 36.0, Y + 234.0, Scale);
+      Draw_Text
+        (Renderer,
+         "MINER",
+         X + 48.0,
+         Editor_Layout.Miner_Row_Y + 2.0,
+         Scale);
 
       Set_Object_Colour (Renderer, Level.Enemy);
-      Draw_Screen_Box (Renderer, X + 10.0, Y + 258.0, 18.0, 18.0);
+      Draw_Screen_Box
+        (Renderer,
+         X + 18.0,
+         Editor_Layout.Enemy_Row_Y,
+         18.0,
+         18.0);
       Renderer.Set_Draw_Colour ((255, 255, 255, 255));
-      Draw_Text (Renderer, "ENEMY", X + 36.0, Y + 260.0, Scale);
+      Draw_Text
+        (Renderer,
+         "ENEMY",
+         X + 48.0,
+         Editor_Layout.Enemy_Row_Y + 2.0,
+         Scale);
 
       Set_Object_Colour (Renderer, Level.Powerup);
-      Draw_Screen_Box (Renderer, X + 10.0, Y + 284.0, 18.0, 18.0);
+      Draw_Screen_Box
+        (Renderer,
+         X + 18.0,
+         Editor_Layout.Powerup_Row_Y,
+         18.0,
+         18.0);
       Renderer.Set_Draw_Colour ((255, 255, 255, 255));
-      Draw_Text (Renderer, "POWER", X + 36.0, Y + 286.0, Scale);
+      Draw_Text
+        (Renderer,
+         "POWER",
+         X + 48.0,
+         Editor_Layout.Powerup_Row_Y + 2.0,
+         Scale);
 
       Renderer.Set_Draw_Colour ((255, 255, 255, 255));
       Draw_Text
@@ -1087,16 +1166,22 @@ package body Render is
       W : constant Float := Float (Screen_Width);
    begin
       Renderer.Set_Draw_Colour ((24, 24, 28, 255));
-      Draw_Screen_Box (Renderer, 0.0, 0.0, W, 24.0);
+      Draw_Screen_Box
+        (Renderer,
+         0.0,
+         Editor_Layout.Menu_Bar_Top,
+         W,
+         Editor_Layout.Menu_Bar_Height);
 
       Renderer.Set_Draw_Colour ((220, 220, 220, 255));
-      Draw_Text (Renderer, "FILE", 10.0, 7.0, 1.5);
-      Draw_Text (Renderer, "EDIT", 62.0, 7.0, 1.5);
-      Draw_Text (Renderer, "VIEW", 114.0, 7.0, 1.5);
-      Draw_Text (Renderer, "LEVEL", 166.0, 7.0, 1.5);
-      Draw_Text (Renderer, "TEST", 232.0, 7.0, 1.5);
-      Draw_Text (Renderer, "HELP", 284.0, 7.0, 1.5);
-      Draw_Text (Renderer, "SUBTERRANIA EDITOR", W - 210.0, 7.0, 1.5);
+      Draw_Text (Renderer, "FILE", 10.0, 8.0, 1.5);
+      Draw_Text (Renderer, "EDIT", 62.0, 8.0, 1.5);
+      Draw_Text (Renderer, "VIEW", 114.0, 8.0, 1.5);
+      Draw_Text (Renderer, "LEVEL", 166.0, 8.0, 1.5);
+      Draw_Text (Renderer, "TEST", 232.0, 8.0, 1.5);
+      Draw_Text (Renderer, "HELP", 284.0, 8.0, 1.5);
+      Draw_Text
+        (Renderer, "SUBTERRANIA EDITOR", W - 210.0, 8.0, 1.5);
    end Draw_Editor_Menu_Bar;
 
    procedure Draw_Editor_Toolbar
@@ -1110,7 +1195,12 @@ package body Render is
       W : constant Float := Float (Screen_Width);
    begin
       Renderer.Set_Draw_Colour ((35, 35, 42, 255));
-      Draw_Screen_Box (Renderer, 0.0, 24.0, W, 46.0);
+      Draw_Screen_Box
+        (Renderer,
+         0.0,
+         Editor_Layout.Toolbar_Top,
+         W,
+         Editor_Layout.Toolbar_Height);
 
       Renderer.Set_Draw_Colour ((52, 52, 60, 255));
       Draw_Screen_Box (Renderer, 12.0, 34.0, 42.0, 26.0);
@@ -1176,9 +1266,19 @@ package body Render is
      (Renderer : in out SDL.Video.Renderers.Renderer) is
    begin
       Renderer.Set_Draw_Colour ((16, 20, 24, 255));
-      Draw_Screen_Box (Renderer, 10.0, 410.0, 200.0, 150.0);
+      Draw_Screen_Box
+        (Renderer,
+         Editor_Layout.Layers_Left,
+         Editor_Layout.Layers_Top,
+         Editor_Layout.Layers_Width,
+         Editor_Layout.Layers_Height);
       Renderer.Set_Draw_Colour ((255, 255, 255, 255));
-      Draw_Text (Renderer, "LAYERS", 20.0, 420.0, 1.6);
+      Draw_Text
+        (Renderer,
+         "LAYERS",
+         Editor_Layout.Layers_Left + 18.0,
+         Editor_Layout.Layers_Top + 12.0,
+         1.6);
       Draw_Text (Renderer, "VIS LOCK NAME", 20.0, 448.0, 1.25);
       Draw_Text (Renderer, "ON  NO   BACKGROUND", 20.0, 470.0, 1.25);
       Draw_Text (Renderer, "ON  NO   TERRAIN", 20.0, 492.0, 1.25);
@@ -1195,10 +1295,15 @@ package body Render is
       View         : Gameplay.Editor_View;
       Status       : Gameplay.Player_Status;
       Info         : Level.Level_Info) is
-      X : constant Float := Float (Screen_Width) - 260.0;
+      X : constant Float := Editor_Layout.Right_Panel_Left;
    begin
       Renderer.Set_Draw_Colour ((18, 18, 23, 255));
-      Draw_Screen_Box (Renderer, X, 72.0, 250.0, 488.0);
+      Draw_Screen_Box
+        (Renderer,
+         X,
+         Editor_Layout.Right_Panel_Top,
+         Editor_Layout.Right_Panel_Width,
+         Editor_Layout.Right_Panel_Height);
 
       Renderer.Set_Draw_Colour ((255, 255, 255, 255));
       Draw_Text (Renderer, "PROPERTIES", X + 12.0, 86.0, 1.7);
@@ -1290,7 +1395,7 @@ package body Render is
       Cursor_Y      : Float;
       Camera_X      : Float;
       Camera_Y      : Float) is
-      Y : constant Float := Float (Screen_Height) - 28.0;
+      Y : constant Float := Editor_Layout.Status_Bar_Top;
    begin
       Renderer.Set_Draw_Colour ((20, 27, 36, 255));
       Draw_Screen_Box (Renderer, 0.0, Y, Float (Screen_Width), 28.0);
@@ -1324,13 +1429,23 @@ package body Render is
       Screen_Height : Natural;
       View          : Gameplay.Editor_View;
       Status        : Gameplay.Player_Status) is
-      Y : constant Float := Float (Screen_Height) - 150.0;
-      W : constant Float := Float (Screen_Width) - 500.0;
+      Y : constant Float := Editor_Layout.Bottom_Panel_Top;
+      W : constant Float := Editor_Layout.Bottom_Panel_Width;
    begin
       Renderer.Set_Draw_Colour ((18, 18, 24, 255));
-      Draw_Screen_Box (Renderer, 230.0, Y, W, 112.0);
+      Draw_Screen_Box
+        (Renderer,
+         Editor_Layout.Bottom_Panel_Left,
+         Y,
+         W,
+         Editor_Layout.Bottom_Panel_Height);
       Renderer.Set_Draw_Colour ((255, 255, 255, 255));
-      Draw_Text (Renderer, "WORKSPACE", 242.0, Y + 12.0, 1.5);
+      Draw_Text
+        (Renderer,
+         "WORKSPACE",
+         Editor_Layout.Bottom_Panel_Left + 12.0,
+         Y + 12.0,
+         1.5);
 
       case View is
          when Gameplay.Boss_View =>
@@ -1413,8 +1528,8 @@ package body Render is
    begin
       if Mode = Level.Editor_Mode then
          Active_Zoom := View_Zoom;
-         Active_Offset_X := 210.0;
-         Active_Offset_Y := 98.0;
+         Active_Offset_X := Editor_Layout.Map_Left;
+         Active_Offset_Y := Editor_Layout.Map_Top;
       else
          Active_Zoom := 1.0;
          Active_Offset_X := 0.0;
@@ -1468,6 +1583,32 @@ package body Render is
       end if;
 
       if Mode = Level.Editor_Mode then
+         Renderer.Set_Draw_Colour ((70, 90, 110, 255));
+         Draw_Screen_Box
+           (Renderer,
+            Editor_Layout.Map_Left,
+            Editor_Layout.Map_Top,
+            Editor_Layout.Map_Width,
+            2.0);
+         Draw_Screen_Box
+           (Renderer,
+            Editor_Layout.Map_Left,
+            Editor_Layout.Map_Bottom - 2.0,
+            Editor_Layout.Map_Width,
+            2.0);
+         Draw_Screen_Box
+           (Renderer,
+            Editor_Layout.Map_Left,
+            Editor_Layout.Map_Top,
+            2.0,
+            Editor_Layout.Map_Height);
+         Draw_Screen_Box
+           (Renderer,
+            Editor_Layout.Map_Right - 2.0,
+            Editor_Layout.Map_Top,
+            2.0,
+            Editor_Layout.Map_Height);
+
          Draw_Editor_Cursor
            (Renderer,
             Brush,

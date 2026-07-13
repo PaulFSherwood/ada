@@ -12,7 +12,28 @@ assets/audio/**/*.ogg
 assets/audio/**/*.flac
 !assets/audio/**/.keep
 
+# Optional local scratch exports from the editor.
+exports/
+tmp/
+
 # Editor backups
 *~
 *.bak
 *.swp
+
+# Build output
+/obj/
+/bin/
+
+# Local/private audio assets. Keep .keep files only.
+assets/audio/**/*.mp3
+assets/audio/**/*.wav
+assets/audio/**/*.ogg
+assets/audio/**/*.flac
+!assets/audio/**/.keep
+
+# Local backups created by patch scripts
+/backups/
+
+# Old root-level level file after migration
+/level01.map
