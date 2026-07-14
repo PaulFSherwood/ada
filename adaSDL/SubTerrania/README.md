@@ -225,3 +225,43 @@ The native editor builds and opens after the Phase 11 runtime fixes. Some behavi
 - Toolbar/menu behavior needs cleanup.
 - The editor needs real data editing for each workspace.
 
+
+## Phase 11B editor notes
+
+The editor currently has a safer map canvas and a more useful inspector.
+
+Important behavior:
+
+```text
+Select tool    click map objects to inspect them
+Brush tool     place the selected terrain or object from the palette
+Right click    cancel brush and return to select mode
+Grid           redraws the map with the grid layer enabled/disabled
+Inspector      shows object name, type, components, geometry, and motion
+```
+
+Object names are generated from their type and order in the level, for example:
+
+```text
+Platform_01
+Platform_02
+Enemy_01
+Miner_01
+```
+
+The Motion Path section currently displays the old patrol data as two nodes.
+This is the bridge between the old `Patrol_X` / `Patrol_Y` system and the future
+node-based path editor.
+
+Next editor step:
+
+```text
+Phase 11C
+  Add real node insertion
+  Split a path segment
+  Delete a node
+  Drag nodes
+  Set per-node timing
+  Set interpolation: Snap / Linear / Smooth
+  Save/load arbitrary paths
+```

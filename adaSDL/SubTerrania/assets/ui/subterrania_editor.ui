@@ -218,28 +218,68 @@
                 <child>
                   <object class="GtkNotebook" id="inspector_notebook">
                     <property name="vexpand">true</property>
-                    <child><object class="GtkBox" id="selected_inspector"><property name="orientation">vertical</property><property name="margin">12</property>
-                      <child><object class="GtkLabel"><property name="label">Selected Item</property><property name="xalign">0</property></object></child>
-                      <child><object class="GtkLabel" id="selected_name_label"><property name="label">Nothing selected</property><property name="xalign">0</property></object></child>
-                      <child><object class="GtkLabel" id="selected_type_label"><property name="label">Select an item</property><property name="xalign">0</property></object></child>
-                      <child><object class="GtkEntry" id="selected_x_entry"><property name="text">0</property></object></child>
-                      <child><object class="GtkEntry" id="selected_y_entry"><property name="text">0</property></object></child>
-                      <child><object class="GtkEntry" id="selected_w_entry"><property name="text">32</property></object></child>
-                      <child><object class="GtkEntry" id="selected_h_entry"><property name="text">32</property></object></child>
-                      <child><object class="GtkButton"><property name="label">Apply Geometry</property><signal name="clicked" handler="on_apply_selected_geometry"/></object></child>
-                      <child><object class="GtkButton"><property name="label">Delete Selection</property><signal name="clicked" handler="on_delete_selection"/></object></child>
-                    </object></child>
-                    <child><object class="GtkBox" id="level_inspector"><property name="orientation">vertical</property><property name="margin">12</property>
-                      <child><object class="GtkLabel"><property name="label">Level Properties</property><property name="xalign">0</property></object></child>
-                      <child><object class="GtkEntry" id="level_name_entry"><property name="text">STAGE01</property></object></child>
-                      <child><object class="GtkEntry" id="level_title_entry"><property name="text">MISSION 1</property></object></child>
-                      <child><object class="GtkEntry" id="next_level_entry"><property name="text">assets/levels/stage02.map</property></object></child>
-                      <child><object class="GtkEntry" id="background_entry"><property name="text">assets/images/maps/sub-terrania-mission-1.png</property></object></child>
-                      <child><object class="GtkEntry" id="level_boss_music_entry"><property name="text">assets/audio/music/boss01.mp3</property></object></child>
-                      <child><object class="GtkButton"><property name="label">Browse Background</property><signal name="clicked" handler="on_browse_background"/></object></child>
-                      <child><object class="GtkButton"><property name="label">Apply Level Properties</property><signal name="clicked" handler="on_apply_level_properties"/></object></child>
-                      <child><object class="GtkButton"><property name="label">Save Project Assets</property><signal name="clicked" handler="on_save_project_assets"/></object></child>
-                    </object></child>
+                    <child>
+                      <object class="GtkBox" id="selected_inspector">
+                        <property name="orientation">vertical</property>
+                        <property name="margin">12</property>
+                        <property name="spacing">6</property>
+                        <child><object class="GtkLabel"><property name="label">Selected Object</property><property name="xalign">0</property></object></child>
+                        <child><object class="GtkLabel" id="selected_name_label"><property name="label">Nothing selected</property><property name="xalign">0</property></object></child>
+                        <child><object class="GtkLabel" id="selected_type_label"><property name="label">Select an item</property><property name="xalign">0</property></object></child>
+                        <child><object class="GtkLabel" id="selected_components_label"><property name="label">Components: none</property><property name="xalign">0</property></object></child>
+                        <child><object class="GtkSeparator"/></child>
+                        <child><object class="GtkLabel"><property name="label">Transform</property><property name="xalign">0</property></object></child>
+                        <child><object class="GtkLabel"><property name="label">X</property><property name="xalign">0</property></object></child>
+                        <child><object class="GtkEntry" id="selected_x_entry"><property name="text">0</property></object></child>
+                        <child><object class="GtkLabel"><property name="label">Y</property><property name="xalign">0</property></object></child>
+                        <child><object class="GtkEntry" id="selected_y_entry"><property name="text">0</property></object></child>
+                        <child><object class="GtkLabel"><property name="label">Width</property><property name="xalign">0</property></object></child>
+                        <child><object class="GtkEntry" id="selected_w_entry"><property name="text">32</property></object></child>
+                        <child><object class="GtkLabel"><property name="label">Height</property><property name="xalign">0</property></object></child>
+                        <child><object class="GtkEntry" id="selected_h_entry"><property name="text">32</property></object></child>
+                        <child><object class="GtkButton"><property name="label">Apply Geometry</property><signal name="clicked" handler="on_apply_selected_geometry"/></object></child>
+                        <child><object class="GtkButton"><property name="label">Delete Selection</property><signal name="clicked" handler="on_delete_selection"/></object></child>
+                        <child><object class="GtkSeparator"/></child>
+                        <child><object class="GtkLabel"><property name="label">Motion Path</property><property name="xalign">0</property></object></child>
+                        <child><object class="GtkLabel" id="selected_motion_label"><property name="label">Motion: Static</property><property name="xalign">0</property></object></child>
+                        <child><object class="GtkLabel"><property name="label">Node 1 X</property><property name="xalign">0</property></object></child>
+                        <child><object class="GtkEntry" id="path1_x"><property name="text">0</property></object></child>
+                        <child><object class="GtkLabel"><property name="label">Node 1 Y</property><property name="xalign">0</property></object></child>
+                        <child><object class="GtkEntry" id="path1_y"><property name="text">0</property></object></child>
+                        <child><object class="GtkLabel"><property name="label">Node 1 Time</property><property name="xalign">0</property></object></child>
+                        <child><object class="GtkEntry" id="path1_t"><property name="text">0.0</property></object></child>
+                        <child><object class="GtkLabel"><property name="label">Node 2 X</property><property name="xalign">0</property></object></child>
+                        <child><object class="GtkEntry" id="path2_x"><property name="text">0</property></object></child>
+                        <child><object class="GtkLabel"><property name="label">Node 2 Y</property><property name="xalign">0</property></object></child>
+                        <child><object class="GtkEntry" id="path2_y"><property name="text">0</property></object></child>
+                        <child><object class="GtkLabel"><property name="label">Node 2 Time</property><property name="xalign">0</property></object></child>
+                        <child><object class="GtkEntry" id="path2_t"><property name="text">1.0</property></object></child>
+                        <child><object class="GtkLabel"><property name="label">This view now exposes the legacy patrol path. Node editing is next.</property><property name="xalign">0</property><property name="wrap">true</property></object></child>
+                      </object>
+                    </child>
+                    <child type="tab"><object class="GtkLabel"><property name="label">Inspector</property></object></child>
+                    <child>
+                      <object class="GtkBox" id="level_inspector">
+                        <property name="orientation">vertical</property>
+                        <property name="margin">12</property>
+                        <property name="spacing">6</property>
+                        <child><object class="GtkLabel"><property name="label">Level Properties</property><property name="xalign">0</property></object></child>
+                        <child><object class="GtkLabel"><property name="label">Stage Name</property><property name="xalign">0</property></object></child>
+                        <child><object class="GtkEntry" id="level_name_entry"><property name="text">STAGE01</property></object></child>
+                        <child><object class="GtkLabel"><property name="label">Title</property><property name="xalign">0</property></object></child>
+                        <child><object class="GtkEntry" id="level_title_entry"><property name="text">MISSION 1</property></object></child>
+                        <child><object class="GtkLabel"><property name="label">Next Level</property><property name="xalign">0</property></object></child>
+                        <child><object class="GtkEntry" id="next_level_entry"><property name="text">assets/levels/stage02.map</property></object></child>
+                        <child><object class="GtkLabel"><property name="label">Background Image</property><property name="xalign">0</property></object></child>
+                        <child><object class="GtkEntry" id="background_entry"><property name="text">assets/images/maps/sub-terrania-mission-1.png</property></object></child>
+                        <child><object class="GtkLabel"><property name="label">Boss Music</property><property name="xalign">0</property></object></child>
+                        <child><object class="GtkEntry" id="level_boss_music_entry"><property name="text">assets/audio/music/boss01.mp3</property></object></child>
+                        <child><object class="GtkButton"><property name="label">Browse Background</property><signal name="clicked" handler="on_browse_background"/></object></child>
+                        <child><object class="GtkButton"><property name="label">Apply Level Properties</property><signal name="clicked" handler="on_apply_level_properties"/></object></child>
+                        <child><object class="GtkButton"><property name="label">Save Project Assets</property><signal name="clicked" handler="on_save_project_assets"/></object></child>
+                      </object>
+                    </child>
+                    <child type="tab"><object class="GtkLabel"><property name="label">Level</property></object></child>
                   </object>
                 </child>
                 <child><object class="GtkLabel" id="status_label"><property name="label">Ready</property><property name="xalign">0</property></object></child>

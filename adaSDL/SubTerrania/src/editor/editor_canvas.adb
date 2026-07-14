@@ -38,6 +38,8 @@ package body Editor_Canvas is
    use type Gtkada.Canvas_View.Abstract_Item;
    use type Gtkada.Canvas_View.Canvas_Event_Type;
    use type Level.Tile_Kind;
+   use type Editor_State.Selection_Kind;
+   use type Level.Motion_Kind;
 
    function On_Item_Event_Zoom is new On_Item_Event_Zoom_Generic
      (Modifier => 0);
@@ -140,6 +142,80 @@ package body Editor_Canvas is
                Stroke => (0.90, 0.62, 1.0, 1.0));
       end case;
    end Object_Style;
+
+
+   function Motion_Style return Drawing_Style is
+   begin
+      return Gtk_New
+        (Stroke     => (0.85, 0.20, 1.0, 0.95),
+         Line_Width => 3.0);
+   end Motion_Style;
+
+   function Motion_Node_Style return Drawing_Style is
+   begin
+      return Gtk_New
+        (Fill   => Create_Rgba_Pattern ((0.90, 0.20, 1.0, 0.88)),
+         Stroke => (1.0, 0.78, 1.0, 1.0));
+   end Motion_Node_Style;
+
+   function Motion_Name (Motion : Level.Motion_Kind) return String is
+   begin
+      case Motion is
+         when Level.Static   => return "Static";
+         when Level.Patrol_X => return "Patrol X";
+         when Level.Patrol_Y => return "Patrol Y";
+      end case;
+   end Motion_Name;
+
+   function Components_For (Kind : Level.Object_Kind) return String is
+   begin
+      case Kind is
+         when Level.Miner =>
+            return "Components: Transform, Renderable, Collider, Rescue";
+         when Level.Enemy =>
+            return "Components: Transform, Renderable, Collider, AI, Motion";
+         when Level.Powerup | Level.Fuel | Level.Shield | Level.Weight =>
+            return "Components: Transform, Renderable, Collider, Pickup";
+         when Level.Goal | Level.Base =>
+            return "Components: Transform, Renderable, Collider, Objective";
+         when Level.Gate =>
+            return "Components: Transform, Renderable, Collider, Triggered";
+         when Level.Platform =>
+            return "Components: Transform, Renderable, Collider, Motion";
+         when Level.Boss_Spawn =>
+            return "Components: Transform, Trigger, Encounter";
+      end case;
+   end Components_For;
+
+   function Float_Text (Value : Float) return String is
+      Raw : constant String := Float'Image (Value);
+   begin
+      if Raw'Length > 0 and then Raw (Raw'First) = ' ' then
+         return Raw (Raw'First + 1 .. Raw'Last);
+      else
+         return Raw;
+      end if;
+   end Float_Text;
+
+   procedure Set_Entry_Text
+     (Name  : String;
+      Value : String) is
+      Field : constant Gtk_Entry := UI_Entry (Name);
+   begin
+      if Field /= null then
+         Field.Set_Text (Value);
+      end if;
+   end Set_Entry_Text;
+
+   procedure Set_Label_Text
+     (Name  : String;
+      Value : String) is
+      Label : constant Gtk_Label := UI_Label (Name);
+   begin
+      if Label /= null then
+         Label.Set_Text (Value);
+      end if;
+   end Set_Label_Text;
 
    function Background_Style return Drawing_Style is
    begin
@@ -253,6 +329,69 @@ package body Editor_Canvas is
       end loop;
    end Add_Objects;
 
+
+   procedure Add_Motion_Guides is
+      Sel     : constant Editor_State.Selection_Info :=
+        Editor_State.Selection;
+      Objects : constant access Level.Object_Array := Editor_State.Objects;
+      Index   : Level.Object_Index;
+      Line    : Polyline_Item;
+      Node    : Rect_Item;
+      X1      : Float;
+      Y1      : Float;
+      X2      : Float;
+      Y2      : Float;
+
+      procedure Add_Node (X : Float; Y : Float) is
+      begin
+         Node := Gtk_New_Rect
+           (Style  => Motion_Node_Style,
+            Width  => 10.0,
+            Height => 10.0);
+         Node.Set_Position ((Gdouble (X - 5.0), Gdouble (Y - 5.0)));
+         Model.Add (Node);
+      end Add_Node;
+   begin
+      if Sel.Kind /= Editor_State.Object_Selected
+        or else Sel.Object_Index = 0
+      then
+         return;
+      end if;
+
+      Index := Level.Object_Index (Sel.Object_Index);
+
+      if not Objects (Index).Used
+        or else Objects (Index).Motion = Level.Static
+      then
+         return;
+      end if;
+
+      case Objects (Index).Motion is
+         when Level.Static =>
+            return;
+
+         when Level.Patrol_X =>
+            X1 := Objects (Index).Min_Pos;
+            Y1 := Objects (Index).Y + Objects (Index).H / 2.0;
+            X2 := Objects (Index).Max_Pos;
+            Y2 := Y1;
+
+         when Level.Patrol_Y =>
+            X1 := Objects (Index).X + Objects (Index).W / 2.0;
+            Y1 := Objects (Index).Min_Pos;
+            X2 := X1;
+            Y2 := Objects (Index).Max_Pos;
+      end case;
+
+      Line := Gtk_New_Polyline
+        (Motion_Style,
+         ((Gdouble (X1), Gdouble (Y1)),
+          (Gdouble (X2), Gdouble (Y2))));
+      Model.Add (Line);
+      Add_Node (X1, Y1);
+      Add_Node (X2, Y2);
+   end Add_Motion_Guides;
+
    function Object_Index_For_Item
      (Item  : Abstract_Item;
       Index : out Level.Object_Index) return Boolean is
@@ -273,39 +412,98 @@ package body Editor_Canvas is
         Editor_State.Selection;
       Objects : constant access Level.Object_Array := Editor_State.Objects;
       Index   : Level.Object_Index;
+
+      procedure Show_Static_Path is
+      begin
+         Set_Entry_Text ("path1_x", "0");
+         Set_Entry_Text ("path1_y", "0");
+         Set_Entry_Text ("path1_t", "0.0");
+         Set_Entry_Text ("path2_x", "0");
+         Set_Entry_Text ("path2_y", "0");
+         Set_Entry_Text ("path2_t", "0.0");
+      end Show_Static_Path;
+
+      procedure Show_Object_Path (Obj : Level.Object_Record) is
+         Travel_Time : Float := 0.0;
+      begin
+         if Obj.Speed > 0.0 then
+            Travel_Time := abs (Obj.Max_Pos - Obj.Min_Pos) / Obj.Speed;
+         end if;
+
+         case Obj.Motion is
+            when Level.Static =>
+               Show_Static_Path;
+
+            when Level.Patrol_X =>
+               Set_Entry_Text ("path1_x", Float_Text (Obj.Min_Pos));
+               Set_Entry_Text
+                 ("path1_y", Float_Text (Obj.Y + Obj.H / 2.0));
+               Set_Entry_Text ("path1_t", "0.0");
+               Set_Entry_Text ("path2_x", Float_Text (Obj.Max_Pos));
+               Set_Entry_Text
+                 ("path2_y", Float_Text (Obj.Y + Obj.H / 2.0));
+               Set_Entry_Text ("path2_t", Float_Text (Travel_Time));
+
+            when Level.Patrol_Y =>
+               Set_Entry_Text
+                 ("path1_x", Float_Text (Obj.X + Obj.W / 2.0));
+               Set_Entry_Text ("path1_y", Float_Text (Obj.Min_Pos));
+               Set_Entry_Text ("path1_t", "0.0");
+               Set_Entry_Text
+                 ("path2_x", Float_Text (Obj.X + Obj.W / 2.0));
+               Set_Entry_Text ("path2_y", Float_Text (Obj.Max_Pos));
+               Set_Entry_Text ("path2_t", Float_Text (Travel_Time));
+         end case;
+      end Show_Object_Path;
    begin
-      UI_Entry ("selected_x_entry").Set_Text
-        (Integer'Image (Integer (Sel.World_X)));
-      UI_Entry ("selected_y_entry").Set_Text
-        (Integer'Image (Integer (Sel.World_Y)));
+      Set_Entry_Text ("selected_x_entry",
+                      Integer'Image (Integer (Sel.World_X)));
+      Set_Entry_Text ("selected_y_entry",
+                      Integer'Image (Integer (Sel.World_Y)));
 
       case Sel.Kind is
          when Editor_State.Nothing_Selected =>
-            UI_Label ("selected_name_label").Set_Text ("Nothing selected");
-            UI_Label ("selected_type_label").Set_Text ("Select an item");
+            Set_Label_Text ("selected_name_label", "Nothing selected");
+            Set_Label_Text ("selected_type_label", "Select an item");
+            Set_Label_Text ("selected_components_label", "Components: none");
+            Set_Label_Text ("selected_motion_label", "Motion: none");
+            Set_Entry_Text ("selected_w_entry", "0");
+            Set_Entry_Text ("selected_h_entry", "0");
+            Show_Static_Path;
 
          when Editor_State.Tile_Selected =>
-            UI_Label ("selected_name_label").Set_Text
-              (Editor_State.Tile_Name (Sel.Tile));
-            UI_Label ("selected_type_label").Set_Text ("Terrain tile");
-            UI_Entry ("selected_w_entry").Set_Text
-              (Integer'Image (Level.Tile_Size));
-            UI_Entry ("selected_h_entry").Set_Text
-              (Integer'Image (Level.Tile_Size));
+            Set_Label_Text
+              ("selected_name_label", Editor_State.Tile_Name (Sel.Tile));
+            Set_Label_Text ("selected_type_label", "Terrain tile");
+            Set_Label_Text ("selected_components_label",
+                            "Components: Terrain, Collision");
+            Set_Label_Text ("selected_motion_label", "Motion: not available");
+            Set_Entry_Text ("selected_w_entry", Integer'Image (Level.Tile_Size));
+            Set_Entry_Text ("selected_h_entry", Integer'Image (Level.Tile_Size));
+            Show_Static_Path;
 
          when Editor_State.Object_Selected =>
             Index := Level.Object_Index (Sel.Object_Index);
-            UI_Label ("selected_name_label").Set_Text
-              (Editor_State.Object_Name (Objects (Index).Kind));
-            UI_Label ("selected_type_label").Set_Text ("Entity instance");
-            UI_Entry ("selected_x_entry").Set_Text
-              (Integer'Image (Integer (Objects (Index).X)));
-            UI_Entry ("selected_y_entry").Set_Text
-              (Integer'Image (Integer (Objects (Index).Y)));
-            UI_Entry ("selected_w_entry").Set_Text
-              (Integer'Image (Integer (Objects (Index).W)));
-            UI_Entry ("selected_h_entry").Set_Text
-              (Integer'Image (Integer (Objects (Index).H)));
+            Set_Label_Text
+              ("selected_name_label", Editor_State.Object_Display_Name (Index));
+            Set_Label_Text
+              ("selected_type_label",
+               "Entity instance: "
+               & Editor_State.Object_Name (Objects (Index).Kind));
+            Set_Label_Text
+              ("selected_components_label", Components_For (Objects (Index).Kind));
+            Set_Label_Text
+              ("selected_motion_label",
+               "Motion: " & Motion_Name (Objects (Index).Motion));
+            Set_Entry_Text
+              ("selected_x_entry", Float_Text (Objects (Index).X));
+            Set_Entry_Text
+              ("selected_y_entry", Float_Text (Objects (Index).Y));
+            Set_Entry_Text
+              ("selected_w_entry", Float_Text (Objects (Index).W));
+            Set_Entry_Text
+              ("selected_h_entry", Float_Text (Objects (Index).H));
+            Show_Object_Path (Objects (Index));
       end case;
    end Refresh_Inspector;
 
@@ -403,6 +601,7 @@ package body Editor_Canvas is
       Add_Grid;
       Add_Tiles;
       Add_Objects;
+      Add_Motion_Guides;
 
       Canvas.Set_Model (Model);
       Unref (Model);
@@ -443,9 +642,6 @@ package body Editor_Canvas is
          Snap_To_Guides => True);
 
       Canvas.On_Item_Event (Handle_Map_Event'Access);
-      Canvas.On_Item_Event (On_Item_Event_Select'Access);
-      Canvas.On_Item_Event (On_Item_Event_Move_Item'Access);
-      Canvas.On_Item_Event (Handle_After_Move'Access);
       Canvas.On_Item_Event (On_Item_Event_Scroll_Background'Access);
       Canvas.On_Item_Event (On_Item_Event_Zoom'Access);
 

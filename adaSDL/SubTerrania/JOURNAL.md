@@ -207,3 +207,37 @@ If `tools/build_editor.sh` fails and `tools/run_editor.sh` is run afterward as
 a separate command, the old previously-built editor binary may still launch.
 Use `tools/build_editor.sh && tools/run_editor.sh` when testing changes.
 
+
+## Phase 11B: canvas layer and inspector cleanup
+
+**Problem:** The map background, grid, and object overlay could become visually
+out of sync. The editor had generic Canvas_View move/select handlers enabled,
+which meant the background image itself could be treated like a movable canvas
+item instead of a locked map layer.
+
+**Fix:** Phase 11B stops using the generic item move/select callbacks for the
+main map layers. Selection now goes through the editor state by world
+coordinates. This keeps the background, grid, tiles, and objects from being
+accidentally dragged apart.
+
+**Problem:** The inspector showed unlabeled raw entry boxes. Selecting a
+platform or enemy did not make it obvious what object was selected.
+
+**Fix:** The inspector now shows labels, generated object names such as
+`Platform_01` and `Enemy_02`, object type, likely ECS component groups,
+transform fields, and a motion-path section.
+
+**Problem:** The notebook tabs appeared as generic `Page 1` / `Page 2` labels.
+
+**Fix:** The right-side inspector notebook now uses named tabs: `Inspector` and
+`Level`.
+
+**Problem:** Save/playtest could still crash if a project asset field was absent
+from the UI.
+
+**Fix:** `Entry_Line` now checks for a missing entry and logs a warning instead
+of dereferencing a null widget.
+
+**Current limitation:** Phase 11B exposes and draws the existing legacy patrol
+motion as a two-node path. True node insertion, splitting, curved paths,
+node timing editing, and save/load of arbitrary node lists are the next step.

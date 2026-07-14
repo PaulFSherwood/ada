@@ -198,8 +198,14 @@ package body Editor_App is
    function Entry_Line
      (Key  : String;
       Name : String) return String is
+      Field : constant Gtk_GEntry := UI_Entry (Name);
    begin
-      return Key & " " & UI_Entry (Name).Get_Text & ASCII.LF;
+      if Field = null then
+         Log ("Missing UI entry while saving: " & Name);
+         return Key & " " & ASCII.LF;
+      end if;
+
+      return Key & " " & Field.Get_Text & ASCII.LF;
    end Entry_Line;
 
    function Read_Value

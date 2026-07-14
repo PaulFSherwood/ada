@@ -94,4 +94,7 @@ package Editor_State is
    function Tile_Name (Tile : Level.Tile_Kind) return String;
    function Object_Name (Kind : Level.Object_Kind) return String;
 
+   function Object_Display_Name
+     (Index : Level.Object_Index) return String;
+
 end Editor_State;

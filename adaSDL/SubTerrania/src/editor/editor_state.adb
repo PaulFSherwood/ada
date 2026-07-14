@@ -2,6 +2,8 @@ with App_Paths;
 
 package body Editor_State is
 
+   use type Level.Object_Kind;
+
    Current_Tiles   : aliased Level.Tile_Map;
    Current_Objects : aliased Level.Object_Array;
    Current_Info    : Level.Level_Info := Level.Default_Level_Info;
@@ -426,5 +428,44 @@ package body Editor_State is
          when Level.Boss_Spawn => return "Boss Spawn";
       end case;
    end Object_Name;
+
+   function Object_Display_Name
+     (Index : Level.Object_Index) return String is
+      Count : Natural := 0;
+
+      function Trim_Natural (Value : Natural) return String is
+         Raw : constant String := Natural'Image (Value);
+      begin
+         if Raw'Length > 0 and then Raw (Raw'First) = ' ' then
+            return Raw (Raw'First + 1 .. Raw'Last);
+         else
+            return Raw;
+         end if;
+      end Trim_Natural;
+
+      function Two_Digits (Value : Natural) return String is
+      begin
+         if Value < 10 then
+            return "0" & Trim_Natural (Value);
+         else
+            return Trim_Natural (Value);
+         end if;
+      end Two_Digits;
+   begin
+      if not Current_Objects (Index).Used then
+         return "Unused Object";
+      end if;
+
+      for I in Level.Object_Index'First .. Index loop
+         if Current_Objects (I).Used
+           and then Current_Objects (I).Kind = Current_Objects (Index).Kind
+         then
+            Count := Count + 1;
+         end if;
+      end loop;
+
+      return Object_Name (Current_Objects (Index).Kind)
+        & "_" & Two_Digits (Count);
+   end Object_Display_Name;
 
 end Editor_State;
