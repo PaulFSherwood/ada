@@ -1,0 +1,11 @@
+name = "dungeon_walk"
+description = ""
+version = "0.1.0-dev"
+
+authors = ["Paul Sherwood"]
+maintainers = ["Paul Sherwood <paulfsherwood@gmail.com>"]
+licenses = "MIT OR Apache-2.0 WITH LLVM-exception"
+website = ""
+tags = []
+
+executables = ["dungeon_walk"]
