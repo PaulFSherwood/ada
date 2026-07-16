@@ -1,0 +1,14 @@
+name = "gtk_fuel_planner"
+description = ""
+version = "0.1.0-dev"
+
+authors = ["Paul Sherwood"]
+maintainers = ["Paul Sherwood <paulfsherwood@gmail.com>"]
+licenses = "MIT OR Apache-2.0 WITH LLVM-exception"
+website = ""
+tags = []
+
+executables = ["gtk_fuel_planner"]
+
+[[depends-on]]
+gtkada = "^26.0.0"
