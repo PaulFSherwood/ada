@@ -257,3 +257,13 @@ Phase 11C changes the editor direction:
 - Existing legacy Patrol_X / Patrol_Y objects are converted into two-node editor paths when metadata is missing.
 
 Known limitation after this phase: mouse-drag panning is still not a full custom implementation. The immediate goal was to stop map layer drifting and establish the correct entity/path workflow before adding lower-level canvas drag behavior.
+
+## Phase 12A - Editor Usability Reset
+
+- Reworked the GtkBuilder layout so the document tabs have real names instead of generic Page 1 / Page 2 labels.
+- Moved the minimap into the lower-right inspector dock so it is no longer part of the output/timeline strip.
+- Switched the toolbar toward icon-style actions using GTK icon names and tooltips.
+- Synchronized the grid menu and toolbar toggle so they do not fight each other.
+- Made active tool buttons snap back to the current tool if the user tries to deselect the only active tool.
+- Drew the grid after terrain/objects/motion guides so it is visible as a map overlay.
+- Restored GtkAda background-scroll panning so map movement is possible again without relying only on zoom/scroll tricks.

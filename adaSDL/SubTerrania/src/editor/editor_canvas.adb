@@ -272,7 +272,8 @@ package body Editor_Canvas is
 
    procedure Add_Grid is
       Style : constant Drawing_Style := Gtk_New
-        (Stroke => (0.25, 0.48, 0.70, 0.28));
+        (Stroke     => (0.30, 0.60, 0.95, 0.55),
+         Line_Width => 1.0);
       Line  : Polyline_Item;
    begin
       if not Editor_State.Grid_Visible then
@@ -646,10 +647,10 @@ package body Editor_Canvas is
       Model := New_Model;
 
       Add_Background;
-      Add_Grid;
       Add_Tiles;
       Add_Objects;
       Add_Motion_Guides;
+      Add_Grid;
 
       Canvas.Set_Model (Model);
       Unref (Model);
@@ -690,6 +691,7 @@ package body Editor_Canvas is
          Snap_To_Guides => True);
 
       Canvas.On_Item_Event (Handle_Map_Event'Access);
+      Canvas.On_Item_Event (On_Item_Event_Scroll_Background'Access);
       Canvas.On_Item_Event (On_Item_Event_Zoom'Access);
 
       Gtk_New (Scrolled);

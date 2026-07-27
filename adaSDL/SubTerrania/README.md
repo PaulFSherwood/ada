@@ -280,3 +280,20 @@ Important changes:
 - Path metadata is saved next to the level as a `.editor` sidecar file.
 
 See `docs/EDITOR_WORKFLOW.md` for the current workflow contract.
+
+## Native Editor Controls
+
+The editor is the primary content tool. Use the Map tab to paint tiles and place entities, then select entities to edit geometry and motion data in the Inspector.
+
+Common controls:
+
+- Mouse wheel: zoom.
+- Pan tool or background drag: move around the map.
+- Select: inspect tiles/entities.
+- Brush: paint the selected palette item.
+- Erase: remove an object or clear a tile.
+- Path: add motion nodes to the selected entity.
+- Grid: toggle the map grid overlay.
+- Playtest: save and launch the SDL game runtime.
+
+Document tabs are Map, Player, Enemies, Bosses, Weapons, Powerups, Audio, and Objectives. The minimap is docked in the lower-right inspector area.

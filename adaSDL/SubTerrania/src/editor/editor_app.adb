@@ -47,6 +47,7 @@ package body Editor_App is
    Is_Fullscreen : Boolean := False;
    Output_Log    : Unbounded_String;
    Syncing_Tools : Boolean := False;
+   Syncing_Grid  : Boolean := False;
 
    function C_System
      (Command : Interfaces.C.char_array) return Interfaces.C.int
@@ -668,6 +669,33 @@ package body Editor_App is
       Log ("Map fitted to viewport");
    end On_Fit_Map;
 
+   procedure Sync_Grid_Controls (Visible : Boolean) is
+   begin
+      Syncing_Grid := True;
+      Gtk.Check_Menu_Item.Set_Active
+        (Gtk.Check_Menu_Item.Gtk_Check_Menu_Item
+           (Get_Object (Gtk_Builder (Builder), "grid_menu_item")),
+         Visible);
+      Gtk.Toggle_Tool_Button.Set_Active
+        (Gtk.Toggle_Tool_Button.Gtk_Toggle_Tool_Button
+           (Get_Object (Gtk_Builder (Builder), "grid_tool")),
+         Visible);
+      Syncing_Grid := False;
+   end Sync_Grid_Controls;
+
+   procedure Apply_Grid_State (Visible : Boolean) is
+   begin
+      Editor_State.Set_Grid_Visible (Visible);
+      Sync_Grid_Controls (Visible);
+      Editor_Canvas.Rebuild;
+
+      if Visible then
+         Log ("Grid enabled");
+      else
+         Log ("Grid disabled");
+      end if;
+   end Apply_Grid_State;
+
    procedure On_Grid_Menu_Toggled
      (Data : access Gtkada_Builder_Record'Class) is
       pragma Unreferenced (Data);
@@ -676,9 +704,11 @@ package body Editor_App is
           (Gtk.Check_Menu_Item.Gtk_Check_Menu_Item
              (Get_Object (Gtk_Builder (Builder), "grid_menu_item")));
    begin
-      Editor_State.Set_Grid_Visible (Visible);
-      Editor_Canvas.Rebuild;
-      Log ("Grid setting changed");
+      if Syncing_Grid then
+         return;
+      end if;
+
+      Apply_Grid_State (Visible);
    end On_Grid_Menu_Toggled;
 
    procedure On_Grid_Toolbar_Toggled
@@ -689,9 +719,11 @@ package body Editor_App is
           (Gtk.Toggle_Tool_Button.Gtk_Toggle_Tool_Button
              (Get_Object (Gtk_Builder (Builder), "grid_tool")));
    begin
-      Editor_State.Set_Grid_Visible (Visible);
-      Editor_Canvas.Rebuild;
-      Log ("Grid setting changed");
+      if Syncing_Grid then
+         return;
+      end if;
+
+      Apply_Grid_State (Visible);
    end On_Grid_Toolbar_Toggled;
 
    procedure Set_Tool_Button
@@ -752,6 +784,8 @@ package body Editor_App is
 
       if Tool_Is_Active ("select_tool") then
          Set_Tool (Editor_State.Select_Tool, "Select");
+      else
+         Sync_Tool_Buttons (Editor_State.Current_Tool);
       end if;
    end On_Tool_Select;
 
@@ -765,6 +799,8 @@ package body Editor_App is
 
       if Tool_Is_Active ("brush_tool") then
          Set_Tool (Editor_State.Tile_Brush_Tool, "Brush");
+      else
+         Sync_Tool_Buttons (Editor_State.Current_Tool);
       end if;
    end On_Tool_Brush;
 
@@ -778,6 +814,8 @@ package body Editor_App is
 
       if Tool_Is_Active ("eraser_tool") then
          Set_Tool (Editor_State.Eraser_Tool, "Eraser");
+      else
+         Sync_Tool_Buttons (Editor_State.Current_Tool);
       end if;
    end On_Tool_Eraser;
 
@@ -791,6 +829,8 @@ package body Editor_App is
 
       if Tool_Is_Active ("pan_tool") then
          Set_Tool (Editor_State.Pan_Tool, "Pan");
+      else
+         Sync_Tool_Buttons (Editor_State.Current_Tool);
       end if;
    end On_Tool_Pan;
 
@@ -806,6 +846,8 @@ package body Editor_App is
          Set_Tool (Editor_State.Path_Tool, "Path");
          Log ("Path tool active. Select an entity, then click the map "
               & "to add path nodes.");
+      else
+         Sync_Tool_Buttons (Editor_State.Current_Tool);
       end if;
    end On_Tool_Path;
 
@@ -881,7 +923,7 @@ package body Editor_App is
    procedure On_Open_Level_Document
      (Data : access Gtkada_Builder_Record'Class) is
       pragma Unreferenced (Data);
-   begin Set_Document (0, 0, "Level Editor"); end On_Open_Level_Document;
+   begin Set_Document (0, 0, "Map workspace"); end On_Open_Level_Document;
 
    procedure On_Open_Player_Document
      (Data : access Gtkada_Builder_Record'Class) is
@@ -916,7 +958,7 @@ package body Editor_App is
    procedure On_Open_Trigger_Document
      (Data : access Gtkada_Builder_Record'Class) is
       pragma Unreferenced (Data);
-   begin Set_Document (7, 1, "Trigger / Objective Editor"); end On_Open_Trigger_Document;
+   begin Set_Document (7, 1, "Objectives workspace"); end On_Open_Trigger_Document;
 
    procedure On_Apply_Level_Properties
      (Data : access Gtkada_Builder_Record'Class) is
