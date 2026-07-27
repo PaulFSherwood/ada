@@ -1,4 +1,7 @@
+with Ada.Strings;
+with Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;
+with Ada.Text_IO;
 with Gdk.Pixbuf;
 with Gdk.RGBA;
 with Gdk.Types;
@@ -38,8 +41,8 @@ package body Editor_Canvas is
    use type Gtkada.Canvas_View.Abstract_Item;
    use type Gtkada.Canvas_View.Canvas_Event_Type;
    use type Level.Tile_Kind;
-   use type Editor_State.Selection_Kind;
    use type Level.Motion_Kind;
+   use type Editor_State.Selection_Kind;
 
    function On_Item_Event_Zoom is new On_Item_Event_Zoom_Generic
      (Modifier => 0);
@@ -187,15 +190,23 @@ package body Editor_Canvas is
       end case;
    end Components_For;
 
-   function Float_Text (Value : Float) return String is
-      Raw : constant String := Float'Image (Value);
+   function Trimmed (Text : String) return String is
    begin
-      if Raw'Length > 0 and then Raw (Raw'First) = ' ' then
-         return Raw (Raw'First + 1 .. Raw'Last);
-      else
-         return Raw;
-      end if;
+      return Ada.Strings.Fixed.Trim (Text, Ada.Strings.Both);
+   end Trimmed;
+
+   function Float_Text (Value : Float) return String is
+      package Float_IO is new Ada.Text_IO.Float_IO (Float);
+      Buffer : String (1 .. 32) := (others => ' ');
+   begin
+      Float_IO.Put (Buffer, Value, Aft => 2, Exp => 0);
+      return Trimmed (Buffer);
    end Float_Text;
+
+   function Pixel_Text (Value : Float) return String is
+   begin
+      return Trimmed (Integer'Image (Integer (Value)));
+   end Pixel_Text;
 
    procedure Set_Entry_Text
      (Name  : String;
@@ -330,25 +341,45 @@ package body Editor_Canvas is
    end Add_Objects;
 
 
+   function Path_Mode_Name (Mode : Editor_State.Path_Mode_Kind) return String is
+   begin
+      case Mode is
+         when Editor_State.No_Path       => return "None";
+         when Editor_State.Once_Path     => return "Once";
+         when Editor_State.Loop_Path     => return "Loop";
+         when Editor_State.Pingpong_Path => return "PingPong";
+      end case;
+   end Path_Mode_Name;
+
+   function Path_Easing_Name
+     (Easing : Editor_State.Path_Easing_Kind) return String is
+   begin
+      case Easing is
+         when Editor_State.Snap_Ease   => return "Snap";
+         when Editor_State.Linear_Ease => return "Linear";
+         when Editor_State.Smooth_Ease => return "Smooth";
+         when Editor_State.Arc_Ease    => return "Arc";
+      end case;
+   end Path_Easing_Name;
+
    procedure Add_Motion_Guides is
       Sel     : constant Editor_State.Selection_Info :=
         Editor_State.Selection;
-      Objects : constant access Level.Object_Array := Editor_State.Objects;
       Index   : Level.Object_Index;
+      Count   : Editor_State.Path_Node_Count;
       Line    : Polyline_Item;
       Node    : Rect_Item;
-      X1      : Float;
-      Y1      : Float;
-      X2      : Float;
-      Y2      : Float;
 
-      procedure Add_Node (X : Float; Y : Float) is
+      procedure Add_Node
+        (Point : Editor_State.Path_Node_Record;
+         Number : Natural) is
+         pragma Unreferenced (Number);
       begin
          Node := Gtk_New_Rect
            (Style  => Motion_Node_Style,
             Width  => 10.0,
             Height => 10.0);
-         Node.Set_Position ((Gdouble (X - 5.0), Gdouble (Y - 5.0)));
+         Node.Set_Position ((Gdouble (Point.X - 5.0), Gdouble (Point.Y - 5.0)));
          Model.Add (Node);
       end Add_Node;
    begin
@@ -359,37 +390,37 @@ package body Editor_Canvas is
       end if;
 
       Index := Level.Object_Index (Sel.Object_Index);
+      Count := Editor_State.Object_Path_Count (Index);
 
-      if not Objects (Index).Used
-        or else Objects (Index).Motion = Level.Static
-      then
+      if Count = 0 then
          return;
       end if;
 
-      case Objects (Index).Motion is
-         when Level.Static =>
-            return;
+      if Natural (Count) >= 2 then
+         for N in 1 .. Natural (Count) - 1 loop
+            declare
+               A : constant Editor_State.Path_Node_Record :=
+                 Editor_State.Object_Path_Node
+                   (Index, Editor_State.Path_Node_Index (N));
+               B : constant Editor_State.Path_Node_Record :=
+                 Editor_State.Object_Path_Node
+                   (Index, Editor_State.Path_Node_Index (N + 1));
+            begin
+               Line := Gtk_New_Polyline
+                 (Motion_Style,
+                  ((Gdouble (A.X), Gdouble (A.Y)),
+                   (Gdouble (B.X), Gdouble (B.Y))));
+               Model.Add (Line);
+            end;
+         end loop;
+      end if;
 
-         when Level.Patrol_X =>
-            X1 := Objects (Index).Min_Pos;
-            Y1 := Objects (Index).Y + Objects (Index).H / 2.0;
-            X2 := Objects (Index).Max_Pos;
-            Y2 := Y1;
-
-         when Level.Patrol_Y =>
-            X1 := Objects (Index).X + Objects (Index).W / 2.0;
-            Y1 := Objects (Index).Min_Pos;
-            X2 := X1;
-            Y2 := Objects (Index).Max_Pos;
-      end case;
-
-      Line := Gtk_New_Polyline
-        (Motion_Style,
-         ((Gdouble (X1), Gdouble (Y1)),
-          (Gdouble (X2), Gdouble (Y2))));
-      Model.Add (Line);
-      Add_Node (X1, Y1);
-      Add_Node (X2, Y2);
+      for N in 1 .. Natural (Count) loop
+         Add_Node
+           (Editor_State.Object_Path_Node
+              (Index, Editor_State.Path_Node_Index (N)),
+            N);
+      end loop;
    end Add_Motion_Guides;
 
    function Object_Index_For_Item
@@ -413,63 +444,62 @@ package body Editor_Canvas is
       Objects : constant access Level.Object_Array := Editor_State.Objects;
       Index   : Level.Object_Index;
 
-      procedure Show_Static_Path is
+      procedure Show_Empty_Path is
       begin
          Set_Entry_Text ("path1_x", "0");
          Set_Entry_Text ("path1_y", "0");
-         Set_Entry_Text ("path1_t", "0.0");
+         Set_Entry_Text ("path1_t", "0.00");
          Set_Entry_Text ("path2_x", "0");
          Set_Entry_Text ("path2_y", "0");
-         Set_Entry_Text ("path2_t", "0.0");
-      end Show_Static_Path;
+         Set_Entry_Text ("path2_t", "1.00");
+      end Show_Empty_Path;
 
-      procedure Show_Object_Path (Obj : Level.Object_Record) is
-         Travel_Time : Float := 0.0;
+      procedure Show_Object_Path (Obj_Index : Level.Object_Index) is
+         Count : constant Editor_State.Path_Node_Count :=
+           Editor_State.Object_Path_Count (Obj_Index);
       begin
-         if Obj.Speed > 0.0 then
-            Travel_Time := abs (Obj.Max_Pos - Obj.Min_Pos) / Obj.Speed;
+         if Count = 0 then
+            Show_Empty_Path;
+            return;
          end if;
 
-         case Obj.Motion is
-            when Level.Static =>
-               Show_Static_Path;
+         declare
+            P1 : constant Editor_State.Path_Node_Record :=
+              Editor_State.Object_Path_Node (Obj_Index, 1);
+         begin
+            Set_Entry_Text ("path1_x", Pixel_Text (P1.X));
+            Set_Entry_Text ("path1_y", Pixel_Text (P1.Y));
+            Set_Entry_Text ("path1_t", Float_Text (P1.Time));
+         end;
 
-            when Level.Patrol_X =>
-               Set_Entry_Text ("path1_x", Float_Text (Obj.Min_Pos));
-               Set_Entry_Text
-                 ("path1_y", Float_Text (Obj.Y + Obj.H / 2.0));
-               Set_Entry_Text ("path1_t", "0.0");
-               Set_Entry_Text ("path2_x", Float_Text (Obj.Max_Pos));
-               Set_Entry_Text
-                 ("path2_y", Float_Text (Obj.Y + Obj.H / 2.0));
-               Set_Entry_Text ("path2_t", Float_Text (Travel_Time));
-
-            when Level.Patrol_Y =>
-               Set_Entry_Text
-                 ("path1_x", Float_Text (Obj.X + Obj.W / 2.0));
-               Set_Entry_Text ("path1_y", Float_Text (Obj.Min_Pos));
-               Set_Entry_Text ("path1_t", "0.0");
-               Set_Entry_Text
-                 ("path2_x", Float_Text (Obj.X + Obj.W / 2.0));
-               Set_Entry_Text ("path2_y", Float_Text (Obj.Max_Pos));
-               Set_Entry_Text ("path2_t", Float_Text (Travel_Time));
-         end case;
+         if Natural (Count) >= 2 then
+            declare
+               P2 : constant Editor_State.Path_Node_Record :=
+                 Editor_State.Object_Path_Node (Obj_Index, 2);
+            begin
+               Set_Entry_Text ("path2_x", Pixel_Text (P2.X));
+               Set_Entry_Text ("path2_y", Pixel_Text (P2.Y));
+               Set_Entry_Text ("path2_t", Float_Text (P2.Time));
+            end;
+         else
+            Set_Entry_Text ("path2_x", "0");
+            Set_Entry_Text ("path2_y", "0");
+            Set_Entry_Text ("path2_t", "1.00");
+         end if;
       end Show_Object_Path;
    begin
-      Set_Entry_Text ("selected_x_entry",
-                      Integer'Image (Integer (Sel.World_X)));
-      Set_Entry_Text ("selected_y_entry",
-                      Integer'Image (Integer (Sel.World_Y)));
+      Set_Entry_Text ("selected_x_entry", Pixel_Text (Sel.World_X));
+      Set_Entry_Text ("selected_y_entry", Pixel_Text (Sel.World_Y));
 
       case Sel.Kind is
          when Editor_State.Nothing_Selected =>
             Set_Label_Text ("selected_name_label", "Nothing selected");
             Set_Label_Text ("selected_type_label", "Select an item");
             Set_Label_Text ("selected_components_label", "Components: none");
-            Set_Label_Text ("selected_motion_label", "Motion: none");
+            Set_Label_Text ("selected_motion_label", "Motion Path: none");
             Set_Entry_Text ("selected_w_entry", "0");
             Set_Entry_Text ("selected_h_entry", "0");
-            Show_Static_Path;
+            Show_Empty_Path;
 
          when Editor_State.Tile_Selected =>
             Set_Label_Text
@@ -477,10 +507,10 @@ package body Editor_Canvas is
             Set_Label_Text ("selected_type_label", "Terrain tile");
             Set_Label_Text ("selected_components_label",
                             "Components: Terrain, Collision");
-            Set_Label_Text ("selected_motion_label", "Motion: not available");
+            Set_Label_Text ("selected_motion_label", "Motion Path: not available");
             Set_Entry_Text ("selected_w_entry", Integer'Image (Level.Tile_Size));
             Set_Entry_Text ("selected_h_entry", Integer'Image (Level.Tile_Size));
-            Show_Static_Path;
+            Show_Empty_Path;
 
          when Editor_State.Object_Selected =>
             Index := Level.Object_Index (Sel.Object_Index);
@@ -494,16 +524,18 @@ package body Editor_Canvas is
               ("selected_components_label", Components_For (Objects (Index).Kind));
             Set_Label_Text
               ("selected_motion_label",
-               "Motion: " & Motion_Name (Objects (Index).Motion));
-            Set_Entry_Text
-              ("selected_x_entry", Float_Text (Objects (Index).X));
-            Set_Entry_Text
-              ("selected_y_entry", Float_Text (Objects (Index).Y));
-            Set_Entry_Text
-              ("selected_w_entry", Float_Text (Objects (Index).W));
-            Set_Entry_Text
-              ("selected_h_entry", Float_Text (Objects (Index).H));
-            Show_Object_Path (Objects (Index));
+               "Motion Path: "
+               & Path_Mode_Name (Editor_State.Object_Path_Mode (Index))
+               & " / "
+               & Path_Easing_Name (Editor_State.Object_Path_Easing (Index))
+               & " / Nodes:"
+               & Integer'Image
+                 (Integer (Editor_State.Object_Path_Count (Index))));
+            Set_Entry_Text ("selected_x_entry", Pixel_Text (Objects (Index).X));
+            Set_Entry_Text ("selected_y_entry", Pixel_Text (Objects (Index).Y));
+            Set_Entry_Text ("selected_w_entry", Pixel_Text (Objects (Index).W));
+            Set_Entry_Text ("selected_h_entry", Pixel_Text (Objects (Index).H));
+            Show_Object_Path (Index);
       end case;
    end Refresh_Inspector;
 
@@ -557,12 +589,28 @@ package body Editor_Canvas is
          when Editor_State.Pan_Tool =>
             return False;
 
-         when Editor_State.Trigger_Tool | Editor_State.Path_Tool =>
-            Set_Status ("Tool data point placed at"
+         when Editor_State.Trigger_Tool =>
+            Set_Status ("Trigger point noted at"
                         & Integer'Image (Integer (X))
                         & ","
                         & Integer'Image (Integer (Y)));
             return True;
+
+         when Editor_State.Path_Tool =>
+            declare
+               Added : Boolean;
+            begin
+               Editor_State.Add_Path_Node_To_Selected (X, Y, Added);
+
+               if Added then
+                  Rebuild;
+                  Set_Status ("Path node added to selected entity");
+               else
+                  Set_Status ("Select an entity before adding path nodes");
+               end if;
+
+               return True;
+            end;
       end case;
    end Handle_Map_Event;
 
@@ -642,7 +690,6 @@ package body Editor_Canvas is
          Snap_To_Guides => True);
 
       Canvas.On_Item_Event (Handle_Map_Event'Access);
-      Canvas.On_Item_Event (On_Item_Event_Scroll_Background'Access);
       Canvas.On_Item_Event (On_Item_Event_Zoom'Access);
 
       Gtk_New (Scrolled);

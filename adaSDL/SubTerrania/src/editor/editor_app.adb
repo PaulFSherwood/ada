@@ -41,10 +41,12 @@ package body Editor_App is
 
    use type Glib.Error.GError;
    use type Editor_State.Selection_Kind;
+   use type Editor_State.Tool_Kind;
 
    Builder       : Gtkada_Builder;
    Is_Fullscreen : Boolean := False;
    Output_Log    : Unbounded_String;
+   Syncing_Tools : Boolean := False;
 
    function C_System
      (Command : Interfaces.C.char_array) return Interfaces.C.int
@@ -571,6 +573,63 @@ package body Editor_App is
       end if;
    end On_Apply_Selected_Geometry;
 
+   procedure Set_Tool
+     (Tool : Editor_State.Tool_Kind;
+      Text : String);
+
+   procedure On_Edit_Selected_Path
+     (Data : access Gtkada_Builder_Record'Class) is
+      pragma Unreferenced (Data);
+      Sel : constant Editor_State.Selection_Info :=
+        Editor_State.Selection;
+   begin
+      if Sel.Kind /= Editor_State.Object_Selected then
+         Log ("Select an entity before editing a motion path");
+         return;
+      end if;
+
+      Set_Tool (Editor_State.Path_Tool, "Path");
+      Log ("Path mode active. Click map positions to add nodes "
+           & "to the selected entity.");
+   end On_Edit_Selected_Path;
+
+   procedure On_Apply_Selected_Path
+     (Data : access Gtkada_Builder_Record'Class) is
+      pragma Unreferenced (Data);
+      Changed : Boolean;
+   begin
+      Editor_State.Set_Selected_Two_Node_Path
+        (X1      => Float_From_Entry ("path1_x", 0.0),
+         Y1      => Float_From_Entry ("path1_y", 0.0),
+         T1      => Float_From_Entry ("path1_t", 0.0),
+         X2      => Float_From_Entry ("path2_x", 0.0),
+         Y2      => Float_From_Entry ("path2_y", 0.0),
+         T2      => Float_From_Entry ("path2_t", 1.0),
+         Changed => Changed);
+
+      if Changed then
+         Editor_Canvas.Rebuild;
+         Log ("Selected entity path fields applied");
+      else
+         Log ("Select an entity before applying path fields");
+      end if;
+   end On_Apply_Selected_Path;
+
+   procedure On_Clear_Selected_Path
+     (Data : access Gtkada_Builder_Record'Class) is
+      pragma Unreferenced (Data);
+      Changed : Boolean;
+   begin
+      Editor_State.Clear_Selected_Path (Changed);
+
+      if Changed then
+         Editor_Canvas.Rebuild;
+         Log ("Selected entity motion path cleared");
+      else
+         Log ("Select an entity before clearing a motion path");
+      end if;
+   end On_Clear_Selected_Path;
+
    procedure On_Delete_Selection
      (Data : access Gtkada_Builder_Record'Class) is
       pragma Unreferenced (Data);
@@ -635,26 +694,62 @@ package body Editor_App is
       Log ("Grid setting changed");
    end On_Grid_Toolbar_Toggled;
 
+   procedure Set_Tool_Button
+     (Name   : String;
+      Active : Boolean) is
+      Obj : constant Glib.Object.GObject :=
+        Get_Object (Gtk_Builder (Builder), Name);
+   begin
+      if Obj /= null then
+         Gtk.Toggle_Tool_Button.Set_Active
+           (Gtk.Toggle_Tool_Button.Gtk_Toggle_Tool_Button (Obj), Active);
+      end if;
+   end Set_Tool_Button;
+
+   procedure Sync_Tool_Buttons (Tool : Editor_State.Tool_Kind) is
+   begin
+      Syncing_Tools := True;
+      Set_Tool_Button ("select_tool", Tool = Editor_State.Select_Tool);
+      Set_Tool_Button
+        ("brush_tool",
+         Tool = Editor_State.Tile_Brush_Tool
+           or else Tool = Editor_State.Object_Brush_Tool);
+      Set_Tool_Button ("eraser_tool", Tool = Editor_State.Eraser_Tool);
+      Set_Tool_Button ("pan_tool", Tool = Editor_State.Pan_Tool);
+      Set_Tool_Button ("path_tool", Tool = Editor_State.Path_Tool);
+      Syncing_Tools := False;
+   end Sync_Tool_Buttons;
+
    procedure Set_Tool
      (Tool : Editor_State.Tool_Kind;
       Text : String) is
    begin
       Editor_State.Set_Tool (Tool);
+      Sync_Tool_Buttons (Tool);
       UI_Label ("tool_status_label").Set_Text
         ("Tool: " & Text & "    Brush: " & Editor_State.Brush_Name);
    end Set_Tool;
 
    function Tool_Is_Active (Name : String) return Boolean is
+      Obj : constant Glib.Object.GObject :=
+        Get_Object (Gtk_Builder (Builder), Name);
    begin
+      if Obj = null then
+         return False;
+      end if;
+
       return Gtk.Toggle_Tool_Button.Get_Active
-        (Gtk.Toggle_Tool_Button.Gtk_Toggle_Tool_Button
-           (Get_Object (Gtk_Builder (Builder), Name)));
+        (Gtk.Toggle_Tool_Button.Gtk_Toggle_Tool_Button (Obj));
    end Tool_Is_Active;
 
    procedure On_Tool_Select
      (Data : access Gtkada_Builder_Record'Class) is
       pragma Unreferenced (Data);
    begin
+      if Syncing_Tools then
+         return;
+      end if;
+
       if Tool_Is_Active ("select_tool") then
          Set_Tool (Editor_State.Select_Tool, "Select");
       end if;
@@ -664,6 +759,10 @@ package body Editor_App is
      (Data : access Gtkada_Builder_Record'Class) is
       pragma Unreferenced (Data);
    begin
+      if Syncing_Tools then
+         return;
+      end if;
+
       if Tool_Is_Active ("brush_tool") then
          Set_Tool (Editor_State.Tile_Brush_Tool, "Brush");
       end if;
@@ -673,6 +772,10 @@ package body Editor_App is
      (Data : access Gtkada_Builder_Record'Class) is
       pragma Unreferenced (Data);
    begin
+      if Syncing_Tools then
+         return;
+      end if;
+
       if Tool_Is_Active ("eraser_tool") then
          Set_Tool (Editor_State.Eraser_Tool, "Eraser");
       end if;
@@ -682,14 +785,34 @@ package body Editor_App is
      (Data : access Gtkada_Builder_Record'Class) is
       pragma Unreferenced (Data);
    begin
+      if Syncing_Tools then
+         return;
+      end if;
+
       if Tool_Is_Active ("pan_tool") then
          Set_Tool (Editor_State.Pan_Tool, "Pan");
       end if;
    end On_Tool_Pan;
 
+   procedure On_Tool_Path
+     (Data : access Gtkada_Builder_Record'Class) is
+      pragma Unreferenced (Data);
+   begin
+      if Syncing_Tools then
+         return;
+      end if;
+
+      if Tool_Is_Active ("path_tool") then
+         Set_Tool (Editor_State.Path_Tool, "Path");
+         Log ("Path tool active. Select an entity, then click the map "
+              & "to add path nodes.");
+      end if;
+   end On_Tool_Path;
+
    procedure Select_Tile (Tile : Level.Tile_Kind) is
    begin
       Editor_State.Set_Tile_Brush (Tile);
+      Sync_Tool_Buttons (Editor_State.Tile_Brush_Tool);
       UI_Label ("tool_status_label").Set_Text
         ("Tool: Tile Brush    Brush: " & Editor_State.Tile_Name (Tile));
       Documents.Set_Current_Page (0);
@@ -698,6 +821,7 @@ package body Editor_App is
    procedure Select_Object (Kind : Level.Object_Kind) is
    begin
       Editor_State.Set_Object_Brush (Kind);
+      Sync_Tool_Buttons (Editor_State.Object_Brush_Tool);
       UI_Label ("tool_status_label").Set_Text
         ("Tool: Object Brush    Brush: "
          & Editor_State.Object_Name (Kind));
@@ -941,9 +1065,9 @@ package body Editor_App is
       pragma Unreferenced (Data);
    begin
       Log
-        ("Select/Brush/Eraser/Pan are toolbar tools. "
-         & "Mouse wheel zooms. Right-click cancels a brush. "
-         & "Open Player, Enemy, Boss, Weapon or Audio from Project.");
+        ("Select, Brush, Erase, Pan and Path are exclusive tools. "
+         & "Select an object, then use Edit Path and click the map "
+         & "to add motion nodes. Grid is a view overlay.");
    end On_Help;
 
    procedure On_About
@@ -970,6 +1094,12 @@ package body Editor_App is
          On_Apply_Selected_Geometry'Access);
       Register_Handler
         (Builder, "on_delete_selection", On_Delete_Selection'Access);
+      Register_Handler
+        (Builder, "on_edit_selected_path", On_Edit_Selected_Path'Access);
+      Register_Handler
+        (Builder, "on_apply_selected_path", On_Apply_Selected_Path'Access);
+      Register_Handler
+        (Builder, "on_clear_selected_path", On_Clear_Selected_Path'Access);
       Register_Handler (Builder, "on_fullscreen", On_Fullscreen'Access);
       Register_Handler (Builder, "on_fit_map", On_Fit_Map'Access);
       Register_Handler
@@ -982,6 +1112,7 @@ package body Editor_App is
       Register_Handler (Builder, "on_tool_brush", On_Tool_Brush'Access);
       Register_Handler (Builder, "on_tool_eraser", On_Tool_Eraser'Access);
       Register_Handler (Builder, "on_tool_pan", On_Tool_Pan'Access);
+      Register_Handler (Builder, "on_tool_path", On_Tool_Path'Access);
       Register_Handler (Builder, "on_palette_wall", On_Palette_Wall'Access);
       Register_Handler
         (Builder, "on_palette_water", On_Palette_Water'Access);
@@ -1101,6 +1232,7 @@ package body Editor_App is
         (Get_Object (Gtk_Builder (Builder), "main_window"));
       Window.Show_All;
       Set_Document (0, 0, "Level Editor ready");
+      Sync_Tool_Buttons (Editor_State.Select_Tool);
       Log ("Professional editor shell loaded");
    end Initialize;
 

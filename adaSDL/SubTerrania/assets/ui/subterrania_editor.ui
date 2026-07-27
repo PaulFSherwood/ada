@@ -71,6 +71,7 @@
             <child><object class="GtkToggleToolButton" id="brush_tool"><property name="label">Brush</property><signal name="clicked" handler="on_tool_brush"/></object></child>
             <child><object class="GtkToggleToolButton" id="eraser_tool"><property name="label">Erase</property><signal name="clicked" handler="on_tool_eraser"/></object></child>
             <child><object class="GtkToggleToolButton" id="pan_tool"><property name="label">Pan</property><signal name="clicked" handler="on_tool_pan"/></object></child>
+            <child><object class="GtkToggleToolButton" id="path_tool"><property name="label">Path</property><signal name="clicked" handler="on_tool_path"/></object></child>
             <child><object class="GtkSeparatorToolItem"/></child>
             <child><object class="GtkToggleToolButton" id="grid_tool"><property name="label">Grid</property><property name="active">true</property><signal name="toggled" handler="on_grid_toolbar_toggled"/></object></child>
             <child><object class="GtkToolButton"><property name="label">Fit</property><signal name="clicked" handler="on_fit_map"/></object></child>
@@ -254,7 +255,10 @@
                         <child><object class="GtkEntry" id="path2_y"><property name="text">0</property></object></child>
                         <child><object class="GtkLabel"><property name="label">Node 2 Time</property><property name="xalign">0</property></object></child>
                         <child><object class="GtkEntry" id="path2_t"><property name="text">1.0</property></object></child>
-                        <child><object class="GtkLabel"><property name="label">This view now exposes the legacy patrol path. Node editing is next.</property><property name="xalign">0</property><property name="wrap">true</property></object></child>
+                        <child><object class="GtkButton"><property name="label">Edit Path / Add Nodes</property><signal name="clicked" handler="on_edit_selected_path"/></object></child>
+                        <child><object class="GtkButton"><property name="label">Apply Path Fields</property><signal name="clicked" handler="on_apply_selected_path"/></object></child>
+                        <child><object class="GtkButton"><property name="label">Clear Path</property><signal name="clicked" handler="on_clear_selected_path"/></object></child>
+                        <child><object class="GtkLabel"><property name="label">Workflow: select an entity, click Edit Path, then click the map to add motion nodes. The first two fields below can be edited manually and applied.</property><property name="xalign">0</property><property name="wrap">true</property></object></child>
                       </object>
                     </child>
                     <child type="tab"><object class="GtkLabel"><property name="label">Inspector</property></object></child>

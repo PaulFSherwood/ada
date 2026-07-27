@@ -241,3 +241,19 @@ of dereferencing a null widget.
 **Current limitation:** Phase 11B exposes and draws the existing legacy patrol
 motion as a two-node path. True node insertion, splitting, curved paths,
 node timing editing, and save/load of arbitrary node lists are the next step.
+
+## Phase 11C: Editor interaction and entity path reset
+
+The editor had reached a point where the UI looked more professional but the workflow was still confused. Brush, erase, pan, grid, and path editing were overlapping concepts. The right inspector also showed raw X/Y/W/H data without enough object context, and the temporary path-node rendering made it look like nodes appeared after pressing Apply Geometry.
+
+Phase 11C changes the editor direction:
+
+- Select, Brush, Erase, Pan, and Path are treated as mutually exclusive tools.
+- Grid remains a view overlay and is no longer described as an editing tool.
+- Path data belongs to the selected entity, not to the map globally.
+- Apply Geometry only changes position and size. It does not create path nodes.
+- The selected object inspector now treats paths as their own section.
+- Motion path data is saved in a sidecar file next to the level file, using `.editor` metadata. This keeps the SDL game level format stable while the editor workflow is still evolving.
+- Existing legacy Patrol_X / Patrol_Y objects are converted into two-node editor paths when metadata is missing.
+
+Known limitation after this phase: mouse-drag panning is still not a full custom implementation. The immediate goal was to stop map layer drifting and establish the correct entity/path workflow before adding lower-level canvas drag behavior.

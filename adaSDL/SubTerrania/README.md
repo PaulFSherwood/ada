@@ -265,3 +265,18 @@ Phase 11C
   Set interpolation: Snap / Linear / Smooth
   Save/load arbitrary paths
 ```
+
+## Phase 11C editor workflow
+
+Phase 11C resets the editor workflow around the idea that the level editor places entities, while entity/path/weapon/objective editors define behavior.
+
+Important changes:
+
+- Select, Brush, Erase, Pan, and Path are exclusive tools.
+- Grid is a view overlay, not an editing tool.
+- Motion paths belong to selected entities.
+- Select an entity, click **Edit Path / Add Nodes**, then click the map to add path nodes.
+- The first two path nodes can also be edited manually from the right inspector.
+- Path metadata is saved next to the level as a `.editor` sidecar file.
+
+See `docs/EDITOR_WORKFLOW.md` for the current workflow contract.

@@ -5,6 +5,8 @@ package Editor_State is
 
    package US renames Ada.Strings.Unbounded;
 
+   Max_Path_Nodes : constant Positive := 12;
+
    type Tool_Kind is
      (Select_Tool,
       Tile_Brush_Tool,
@@ -18,6 +20,27 @@ package Editor_State is
      (Nothing_Selected,
       Tile_Selected,
       Object_Selected);
+
+   type Path_Mode_Kind is
+     (No_Path,
+      Once_Path,
+      Loop_Path,
+      Pingpong_Path);
+
+   type Path_Easing_Kind is
+     (Snap_Ease,
+      Linear_Ease,
+      Smooth_Ease,
+      Arc_Ease);
+
+   type Path_Node_Record is record
+      X    : Float := 0.0;
+      Y    : Float := 0.0;
+      Time : Float := 0.0;
+   end record;
+
+   subtype Path_Node_Count is Natural range 0 .. Max_Path_Nodes;
+   subtype Path_Node_Index is Positive range 1 .. Max_Path_Nodes;
 
    type Selection_Info is record
       Kind         : Selection_Kind := Nothing_Selected;
@@ -88,6 +111,35 @@ package Editor_State is
       Width   : Float;
       Height  : Float;
       Changed : out Boolean);
+
+   procedure Add_Path_Node_To_Selected
+     (World_X : Float;
+      World_Y : Float;
+      Added   : out Boolean);
+
+   procedure Set_Selected_Two_Node_Path
+     (X1      : Float;
+      Y1      : Float;
+      T1      : Float;
+      X2      : Float;
+      Y2      : Float;
+      T2      : Float;
+      Changed : out Boolean);
+
+   procedure Clear_Selected_Path (Changed : out Boolean);
+
+   function Object_Path_Count
+     (Index : Level.Object_Index) return Path_Node_Count;
+
+   function Object_Path_Node
+     (Index : Level.Object_Index;
+      Node  : Path_Node_Index) return Path_Node_Record;
+
+   function Object_Path_Mode
+     (Index : Level.Object_Index) return Path_Mode_Kind;
+
+   function Object_Path_Easing
+     (Index : Level.Object_Index) return Path_Easing_Kind;
 
    function Tool_Name return String;
    function Brush_Name return String;
