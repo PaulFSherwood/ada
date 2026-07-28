@@ -64,6 +64,32 @@ package Level is
       Patrol_X,
       Patrol_Y);
 
+   Max_Path_Nodes : constant Positive := 12;
+
+   subtype Motion_Path_Node_Count is Natural range 0 .. Max_Path_Nodes;
+   subtype Motion_Path_Node_Index is Positive range 1 .. Max_Path_Nodes;
+
+   type Path_Playback_Mode is
+     (No_Path,
+      Once_Path,
+      Loop_Path,
+      Pingpong_Path);
+
+   type Path_Easing_Kind is
+     (Snap_Ease,
+      Linear_Ease,
+      Smooth_Ease,
+      Arc_Ease);
+
+   type Motion_Path_Node is record
+      X    : Float := 0.0;
+      Y    : Float := 0.0;
+      Time : Float := 0.0;
+   end record;
+
+   type Motion_Path_Node_Array is array
+     (Motion_Path_Node_Index) of Motion_Path_Node;
+
    subtype Tile_X is Positive range 1 .. Map_Width;
    subtype Tile_Y is Positive range 1 .. Map_Height;
    type Tile_Map is array (Tile_Y, Tile_X) of Tile_Kind;
@@ -82,6 +108,21 @@ package Level is
       Max_Pos : Float := 0.0;
       Speed   : Float := 0.0;
       Dir     : Float := 1.0;
+
+      Path_Count  : Motion_Path_Node_Count := 0;
+      Path_Nodes  : Motion_Path_Node_Array :=
+        (others => (X => 0.0, Y => 0.0, Time => 0.0));
+      Path_Mode   : Path_Playback_Mode := No_Path;
+      Path_Easing : Path_Easing_Kind := Linear_Ease;
+
+      Path_From_Node : Natural range 0 .. Max_Path_Nodes := 0;
+      Path_To_Node   : Natural range 0 .. Max_Path_Nodes := 0;
+      Path_Direction : Integer range -1 .. 1 := 1;
+      Path_Elapsed   : Float := 0.0;
+      Path_Complete  : Boolean := False;
+
+      Delta_X : Float := 0.0;
+      Delta_Y : Float := 0.0;
    end record;
 
    Max_Objects : constant Positive := 128;

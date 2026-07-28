@@ -1,7 +1,7 @@
+with Ada.Numerics.Elementary_Functions;
 with Ada.Strings;
 with Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;
-with Ada.Text_IO;
 with Gdk.Pixbuf;
 with Gdk.RGBA;
 with Gdk.Types;
@@ -9,12 +9,14 @@ with Glib;
 with Glib.Error;
 with Glib.Object;
 with Gtk.Builder;
-with Gtk.GEntry;
 with Gtk.Enums;
 with Gtk.Frame;
+with Gtk.GEntry;
 with Gtk.Label;
 with Gtk.Scrolled_Window;
+with Gtk.Toggle_Tool_Button;
 with Gtk.Widget;
+with Gtk.Window;
 with Gtkada.Canvas_View;
 with Gtkada.Canvas_View.Views;
 with Gtkada.Style;
@@ -28,21 +30,25 @@ package body Editor_Canvas is
    use Glib;
    use Glib.Object;
    use Gtk.Builder;
-   use Gtk.GEntry;
    use Gtk.Frame;
+   use Gtk.GEntry;
    use Gtk.Label;
    use Gtk.Scrolled_Window;
    use Gtk.Widget;
+   use Gtk.Window;
    use Gtkada.Canvas_View;
    use Gtkada.Canvas_View.Views;
    use Gtkada.Style;
 
+   use type Gdk.Types.Gdk_Modifier_Type;
    use type Glib.Error.GError;
    use type Gtkada.Canvas_View.Abstract_Item;
    use type Gtkada.Canvas_View.Canvas_Event_Type;
+   use type Level.Object_Kind;
    use type Level.Tile_Kind;
-   use type Level.Motion_Kind;
+   use type Editor_State.Layer_Kind;
    use type Editor_State.Selection_Kind;
+   use type Editor_State.Tool_Kind;
 
    function On_Item_Event_Zoom is new On_Item_Event_Zoom_Generic
      (Modifier => 0);
@@ -50,14 +56,24 @@ package body Editor_Canvas is
    UI_Builder : Gtkada.Builder.Gtkada_Builder;
    Canvas     : Canvas_View;
    Model      : List_Canvas_Model;
-   Minimap    : Minimap_View;
 
-   Background_Item : Abstract_Item;
+   View_Initialized : Boolean := False;
+   Pan_Active        : Boolean := False;
+   Pan_Start_Root     : Gtkada.Style.Point := (0.0, 0.0);
+   Pan_Start_Topleft  : Model_Point := (0.0, 0.0);
+   Path_Drag_Active   : Boolean := False;
+   Path_Drag_Node     : Natural := 0;
 
    type Object_Item_Array is array
      (Level.Object_Index) of Abstract_Item;
 
    Object_Items : Object_Item_Array := (others => null);
+
+   type Path_Item_Array is array
+     (Editor_State.Path_Node_Index) of Abstract_Item;
+
+   Path_Node_Items  : Path_Item_Array := (others => null);
+   Path_Label_Items : Path_Item_Array := (others => null);
 
    function UI_Label (Name : String) return Gtk_Label is
    begin
@@ -71,13 +87,99 @@ package body Editor_Canvas is
         (Get_Object (Gtk_Builder (UI_Builder), Name));
    end UI_Entry;
 
+   function UI_Window (Name : String) return Gtk_Window is
+   begin
+      return Gtk_Window
+        (Get_Object (Gtk_Builder (UI_Builder), Name));
+   end UI_Window;
+
+   procedure Set_Entry
+     (Name : String;
+      Text : String) is
+      Field : constant Gtk_Entry := UI_Entry (Name);
+   begin
+      if Field /= null then
+         Field.Set_Text (Text);
+      end if;
+   end Set_Entry;
+
+   procedure Set_Label
+     (Name : String;
+      Text : String) is
+      Label : constant Gtk_Label := UI_Label (Name);
+   begin
+      if Label /= null then
+         Label.Set_Text (Text);
+      end if;
+   end Set_Label;
+
+   function Trimmed (Text : String) return String is
+   begin
+      return Ada.Strings.Fixed.Trim (Text, Ada.Strings.Both);
+   end Trimmed;
+
+   function Pixel_Text (Value : Float) return String is
+   begin
+      return Trimmed (Integer'Image (Integer (Value)));
+   end Pixel_Text;
+
+   function Time_Text (Value : Float) return String is
+      Scaled   : constant Integer := Integer (Value * 100.0);
+      Whole    : constant Integer := Scaled / 100;
+      Fraction : constant Natural := Natural (abs Scaled rem 100);
+      Tens     : constant Character :=
+        Character'Val (Character'Pos ('0') + Fraction / 10);
+      Ones     : constant Character :=
+        Character'Val (Character'Pos ('0') + Fraction mod 10);
+   begin
+      return Trimmed (Integer'Image (Whole)) & "." & Tens & Ones;
+   end Time_Text;
+
+   function Path_Mode_Name
+     (Mode : Editor_State.Path_Mode_Kind) return String is
+   begin
+      case Mode is
+         when Editor_State.No_Path       => return "No path";
+         when Editor_State.Once_Path     => return "Once";
+         when Editor_State.Loop_Path     => return "Loop";
+         when Editor_State.Pingpong_Path => return "Ping-pong";
+      end case;
+   end Path_Mode_Name;
+
    procedure Set_Status (Text : String) is
    begin
-      UI_Label ("status_label").Set_Text (Text);
-      UI_Label ("tool_status_label").Set_Text
-        ("Tool: " & Editor_State.Tool_Name
-         & "    Brush: " & Editor_State.Brush_Name);
+      Set_Label ("status_label", Text);
+      Set_Label
+        ("tool_status_label",
+         "Mode: " & Editor_State.Tool_Name
+         & "   Brush: " & Editor_State.Brush_Name);
    end Set_Status;
+
+   procedure Activate_Select_UI is
+      procedure Set_Active
+        (Name   : String;
+         Active : Boolean) is
+         Obj : constant GObject := Get_Object (Gtk_Builder (UI_Builder), Name);
+      begin
+         if Obj /= null then
+            Gtk.Toggle_Tool_Button.Set_Active
+              (Gtk.Toggle_Tool_Button.Gtk_Toggle_Tool_Button (Obj), Active);
+         end if;
+      end Set_Active;
+      Banner : constant Gtk_Widget := Gtk_Widget
+        (Get_Object (Gtk_Builder (UI_Builder), "path_banner"));
+   begin
+      Editor_State.Set_Tool (Editor_State.Select_Tool);
+      Set_Active ("select_tool", True);
+      Set_Active ("brush_tool", False);
+      Set_Active ("eraser_tool", False);
+      Set_Active ("pan_tool", False);
+      Set_Active ("mode_path_tool", False);
+      Set_Active ("mode_object_tool", True);
+      if Banner /= null then
+         Banner.Hide;
+      end if;
+   end Activate_Select_UI;
 
    function Tile_Style
      (Tile : Level.Tile_Kind) return Drawing_Style is
@@ -90,155 +192,141 @@ package body Editor_Canvas is
 
          when Level.Wall_Tile =>
             return Gtk_New
-              (Fill   => Create_Rgba_Pattern ((0.55, 0.31, 0.12, 0.58)),
+              (Fill   => Create_Rgba_Pattern ((0.55, 0.31, 0.12, 0.52)),
                Stroke => (0.86, 0.55, 0.20, 0.85));
 
          when Level.Landing_Tile =>
             return Gtk_New
-              (Fill   => Create_Rgba_Pattern ((0.13, 0.80, 0.22, 0.48)),
+              (Fill   => Create_Rgba_Pattern ((0.13, 0.80, 0.22, 0.45)),
                Stroke => (0.20, 1.0, 0.34, 0.90));
 
          when Level.Water_Tile =>
             return Gtk_New
-              (Fill   => Create_Rgba_Pattern ((0.05, 0.38, 0.82, 0.48)),
+              (Fill   => Create_Rgba_Pattern ((0.05, 0.38, 0.82, 0.42)),
                Stroke => (0.15, 0.68, 1.0, 0.90));
 
          when Level.Start_Tile =>
             return Gtk_New
-              (Fill   => Create_Rgba_Pattern ((0.20, 0.95, 0.40, 0.58)),
+              (Fill   => Create_Rgba_Pattern ((0.20, 0.95, 0.40, 0.52)),
                Stroke => (0.55, 1.0, 0.60, 1.0));
       end case;
    end Tile_Style;
 
    function Object_Style
-     (Kind : Level.Object_Kind) return Drawing_Style is
+     (Kind        : Level.Object_Kind;
+      Is_Selected : Boolean) return Drawing_Style is
+      Width : constant Gdouble := (if Is_Selected then 4.0 else 2.0);
    begin
       case Kind is
          when Level.Miner =>
             return Gtk_New
-              (Fill   => Create_Rgba_Pattern ((0.0, 0.85, 1.0, 0.82)),
-               Stroke => (0.5, 0.95, 1.0, 1.0));
+              (Fill       => Create_Rgba_Pattern ((0.0, 0.85, 1.0, 0.80)),
+               Stroke     => (0.5, 0.95, 1.0, 1.0),
+               Line_Width => Width);
 
          when Level.Enemy | Level.Boss_Spawn =>
             return Gtk_New
-              (Fill   => Create_Rgba_Pattern ((1.0, 0.12, 0.12, 0.82)),
-               Stroke => (1.0, 0.55, 0.55, 1.0));
+              (Fill       => Create_Rgba_Pattern ((1.0, 0.12, 0.12, 0.80)),
+               Stroke     => (1.0, 0.55, 0.55, 1.0),
+               Line_Width => Width);
 
          when Level.Powerup | Level.Fuel | Level.Shield =>
             return Gtk_New
-              (Fill   => Create_Rgba_Pattern ((0.25, 1.0, 0.30, 0.82)),
-               Stroke => (0.62, 1.0, 0.65, 1.0));
+              (Fill       => Create_Rgba_Pattern ((0.25, 1.0, 0.30, 0.80)),
+               Stroke     => (0.62, 1.0, 0.65, 1.0),
+               Line_Width => Width);
 
          when Level.Weight =>
             return Gtk_New
-              (Fill   => Create_Rgba_Pattern ((0.72, 0.72, 0.72, 0.82)),
-               Stroke => (1.0, 1.0, 1.0, 1.0));
+              (Fill       => Create_Rgba_Pattern ((0.72, 0.72, 0.72, 0.80)),
+               Stroke     => (1.0, 1.0, 1.0, 1.0),
+               Line_Width => Width);
 
          when Level.Goal | Level.Base =>
             return Gtk_New
-              (Fill   => Create_Rgba_Pattern ((1.0, 0.86, 0.10, 0.82)),
-               Stroke => (1.0, 0.95, 0.55, 1.0));
+              (Fill       => Create_Rgba_Pattern ((1.0, 0.86, 0.10, 0.80)),
+               Stroke     => (1.0, 0.95, 0.55, 1.0),
+               Line_Width => Width);
 
          when Level.Gate | Level.Platform =>
             return Gtk_New
-              (Fill   => Create_Rgba_Pattern ((0.72, 0.22, 1.0, 0.82)),
-               Stroke => (0.90, 0.62, 1.0, 1.0));
+              (Fill       => Create_Rgba_Pattern ((0.72, 0.22, 1.0, 0.80)),
+               Stroke     => (0.90, 0.62, 1.0, 1.0),
+               Line_Width => Width);
       end case;
    end Object_Style;
-
 
    function Motion_Style return Drawing_Style is
    begin
       return Gtk_New
-        (Stroke     => (0.85, 0.20, 1.0, 0.95),
-         Line_Width => 3.0);
+        (Stroke     => (0.95, 0.30, 1.0, 1.0),
+         Line_Width => 4.0);
    end Motion_Style;
 
-   function Motion_Node_Style return Drawing_Style is
+   function Motion_Node_Style
+     (Number      : Positive;
+      Last        : Positive;
+      Is_Selected : Boolean) return Drawing_Style is
+      Width : constant Gdouble := (if Is_Selected then 6.0 else 3.0);
    begin
-      return Gtk_New
-        (Fill   => Create_Rgba_Pattern ((0.90, 0.20, 1.0, 0.88)),
-         Stroke => (1.0, 0.78, 1.0, 1.0));
+      if Number = 1 then
+         return Gtk_New
+           (Fill       => Create_Rgba_Pattern ((0.15, 1.0, 0.35, 0.95)),
+            Stroke     => (1.0, 1.0, 1.0, 1.0),
+            Line_Width => Width);
+      elsif Number = Last then
+         return Gtk_New
+           (Fill       => Create_Rgba_Pattern ((1.0, 0.20, 0.20, 0.95)),
+            Stroke     => (1.0, 1.0, 1.0, 1.0),
+            Line_Width => Width);
+      else
+         return Gtk_New
+           (Fill       => Create_Rgba_Pattern ((0.90, 0.20, 1.0, 0.95)),
+            Stroke     => (1.0, 1.0, 1.0, 1.0),
+            Line_Width => Width);
+      end if;
    end Motion_Node_Style;
-
-   function Motion_Name (Motion : Level.Motion_Kind) return String is
-   begin
-      case Motion is
-         when Level.Static   => return "Static";
-         when Level.Patrol_X => return "Patrol X";
-         when Level.Patrol_Y => return "Patrol Y";
-      end case;
-   end Motion_Name;
-
-   function Components_For (Kind : Level.Object_Kind) return String is
-   begin
-      case Kind is
-         when Level.Miner =>
-            return "Components: Transform, Renderable, Collider, Rescue";
-         when Level.Enemy =>
-            return "Components: Transform, Renderable, Collider, AI, Motion";
-         when Level.Powerup | Level.Fuel | Level.Shield | Level.Weight =>
-            return "Components: Transform, Renderable, Collider, Pickup";
-         when Level.Goal | Level.Base =>
-            return "Components: Transform, Renderable, Collider, Objective";
-         when Level.Gate =>
-            return "Components: Transform, Renderable, Collider, Triggered";
-         when Level.Platform =>
-            return "Components: Transform, Renderable, Collider, Motion";
-         when Level.Boss_Spawn =>
-            return "Components: Transform, Trigger, Encounter";
-      end case;
-   end Components_For;
-
-   function Trimmed (Text : String) return String is
-   begin
-      return Ada.Strings.Fixed.Trim (Text, Ada.Strings.Both);
-   end Trimmed;
-
-   function Float_Text (Value : Float) return String is
-      package Float_IO is new Ada.Text_IO.Float_IO (Float);
-      Buffer : String (1 .. 32) := (others => ' ');
-   begin
-      Float_IO.Put (Buffer, Value, Aft => 2, Exp => 0);
-      return Trimmed (Buffer);
-   end Float_Text;
-
-   function Pixel_Text (Value : Float) return String is
-   begin
-      return Trimmed (Integer'Image (Integer (Value)));
-   end Pixel_Text;
-
-   procedure Set_Entry_Text
-     (Name  : String;
-      Value : String) is
-      Field : constant Gtk_Entry := UI_Entry (Name);
-   begin
-      if Field /= null then
-         Field.Set_Text (Value);
-      end if;
-   end Set_Entry_Text;
-
-   procedure Set_Label_Text
-     (Name  : String;
-      Value : String) is
-      Label : constant Gtk_Label := UI_Label (Name);
-   begin
-      if Label /= null then
-         Label.Set_Text (Value);
-      end if;
-   end Set_Label_Text;
-
-   function Background_Style return Drawing_Style is
-   begin
-      return Gtk_New (Stroke => (0.18, 0.35, 0.50, 1.0));
-   end Background_Style;
 
    function Background_Path return String is
       Info : constant Level.Level_Info := Editor_State.Info;
    begin
-      return Ada.Strings.Unbounded.To_String
-        (Info.Background_Image);
+      return Ada.Strings.Unbounded.To_String (Info.Background_Image);
    end Background_Path;
+
+   function Object_Layer_Visible
+     (Kind : Level.Object_Kind) return Boolean is
+   begin
+      case Kind is
+         when Level.Miner =>
+            return Editor_State.Layer_Visible (Editor_State.Miners_Layer);
+
+         when Level.Enemy | Level.Boss_Spawn =>
+            return Editor_State.Layer_Visible (Editor_State.Enemies_Layer);
+
+         when Level.Powerup | Level.Fuel | Level.Shield | Level.Weight =>
+            return Editor_State.Layer_Visible (Editor_State.Pickups_Layer);
+
+         when Level.Platform =>
+            return Editor_State.Layer_Visible (Editor_State.Platforms_Layer);
+
+         when Level.Goal | Level.Base | Level.Gate =>
+            return Editor_State.Layer_Visible (Editor_State.Triggers_Layer);
+      end case;
+   end Object_Layer_Visible;
+
+   procedure Add_World_Bounds is
+      Rect : Rect_Item;
+      Style : constant Drawing_Style := Gtk_New
+        (Fill   => Create_Rgba_Pattern ((0.08, 0.08, 0.09, 1.0)),
+         Stroke => (0.25, 0.25, 0.28, 1.0));
+   begin
+      Rect := Gtk_New_Rect
+        (Style  => Style,
+         Width  => Gdouble (Level.World_Width_Pixels),
+         Height => Gdouble (Level.World_Height_Pixels));
+      Rect.Set_Position ((0.0, 0.0));
+      Model.Add (Rect);
+   end Add_World_Bounds;
 
    procedure Add_Background is
       Pixbuf : Gdk.Pixbuf.Gdk_Pixbuf;
@@ -246,6 +334,10 @@ package body Editor_Canvas is
       Image  : Image_Item;
       Path   : constant String := Background_Path;
    begin
+      if not Editor_State.Layer_Visible (Editor_State.Background_Layer) then
+         return;
+      end if;
+
       Gdk.Pixbuf.Gdk_New_From_File
         (Pixbuf   => Pixbuf,
          Filename => Path,
@@ -254,12 +346,11 @@ package body Editor_Canvas is
       if Error /= null then
          Set_Status ("Background not found: " & Path);
          Glib.Error.Error_Free (Error);
-         Background_Item := null;
          return;
       end if;
 
       Image := Gtk_New_Image
-        (Style         => Background_Style,
+        (Style         => Gtk_New (Stroke => (0.18, 0.35, 0.50, 1.0)),
          Image         => Pixbuf,
          Allow_Rescale => True,
          Width         => Gdouble (Level.World_Width_Pixels),
@@ -267,14 +358,13 @@ package body Editor_Canvas is
 
       Image.Set_Position ((0.0, 0.0));
       Model.Add (Image);
-      Background_Item := Abstract_Item (Image);
    end Add_Background;
 
    procedure Add_Grid is
       Style : constant Drawing_Style := Gtk_New
         (Stroke     => (0.30, 0.60, 0.95, 0.55),
          Line_Width => 1.0);
-      Line  : Polyline_Item;
+      Line : Polyline_Item;
    begin
       if not Editor_State.Grid_Visible then
          return;
@@ -305,7 +395,16 @@ package body Editor_Canvas is
    begin
       for Y in Level.Tile_Y loop
          for X in Level.Tile_X loop
-            if Tiles (Y, X) /= Level.Space_Tile then
+            if Tiles (Y, X) /= Level.Space_Tile
+              and then
+                ((Tiles (Y, X) = Level.Water_Tile
+                  and then Editor_State.Layer_Visible
+                    (Editor_State.Water_Layer))
+                 or else
+                   (Tiles (Y, X) /= Level.Water_Tile
+                    and then Editor_State.Layer_Visible
+                      (Editor_State.Terrain_Layer)))
+            then
                Rect := Gtk_New_Rect
                  (Style  => Tile_Style (Tiles (Y, X)),
                   Width  => Gdouble (Level.Tile_Size),
@@ -322,14 +421,21 @@ package body Editor_Canvas is
 
    procedure Add_Objects is
       Objects : constant access Level.Object_Array := Editor_State.Objects;
+      Sel     : constant Editor_State.Selection_Info := Editor_State.Selection;
       Rect    : Rect_Item;
+      Selected_Index : Natural := 0;
    begin
       Object_Items := (others => null);
+      if Sel.Kind = Editor_State.Object_Selected then
+         Selected_Index := Sel.Object_Index;
+      end if;
 
       for I in Level.Object_Index loop
-         if Objects (I).Used then
+         if Objects (I).Used and then Object_Layer_Visible (Objects (I).Kind) then
             Rect := Gtk_New_Rect
-              (Style  => Object_Style (Objects (I).Kind),
+              (Style  => Object_Style
+                 (Objects (I).Kind,
+                  Selected_Index = Natural (I)),
                Width  => Gdouble (Objects (I).W),
                Height => Gdouble (Objects (I).H));
 
@@ -341,50 +447,71 @@ package body Editor_Canvas is
       end loop;
    end Add_Objects;
 
-
-   function Path_Mode_Name (Mode : Editor_State.Path_Mode_Kind) return String is
+   function Path_Node_Label
+     (Number : Positive;
+      Last   : Positive) return String is
    begin
-      case Mode is
-         when Editor_State.No_Path       => return "None";
-         when Editor_State.Once_Path     => return "Once";
-         when Editor_State.Loop_Path     => return "Loop";
-         when Editor_State.Pingpong_Path => return "PingPong";
-      end case;
-   end Path_Mode_Name;
+      if Number = 1 then
+         return "START";
+      elsif Number = Last then
+         return "END";
+      else
+         return "P" & Trimmed (Natural'Image (Number - 1));
+      end if;
+   end Path_Node_Label;
 
-   function Path_Easing_Name
-     (Easing : Editor_State.Path_Easing_Kind) return String is
+   procedure Add_Dashed_Segment
+     (A : Editor_State.Path_Node_Record;
+      B : Editor_State.Path_Node_Record) is
+      DX          : constant Float := B.X - A.X;
+      DY          : constant Float := B.Y - A.Y;
+      Length      : constant Float :=
+        Ada.Numerics.Elementary_Functions.Sqrt (DX * DX + DY * DY);
+      Dash_Length : constant Float := 16.0;
+      Gap_Length  : constant Float := 10.0;
+      Position    : Float := 0.0;
+      Dash_End    : Float;
+      T1          : Float;
+      T2          : Float;
+      Line        : Polyline_Item;
    begin
-      case Easing is
-         when Editor_State.Snap_Ease   => return "Snap";
-         when Editor_State.Linear_Ease => return "Linear";
-         when Editor_State.Smooth_Ease => return "Smooth";
-         when Editor_State.Arc_Ease    => return "Arc";
-      end case;
-   end Path_Easing_Name;
+      if Length <= 0.01 then
+         return;
+      end if;
+
+      while Position < Length loop
+         Dash_End := Position + Dash_Length;
+         if Dash_End > Length then
+            Dash_End := Length;
+         end if;
+
+         T1 := Position / Length;
+         T2 := Dash_End / Length;
+         Line := Gtk_New_Polyline
+           (Motion_Style,
+            ((Gdouble (A.X + DX * T1), Gdouble (A.Y + DY * T1)),
+             (Gdouble (A.X + DX * T2), Gdouble (A.Y + DY * T2))));
+         Model.Add (Line);
+         Position := Position + Dash_Length + Gap_Length;
+      end loop;
+   end Add_Dashed_Segment;
 
    procedure Add_Motion_Guides is
-      Sel     : constant Editor_State.Selection_Info :=
+      Sel           : constant Editor_State.Selection_Info :=
         Editor_State.Selection;
-      Index   : Level.Object_Index;
-      Count   : Editor_State.Path_Node_Count;
-      Line    : Polyline_Item;
-      Node    : Rect_Item;
-
-      procedure Add_Node
-        (Point : Editor_State.Path_Node_Record;
-         Number : Natural) is
-         pragma Unreferenced (Number);
-      begin
-         Node := Gtk_New_Rect
-           (Style  => Motion_Node_Style,
-            Width  => 10.0,
-            Height => 10.0);
-         Node.Set_Position ((Gdouble (Point.X - 5.0), Gdouble (Point.Y - 5.0)));
-         Model.Add (Node);
-      end Add_Node;
+      Selected_Node : constant Natural := Editor_State.Selected_Path_Node;
+      Index         : Level.Object_Index;
+      Count         : Editor_State.Path_Node_Count;
+      Node          : Rect_Item;
+      Node_Label    : Text_Item;
+      Label_Style   : constant Drawing_Style := Gtk_New
+        (Stroke => (1.0, 1.0, 1.0, 1.0));
    begin
-      if Sel.Kind /= Editor_State.Object_Selected
+      Path_Node_Items := (others => null);
+      Path_Label_Items := (others => null);
+
+      if not Editor_State.Layer_Visible (Editor_State.Paths_Layer)
+        or else Sel.Kind /= Editor_State.Object_Selected
         or else Sel.Object_Index = 0
       then
          return;
@@ -392,167 +519,448 @@ package body Editor_Canvas is
 
       Index := Level.Object_Index (Sel.Object_Index);
       Count := Editor_State.Object_Path_Count (Index);
-
       if Count = 0 then
          return;
       end if;
 
       if Natural (Count) >= 2 then
          for N in 1 .. Natural (Count) - 1 loop
-            declare
-               A : constant Editor_State.Path_Node_Record :=
-                 Editor_State.Object_Path_Node
-                   (Index, Editor_State.Path_Node_Index (N));
-               B : constant Editor_State.Path_Node_Record :=
-                 Editor_State.Object_Path_Node
-                   (Index, Editor_State.Path_Node_Index (N + 1));
-            begin
-               Line := Gtk_New_Polyline
-                 (Motion_Style,
-                  ((Gdouble (A.X), Gdouble (A.Y)),
-                   (Gdouble (B.X), Gdouble (B.Y))));
-               Model.Add (Line);
-            end;
+            Add_Dashed_Segment
+              (Editor_State.Object_Path_Node
+                 (Index, Editor_State.Path_Node_Index (N)),
+               Editor_State.Object_Path_Node
+                 (Index, Editor_State.Path_Node_Index (N + 1)));
          end loop;
       end if;
 
       for N in 1 .. Natural (Count) loop
-         Add_Node
-           (Editor_State.Object_Path_Node
-              (Index, Editor_State.Path_Node_Index (N)),
-            N);
+         declare
+            Point : constant Editor_State.Path_Node_Record :=
+              Editor_State.Object_Path_Node
+                (Index, Editor_State.Path_Node_Index (N));
+            Text  : constant String := Path_Node_Label (N, Natural (Count));
+            Width : constant Gdouble :=
+              (if N = 1 or else N = Natural (Count) then 58.0 else 30.0);
+         begin
+            Node := Gtk_New_Rect
+              (Style  => Motion_Node_Style
+                 (N, Natural (Count), Selected_Node = N),
+               Width  => 22.0,
+               Height => 22.0);
+            Node.Set_Position
+              ((Gdouble (Point.X - 11.0), Gdouble (Point.Y - 11.0)));
+            Model.Add (Node);
+            Path_Node_Items (Editor_State.Path_Node_Index (N)) :=
+              Abstract_Item (Node);
+
+            Node_Label := Gtk_New_Text
+              (Style  => Label_Style,
+               Text   => Text,
+               Width  => Width,
+               Height => 20.0);
+            Node_Label.Set_Position
+              ((Gdouble (Point.X + 13.0), Gdouble (Point.Y - 11.0)));
+            Model.Add (Node_Label);
+            Path_Label_Items (Editor_State.Path_Node_Index (N)) :=
+              Abstract_Item (Node_Label);
+         end;
       end loop;
    end Add_Motion_Guides;
 
-   function Object_Index_For_Item
-     (Item  : Abstract_Item;
-      Index : out Level.Object_Index) return Boolean is
+   procedure Refresh_Inspector is
+      Sel     : constant Editor_State.Selection_Info := Editor_State.Selection;
+      Objects : constant access Level.Object_Array := Editor_State.Objects;
    begin
-      for I in Level.Object_Index loop
-         if Item /= null and then Object_Items (I) = Item then
-            Index := I;
+      case Sel.Kind is
+         when Editor_State.Nothing_Selected =>
+            Set_Label ("selection_status_label", "Selected: none");
+            Set_Label ("path_target_label", "No object selected");
+
+         when Editor_State.Tile_Selected =>
+            Set_Label
+              ("selection_status_label",
+               "Selected tile: " & Editor_State.Tile_Name (Sel.Tile)
+               & " at " & Pixel_Text (Sel.World_X)
+               & "," & Pixel_Text (Sel.World_Y));
+            Set_Label ("path_target_label", "Paths apply to objects only");
+
+         when Editor_State.Object_Selected =>
+            declare
+               Index : constant Level.Object_Index :=
+                 Level.Object_Index (Sel.Object_Index);
+               Count : constant Editor_State.Path_Node_Count :=
+                 Editor_State.Object_Path_Count (Index);
+            begin
+               Set_Label
+                 ("selection_status_label",
+                  "Selected: " & Editor_State.Object_Display_Name (Index)
+                  & " [" & Editor_State.Object_Name
+                    (Objects (Index).Kind) & "]");
+               Set_Label
+                 ("path_target_label",
+                  "Path target: " & Editor_State.Object_Display_Name (Index)
+                  & " | " & Path_Mode_Name
+                    (Editor_State.Object_Path_Mode (Index))
+                  & " | nodes "
+                  & Trimmed (Natural'Image (Natural (Count))));
+            end;
+      end case;
+   end Refresh_Inspector;
+
+   function Hit_Path_Node
+     (World_X : Float;
+      World_Y : Float;
+      Node    : out Natural) return Boolean is
+      Sel   : constant Editor_State.Selection_Info := Editor_State.Selection;
+      Index : Level.Object_Index;
+      Count : Editor_State.Path_Node_Count;
+      Point : Editor_State.Path_Node_Record;
+      DX    : Float;
+      DY    : Float;
+   begin
+      Node := 0;
+      if Sel.Kind /= Editor_State.Object_Selected
+        or else Sel.Object_Index = 0
+      then
+         return False;
+      end if;
+
+      Index := Level.Object_Index (Sel.Object_Index);
+      Count := Editor_State.Object_Path_Count (Index);
+      for N in 1 .. Natural (Count) loop
+         Point := Editor_State.Object_Path_Node
+           (Index, Editor_State.Path_Node_Index (N));
+         DX := World_X - Point.X;
+         DY := World_Y - Point.Y;
+         if DX * DX + DY * DY <= 18.0 * 18.0 then
+            Node := N;
             return True;
          end if;
       end loop;
 
-      Index := Level.Object_Index'First;
       return False;
-   end Object_Index_For_Item;
+   end Hit_Path_Node;
 
-   procedure Refresh_Inspector is
-      Sel     : constant Editor_State.Selection_Info :=
-        Editor_State.Selection;
-      Objects : constant access Level.Object_Array := Editor_State.Objects;
-      Index   : Level.Object_Index;
-
-      procedure Show_Empty_Path is
-      begin
-         Set_Entry_Text ("path1_x", "0");
-         Set_Entry_Text ("path1_y", "0");
-         Set_Entry_Text ("path1_t", "0.00");
-         Set_Entry_Text ("path2_x", "0");
-         Set_Entry_Text ("path2_y", "0");
-         Set_Entry_Text ("path2_t", "1.00");
-      end Show_Empty_Path;
-
-      procedure Show_Object_Path (Obj_Index : Level.Object_Index) is
-         Count : constant Editor_State.Path_Node_Count :=
-           Editor_State.Object_Path_Count (Obj_Index);
-      begin
-         if Count = 0 then
-            Show_Empty_Path;
-            return;
-         end if;
-
-         declare
-            P1 : constant Editor_State.Path_Node_Record :=
-              Editor_State.Object_Path_Node (Obj_Index, 1);
-         begin
-            Set_Entry_Text ("path1_x", Pixel_Text (P1.X));
-            Set_Entry_Text ("path1_y", Pixel_Text (P1.Y));
-            Set_Entry_Text ("path1_t", Float_Text (P1.Time));
-         end;
-
-         if Natural (Count) >= 2 then
-            declare
-               P2 : constant Editor_State.Path_Node_Record :=
-                 Editor_State.Object_Path_Node (Obj_Index, 2);
-            begin
-               Set_Entry_Text ("path2_x", Pixel_Text (P2.X));
-               Set_Entry_Text ("path2_y", Pixel_Text (P2.Y));
-               Set_Entry_Text ("path2_t", Float_Text (P2.Time));
-            end;
-         else
-            Set_Entry_Text ("path2_x", "0");
-            Set_Entry_Text ("path2_y", "0");
-            Set_Entry_Text ("path2_t", "1.00");
-         end if;
-      end Show_Object_Path;
+   function Segment_Distance_Squared
+     (World_X : Float;
+      World_Y : Float;
+      A       : Editor_State.Path_Node_Record;
+      B       : Editor_State.Path_Node_Record) return Float is
+      DX      : constant Float := B.X - A.X;
+      DY      : constant Float := B.Y - A.Y;
+      Length2 : constant Float := DX * DX + DY * DY;
+      T       : Float;
+      Near_X  : Float;
+      Near_Y  : Float;
+      Error_X : Float;
+      Error_Y : Float;
    begin
-      Set_Entry_Text ("selected_x_entry", Pixel_Text (Sel.World_X));
-      Set_Entry_Text ("selected_y_entry", Pixel_Text (Sel.World_Y));
+      if Length2 <= 0.01 then
+         Error_X := World_X - A.X;
+         Error_Y := World_Y - A.Y;
+         return Error_X * Error_X + Error_Y * Error_Y;
+      end if;
 
-      case Sel.Kind is
-         when Editor_State.Nothing_Selected =>
-            Set_Label_Text ("selected_name_label", "Nothing selected");
-            Set_Label_Text ("selected_type_label", "Select an item");
-            Set_Label_Text ("selected_components_label", "Components: none");
-            Set_Label_Text ("selected_motion_label", "Motion Path: none");
-            Set_Entry_Text ("selected_w_entry", "0");
-            Set_Entry_Text ("selected_h_entry", "0");
-            Show_Empty_Path;
+      T := ((World_X - A.X) * DX + (World_Y - A.Y) * DY) / Length2;
+      if T < 0.0 then
+         T := 0.0;
+      elsif T > 1.0 then
+         T := 1.0;
+      end if;
 
-         when Editor_State.Tile_Selected =>
-            Set_Label_Text
-              ("selected_name_label", Editor_State.Tile_Name (Sel.Tile));
-            Set_Label_Text ("selected_type_label", "Terrain tile");
-            Set_Label_Text ("selected_components_label",
-                            "Components: Terrain, Collision");
-            Set_Label_Text ("selected_motion_label", "Motion Path: not available");
-            Set_Entry_Text ("selected_w_entry", Integer'Image (Level.Tile_Size));
-            Set_Entry_Text ("selected_h_entry", Integer'Image (Level.Tile_Size));
-            Show_Empty_Path;
+      Near_X := A.X + DX * T;
+      Near_Y := A.Y + DY * T;
+      Error_X := World_X - Near_X;
+      Error_Y := World_Y - Near_Y;
+      return Error_X * Error_X + Error_Y * Error_Y;
+   end Segment_Distance_Squared;
 
-         when Editor_State.Object_Selected =>
-            Index := Level.Object_Index (Sel.Object_Index);
-            Set_Label_Text
-              ("selected_name_label", Editor_State.Object_Display_Name (Index));
-            Set_Label_Text
-              ("selected_type_label",
-               "Entity instance: "
-               & Editor_State.Object_Name (Objects (Index).Kind));
-            Set_Label_Text
-              ("selected_components_label", Components_For (Objects (Index).Kind));
-            Set_Label_Text
-              ("selected_motion_label",
-               "Motion Path: "
-               & Path_Mode_Name (Editor_State.Object_Path_Mode (Index))
-               & " / "
-               & Path_Easing_Name (Editor_State.Object_Path_Easing (Index))
-               & " / Nodes:"
-               & Integer'Image
-                 (Integer (Editor_State.Object_Path_Count (Index))));
-            Set_Entry_Text ("selected_x_entry", Pixel_Text (Objects (Index).X));
-            Set_Entry_Text ("selected_y_entry", Pixel_Text (Objects (Index).Y));
-            Set_Entry_Text ("selected_w_entry", Pixel_Text (Objects (Index).W));
-            Set_Entry_Text ("selected_h_entry", Pixel_Text (Objects (Index).H));
-            Show_Object_Path (Index);
-      end case;
-   end Refresh_Inspector;
+   function Hit_Path_Segment
+     (World_X  : Float;
+      World_Y  : Float;
+      Segment  : out Natural) return Boolean is
+      Sel      : constant Editor_State.Selection_Info := Editor_State.Selection;
+      Index    : Level.Object_Index;
+      Count    : Editor_State.Path_Node_Count;
+      Best     : Float := 14.0 * 14.0;
+      Distance : Float;
+   begin
+      Segment := 0;
+      if Sel.Kind /= Editor_State.Object_Selected
+        or else Sel.Object_Index = 0
+      then
+         return False;
+      end if;
+
+      Index := Level.Object_Index (Sel.Object_Index);
+      Count := Editor_State.Object_Path_Count (Index);
+      if Count < 2 then
+         return False;
+      end if;
+
+      for N in 1 .. Natural (Count) - 1 loop
+         Distance := Segment_Distance_Squared
+           (World_X,
+            World_Y,
+            Editor_State.Object_Path_Node
+              (Index, Editor_State.Path_Node_Index (N)),
+            Editor_State.Object_Path_Node
+              (Index, Editor_State.Path_Node_Index (N + 1)));
+         if Distance <= Best then
+            Best := Distance;
+            Segment := N;
+         end if;
+      end loop;
+
+      return Segment /= 0;
+   end Hit_Path_Segment;
+
+   procedure Show_Path_Node_Context (Node : Natural) is
+      Sel   : constant Editor_State.Selection_Info := Editor_State.Selection;
+      Index : Level.Object_Index;
+      Count : Editor_State.Path_Node_Count;
+      Point : Editor_State.Path_Node_Record;
+   begin
+      if Sel.Kind /= Editor_State.Object_Selected
+        or else Sel.Object_Index = 0
+        or else Node = 0
+      then
+         return;
+      end if;
+
+      Index := Level.Object_Index (Sel.Object_Index);
+      Count := Editor_State.Object_Path_Count (Index);
+      if Node > Natural (Count) then
+         return;
+      end if;
+
+      Point := Editor_State.Object_Path_Node
+        (Index, Editor_State.Path_Node_Index (Node));
+      Editor_State.Select_Path_Node (Node);
+      Set_Label
+        ("path_node_title_label",
+         Path_Node_Label (Node, Natural (Count))
+         & " - " & Editor_State.Object_Display_Name (Index));
+      Set_Label
+        ("path_node_delete_note",
+         (if Node = 1 or else Node = Natural (Count)
+          then "START and END cannot be deleted."
+          else "Delete removes this waypoint only."));
+      Set_Entry ("path_node_x_entry", Pixel_Text (Point.X));
+      Set_Entry ("path_node_y_entry", Pixel_Text (Point.Y));
+      Set_Entry ("path_node_time_entry", Time_Text (Point.Time));
+      UI_Window ("path_node_window").Show_All;
+   end Show_Path_Node_Context;
+
+   function Handle_Pan
+     (Self    : not null access GObject_Record'Class;
+      Details : Event_Details_Access) return Boolean is
+      pragma Unreferenced (Self);
+      Wants_Pan : constant Boolean :=
+        Details.Button = 2
+        or else
+          (Details.Button = 1
+           and then Editor_State.Current_Tool = Editor_State.Pan_Tool);
+   begin
+      if Details.Event_Type = Button_Press and then Wants_Pan then
+         declare
+            Area : constant Model_Rectangle := Canvas.Get_Visible_Area;
+         begin
+            Pan_Active := True;
+            Pan_Start_Root := Details.Root_Point;
+            Pan_Start_Topleft := (Area.X, Area.Y);
+            Details.Allowed_Drag_Area := Drag_Anywhere;
+            Details.Allow_Snapping := False;
+            return True;
+         end;
+      end if;
+
+      if Pan_Active
+        and then
+          (Details.Event_Type = Start_Drag
+           or else Details.Event_Type = In_Drag)
+      then
+         declare
+            Scale : constant Gdouble := Canvas.Get_Scale;
+            DX : constant Gdouble :=
+              (Details.Root_Point.X - Pan_Start_Root.X) / Scale;
+            DY : constant Gdouble :=
+              (Details.Root_Point.Y - Pan_Start_Root.Y) / Scale;
+         begin
+            Canvas.Set_Topleft
+              ((Pan_Start_Topleft.X - DX,
+                Pan_Start_Topleft.Y - DY));
+            return True;
+         end;
+      end if;
+
+      if Pan_Active
+        and then
+          (Details.Event_Type = End_Drag
+           or else Details.Event_Type = Button_Release)
+      then
+         Pan_Active := False;
+         return True;
+      end if;
+
+      return False;
+   end Handle_Pan;
 
    function Handle_Map_Event
      (Self    : not null access GObject_Record'Class;
       Details : Event_Details_Access) return Boolean is
       pragma Unreferenced (Self);
-      X : constant Float := Float (Details.M_Point.X);
-      Y : constant Float := Float (Details.M_Point.Y);
+      X             : constant Float := Float (Details.M_Point.X);
+      Y             : constant Float := Float (Details.M_Point.Y);
+      Control_Down  : constant Boolean :=
+        (Details.State and Gdk.Types.Control_Mask) /= 0;
+      Node_Number   : Natural := 0;
+      Segment       : Natural := 0;
+      Changed       : Boolean;
    begin
+      if Details.Button = 2 or else Pan_Active then
+         return False;
+      end if;
+
+      if Editor_State.Current_Tool = Editor_State.Path_Tool then
+         if Details.Event_Type = Button_Press
+           and then Details.Button = 3
+           and then Control_Down
+         then
+            if Hit_Path_Node (X, Y, Node_Number) then
+               Editor_State.Select_Path_Node (Node_Number);
+               Rebuild;
+               Show_Path_Node_Context (Node_Number);
+               Set_Status
+                 ("Path node selected. Edit properties or delete the waypoint.");
+            else
+               Set_Status ("Ctrl-right-click directly on a path node.");
+            end if;
+            return True;
+         end if;
+
+         if Details.Event_Type = Button_Press
+           and then Details.Button = 1
+           and then not Control_Down
+           and then Hit_Path_Node (X, Y, Node_Number)
+         then
+            Editor_State.Select_Path_Node (Node_Number);
+            Path_Drag_Active := True;
+            Path_Drag_Node := Node_Number;
+            Details.Allowed_Drag_Area := Drag_Anywhere;
+            Details.Allow_Snapping := False;
+            Set_Status
+              ("Dragging path node "
+               & Trimmed (Natural'Image (Node_Number)));
+            return True;
+         end if;
+
+         if Path_Drag_Active
+           and then
+             (Details.Event_Type = Start_Drag
+              or else Details.Event_Type = In_Drag)
+         then
+            Editor_State.Select_Path_Node (Path_Drag_Node);
+            Editor_State.Move_Selected_Path_Node (X, Y, Changed);
+            if Changed
+              and then Path_Drag_Node in
+                Natural (Editor_State.Path_Node_Index'First)
+                .. Natural (Editor_State.Path_Node_Index'Last)
+            then
+               declare
+                  Item_Index : constant Editor_State.Path_Node_Index :=
+                    Editor_State.Path_Node_Index (Path_Drag_Node);
+               begin
+                  if Path_Node_Items (Item_Index) /= null then
+                     Path_Node_Items (Item_Index).Set_Position
+                       ((Gdouble (X - 11.0), Gdouble (Y - 11.0)));
+                  end if;
+                  if Path_Label_Items (Item_Index) /= null then
+                     Path_Label_Items (Item_Index).Set_Position
+                       ((Gdouble (X + 13.0), Gdouble (Y - 11.0)));
+                  end if;
+                  Model.Refresh_Layout;
+               end;
+            end if;
+            return True;
+         end if;
+
+         if Path_Drag_Active
+           and then
+             (Details.Event_Type = End_Drag
+              or else Details.Event_Type = Button_Release)
+         then
+            Editor_State.Select_Path_Node (Path_Drag_Node);
+            Editor_State.Move_Selected_Path_Node (X, Y, Changed);
+            Path_Drag_Active := False;
+            Path_Drag_Node := 0;
+            Rebuild;
+            Set_Status ("Path node moved");
+            return True;
+         end if;
+
+         if Details.Event_Type = Button_Release
+           and then Details.Button = 1
+           and then Control_Down
+         then
+            declare
+               Sel     : constant Editor_State.Selection_Info :=
+                 Editor_State.Selection;
+               Count   : Editor_State.Path_Node_Count := 0;
+               Created : Boolean;
+               Inserted : Boolean;
+            begin
+               if Sel.Kind = Editor_State.Object_Selected
+                 and then Sel.Object_Index /= 0
+               then
+                  Count := Editor_State.Object_Path_Count
+                    (Level.Object_Index (Sel.Object_Index));
+               end if;
+
+               if Count = 0 then
+                  Editor_State.Ensure_Simple_Path_For_Selected (Created);
+                  if Created then
+                     Rebuild;
+                     Set_Status
+                       ("START and END created. Drag END to the destination.");
+                  else
+                     Set_Status ("Select an object before creating a path.");
+                  end if;
+                  return True;
+               end if;
+
+               if Hit_Path_Segment (X, Y, Segment) then
+                  Editor_State.Insert_Path_Node
+                    (After_Node => Editor_State.Path_Node_Index (Segment),
+                     World_X    => X,
+                     World_Y    => Y,
+                     Inserted   => Inserted);
+                  if Inserted then
+                     Rebuild;
+                     Set_Status
+                       ("Waypoint inserted. Drag it to refine the route.");
+                  else
+                     Set_Status ("The path cannot accept another waypoint.");
+                  end if;
+               else
+                  Set_Status
+                    ("Ctrl-click the dashed line to insert a waypoint.");
+               end if;
+               return True;
+            end;
+         end if;
+      end if;
+
       if Details.Event_Type = Button_Press and then Details.Button = 3 then
-         Editor_State.Set_Tool (Editor_State.Select_Tool);
-         Editor_State.Clear_Selection;
-         Model.Clear_Selection;
+         if Editor_State.Current_Tool = Editor_State.Path_Tool then
+            Editor_State.Cancel_Path_Edit (Changed);
+            if Changed then
+               Rebuild;
+            end if;
+         end if;
+         Activate_Select_UI;
+         Set_Status ("Operation cancelled. Select mode active.");
          Refresh_Inspector;
-         Set_Status ("Brush cancelled. Select tool active.");
          return True;
       end if;
 
@@ -572,80 +980,41 @@ package body Editor_Canvas is
             return True;
 
          when Editor_State.Select_Tool =>
-            declare
-               Index : Level.Object_Index;
-            begin
-               Editor_State.Select_At (X, Y);
-               Refresh_Inspector;
-
-               if Object_Index_For_Item
-                 (Details.Toplevel_Item, Index)
-               then
-                  return False;
-               end if;
-
-               return True;
-            end;
+            Editor_State.Select_At (X, Y);
+            Rebuild;
+            return True;
 
          when Editor_State.Pan_Tool =>
             return False;
 
          when Editor_State.Trigger_Tool =>
-            Set_Status ("Trigger point noted at"
-                        & Integer'Image (Integer (X))
-                        & ","
-                        & Integer'Image (Integer (Y)));
+            Set_Status
+              ("Trigger marker noted at "
+               & Pixel_Text (X) & "," & Pixel_Text (Y));
             return True;
 
          when Editor_State.Path_Tool =>
-            declare
-               Added : Boolean;
-            begin
-               Editor_State.Add_Path_Node_To_Selected (X, Y, Added);
-
-               if Added then
-                  Rebuild;
-                  Set_Status ("Path node added to selected entity");
-               else
-                  Set_Status ("Select an entity before adding path nodes");
-               end if;
-
-               return True;
-            end;
+            if Hit_Path_Node (X, Y, Node_Number) then
+               Editor_State.Select_Path_Node (Node_Number);
+               Rebuild;
+               Set_Status ("Path node selected");
+            else
+               Set_Status
+                 ("Drag a node, Ctrl-click a dashed segment, "
+                  & "or Ctrl-right-click a node.");
+            end if;
+            return True;
       end case;
    end Handle_Map_Event;
 
-   function Handle_After_Move
-     (Self    : not null access GObject_Record'Class;
-      Details : Event_Details_Access) return Boolean is
-      pragma Unreferenced (Self);
-      Index : Level.Object_Index;
-   begin
-      if Details.Event_Type = End_Drag
-        and then Object_Index_For_Item
-          (Details.Toplevel_Item, Index)
-      then
-         declare
-            Pos : constant Gtkada.Style.Point :=
-              Details.Toplevel_Item.Position;
-         begin
-            Editor_State.Update_Object_Position
-              (Index, Float (Pos.X), Float (Pos.Y));
-            Refresh_Inspector;
-            Set_Status ("Entity moved");
-         end;
-      end if;
-
-      return False;
-   end Handle_After_Move;
-
-   procedure Rebuild is
+   procedure Replace_Model is
       New_Model : List_Canvas_Model;
    begin
       Gtk_New (New_Model);
       New_Model.Set_Selection_Mode (Selection_Single);
       Model := New_Model;
 
+      Add_World_Bounds;
       Add_Background;
       Add_Tiles;
       Add_Objects;
@@ -654,6 +1023,24 @@ package body Editor_Canvas is
 
       Canvas.Set_Model (Model);
       Unref (Model);
+   end Replace_Model;
+
+   procedure Rebuild is
+   begin
+      if View_Initialized then
+         declare
+            Area  : constant Model_Rectangle := Canvas.Get_Visible_Area;
+            Scale : constant Gdouble := Canvas.Get_Scale;
+         begin
+            Replace_Model;
+            Canvas.Set_Scale (Scale);
+            Canvas.Set_Topleft ((Area.X, Area.Y));
+         end;
+      else
+         Replace_Model;
+         View_Initialized := True;
+      end if;
+
       Refresh_Inspector;
       Set_Status ("Ready");
    end Rebuild;
@@ -670,18 +1057,40 @@ package body Editor_Canvas is
          Max_Scale => 2.0);
    end Fit_Map;
 
+   procedure Zoom_In is
+   begin
+      Canvas.Set_Scale (Canvas.Get_Scale * 1.20);
+   end Zoom_In;
+
+   procedure Zoom_Out is
+   begin
+      Canvas.Set_Scale (Canvas.Get_Scale / 1.20);
+   end Zoom_Out;
+
+   procedure Center_On_Start is
+      X     : Float;
+      Y     : Float;
+      Found : Boolean;
+   begin
+      Found := Level.Find_Player_Start (Editor_State.Tiles.all, X, Y);
+
+      if Found then
+         Canvas.Set_Topleft
+           ((Gdouble (X - 320.0), Gdouble (Y - 240.0)));
+      else
+         Fit_Map;
+      end if;
+   end Center_On_Start;
+
    procedure Initialize
      (Builder : Gtkada.Builder.Gtkada_Builder) is
-      Map_Frame     : Gtk_Frame;
-      Minimap_Frame : Gtk_Frame;
-      Scrolled      : Gtk_Scrolled_Window;
+      Map_Frame : Gtk_Frame;
+      Scrolled  : Gtk_Scrolled_Window;
    begin
       UI_Builder := Builder;
 
       Map_Frame := Gtk_Frame
         (Get_Object (Gtk_Builder (Builder), "map_canvas_frame"));
-      Minimap_Frame := Gtk_Frame
-        (Get_Object (Gtk_Builder (Builder), "minimap_frame"));
 
       Canvas := new Canvas_View_Record;
       Gtkada.Canvas_View.Initialize (Canvas);
@@ -690,8 +1099,8 @@ package body Editor_Canvas is
         (Snap_To_Grid   => True,
          Snap_To_Guides => True);
 
+      Canvas.On_Item_Event (Handle_Pan'Access);
       Canvas.On_Item_Event (Handle_Map_Event'Access);
-      Canvas.On_Item_Event (On_Item_Event_Scroll_Background'Access);
       Canvas.On_Item_Event (On_Item_Event_Zoom'Access);
 
       Gtk_New (Scrolled);
@@ -700,13 +1109,8 @@ package body Editor_Canvas is
       Scrolled.Add (Canvas);
       Map_Frame.Add (Scrolled);
 
-      Gtk_New (Minimap);
-      Minimap.Monitor (Canvas);
-      Minimap_Frame.Add (Minimap);
-
       Rebuild;
       Map_Frame.Show_All;
-      Minimap_Frame.Show_All;
       Fit_Map;
    end Initialize;
 

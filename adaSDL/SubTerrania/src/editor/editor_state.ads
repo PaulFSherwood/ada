@@ -33,6 +33,18 @@ package Editor_State is
       Smooth_Ease,
       Arc_Ease);
 
+   type Layer_Kind is
+     (Background_Layer,
+      Terrain_Layer,
+      Water_Layer,
+      Pickups_Layer,
+      Destructibles_Layer,
+      Platforms_Layer,
+      Miners_Layer,
+      Enemies_Layer,
+      Triggers_Layer,
+      Paths_Layer);
+
    type Path_Node_Record is record
       X    : Float := 0.0;
       Y    : Float := 0.0;
@@ -85,6 +97,11 @@ package Editor_State is
    function Grid_Visible return Boolean;
    procedure Set_Grid_Visible (Visible : Boolean);
 
+   function Layer_Visible (Layer : Layer_Kind) return Boolean;
+   procedure Set_Layer_Visible
+     (Layer   : Layer_Kind;
+      Visible : Boolean);
+
    procedure Place_At
      (World_X : Float;
       World_Y : Float);
@@ -111,6 +128,41 @@ package Editor_State is
       Width   : Float;
       Height  : Float;
       Changed : out Boolean);
+
+   procedure Rename_Selected_Object
+     (Name    : String;
+      Changed : out Boolean);
+
+   procedure Delete_Selected (Changed : out Boolean);
+
+   procedure Begin_Path_Edit (Started : out Boolean);
+   procedure Finish_Path_Edit (Changed : out Boolean);
+   procedure Cancel_Path_Edit (Changed : out Boolean);
+   function Path_Edit_Active return Boolean;
+
+   procedure Ensure_Simple_Path_For_Selected (Created : out Boolean);
+
+   function Selected_Path_Node return Natural;
+   procedure Select_Path_Node (Node : Natural);
+
+   procedure Move_Selected_Path_Node
+     (World_X : Float;
+      World_Y : Float;
+      Changed : out Boolean);
+
+   procedure Update_Selected_Path_Node
+     (World_X : Float;
+      World_Y : Float;
+      Time    : Float;
+      Changed : out Boolean);
+
+   procedure Insert_Path_Node
+     (After_Node : Path_Node_Index;
+      World_X    : Float;
+      World_Y    : Float;
+      Inserted   : out Boolean);
+
+   procedure Delete_Selected_Path_Node (Deleted : out Boolean);
 
    procedure Add_Path_Node_To_Selected
      (World_X : Float;

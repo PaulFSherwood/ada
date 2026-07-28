@@ -1,210 +1,169 @@
 # SubTerrania
 
-SubTerrania is an Ada/SDL game project with a separate native GtkAda editor.
+SubTerrania is an Ada/SDL game project with a separate GtkAda content editor.
+The editor is intended to become the source of truth for levels, entity
+instances, reusable definitions, paths, objectives, and audio references.
 
-The current design treats the **editor as the primary tool**. The game runtime reads the data produced by the editor: levels, player definitions, enemies, bosses, weapons, powerups, triggers, objectives, and audio references.
+## Build and run
 
-## Project layout
+```bash
+# SDL game
+alr build
+alr run
 
-```text
-SubTerrania/
-  alire.toml
-  subterrania.gpr              # SDL game runtime project
-  subterrania_editor.gpr       # native GtkAda editor project
+# GtkAda editor
+tools/build_editor.sh
+tools/run_editor.sh
 
-  src/
-    core/                      # SDL game application shell
-    ecs/                       # existing ECS components and systems
-    editor/                    # native GtkAda editor
-
-  assets/
-    levels/                    # level files, such as stage01.map
-    ui/                        # GtkBuilder UI files
-    images/
-      maps/
-      sprites/
-      ui/
-    audio/
-      music/                   # local only, ignored by Git
-      sfx/                     # local only, ignored by Git
-
-  tools/
-    build_all.sh
-    build_editor.sh
-    run_editor.sh
-    check_editor_requirements.sh
+# Build both
+tools/build_all.sh
 ```
 
-## Requirements
-
-On Kubuntu/Ubuntu:
+On Ubuntu/Kubuntu the editor requires GTK 3 development packages:
 
 ```bash
 sudo apt install libgtk-3-dev
 ```
 
-Alire should install the Ada dependencies:
+## Phase 13 editor layout
 
-```bash
-alr with gtkada
-alr with sdlada
-```
-
-Check the editor requirements:
-
-```bash
-tools/check_editor_requirements.sh
-```
-
-## Build
-
-Build the SDL game:
-
-```bash
-alr build
-```
-
-Build the native editor:
-
-```bash
-tools/build_editor.sh
-```
-
-Build both:
-
-```bash
-tools/build_all.sh
-```
-
-## Run
-
-Run the SDL game:
-
-```bash
-alr run
-```
-
-Run the native editor:
-
-```bash
-tools/run_editor.sh
-```
-
-The SDL game's **FULL MAP EDITOR** menu item is intended to launch the native editor.
-
-## Editor overview
-
-The editor is organized like a professional content tool instead of a gameplay overlay.
-
-Main areas:
+The editor was rewritten around the workflow used by RPG Maker-style tools.
+The map stays central. Complicated data is moved into focused windows instead
+of permanently surrounding the canvas.
 
 ```text
-Top menu       File / Edit / View / Project / Test / Help
-Toolbar        New / Open / Save / tools / grid / playtest / build
-Left panels    Project tree, palette, layers
-Center         Map canvas
-Right panels   Inspector and level properties
-Bottom         Timeline, output, notes, minimap
+Main window
+  Menu and icon toolbar
+  Palette and layer controls on the left
+  Project resources below the palette
+  Large map canvas in the center
+  Compact output and status information at the bottom
+
+Focused windows
+  Object Properties
+  Level Properties
+  Database
 ```
 
-## Suggested editor workflow
-
-1. Open the editor:
-
-   ```bash
-   tools/run_editor.sh
-   ```
-
-2. Load or create a level.
-
-3. Use the palette to choose terrain or objects.
-
-4. Place or select items on the map canvas.
-
-5. Use the right-side inspector to edit the selected item.
-
-6. Set level metadata such as title, background, music, boss music, and next level.
-
-7. Save the project assets.
-
-8. Use Playtest or run the SDL game.
-
-## Editor workspaces
-
-The long-term editor model is one application with multiple workspaces:
+The Database is opened with the gear icon and contains:
 
 ```text
-Level Editor       terrain, collision, water, landing pads, starts, map objects
-Player Editor      player ship physics, sprite, shield, fuel, audio, weapon slots
-Enemy Editor       reusable enemy templates and ECS components
-Boss Editor        phases, paths, timing, attacks, music, gates, damage states
-Weapon Editor      projectiles, damage, cooldown, charge, sounds
-Powerup Editor     pickup effects, pickup sounds, temporary effects
-Audio Editor       music and sound references
-Trigger Editor     conditions and actions
-Objective Editor   mission goals and completion rules
-Build/Test         build, run, playtest current level
+Player Ships
+Enemies
+Bosses
+Weapons
+Pickups
+Platforms
+Destructibles
+Animations
+Audio
+Objectives
+Project Settings
 ```
 
-## ECS design goal
+Database files are stored in `assets/database/` as readable key/value files.
+They are editor data and a foundation for later runtime integration.
 
-The editor should create reusable **entity templates** made of ECS components.
-
-Example:
+## Main controls
 
 ```text
-Enemy_Scout
-  Transform
-  Renderable
-  Collider
-  Velocity
-  Health
-  Weapon
-  AI_Patrol
-  Audio_Source
+Middle mouse drag     Pan from any mode
+Pan tool + left drag  Pan
+Mouse wheel           Zoom at the cursor
+Zoom toolbar buttons  Zoom in/out
+Fit                    Fit the complete level
+Home                   Center near the Start/Base tile
+Right click            Cancel the current canvas operation
 ```
 
-A level places instances of those templates.
+### Map editing
 
-## Audio design
+1. Select the **Map** mode.
+2. Choose Wall, Water, Landing Pad, Start/Base, or Clear Tile.
+3. Click the map to paint.
 
-Audio files should be referenced by data, not hardcoded in Ada.
+### Object editing
 
-Examples:
+1. Select the **Object** mode.
+2. Choose Miner, Enemy, Platform, Gate, Boss Spawn, or a pickup.
+3. Click to place an instance.
+4. Choose Select and click the instance.
+5. Open **Object Properties** from the toolbar or Edit menu.
+6. Rename the instance or change its position and size.
+
+### Motion paths
+
+1. Select a placed object.
+2. Choose **Path** mode or open Object Properties and choose
+   **Edit Selected Object Path**.
+3. The banner names the object whose path is being edited.
+4. If the object has no route, choose **Create Simple Path** or Ctrl-click
+   the canvas. START and END are created slightly apart.
+5. Left-click a node to select it and left-drag it to move it.
+6. Ctrl-click a dashed segment to insert an intermediate waypoint.
+7. Ctrl-right-click a node to open its numeric properties. Intermediate
+   waypoints can be deleted; START and END cannot.
+8. Press **Enter** or choose **Finish Path** to keep the changes.
+9. Press **Escape** or choose **Cancel** to restore the previous path.
+
+The map is the primary path-editing interface. Numeric position and arrival
+values are secondary controls. Segment timing, interpolation, and live motion
+preview remain follow-up work.
+
+## Layers
+
+The Layers tab controls editor visibility for:
 
 ```text
-LEVEL
-NAME STAGE01
-TITLE MISSION 1
-MUSIC assets/audio/music/mission01.mp3
-BOSS_MUSIC assets/audio/music/boss01.mp3
+Background
+Terrain / Collision
+Water
+Pickups
+Destructibles
+Platforms
+Miners
+Enemies / Bosses
+Triggers / Bases
+Paths / Debug
 ```
 
-```text
-SHIP RescueShip01
-ENGINE_THRUST_SOUND assets/audio/sfx/ship/thrust.wav
-SHIELD_HIT_SOUND assets/audio/sfx/shields/hit.wav
-EXPLODE_SOUND assets/audio/sfx/ship/explode.wav
-```
+The destructible layer is present as an architectural slot. The current
+`Level.Object_Kind` does not yet include a destructible instance type. Runtime
+support for hiding a pickup under a pixel-eroded destructible is still pending.
+
+## Level properties
+
+Level Properties defines:
 
 ```text
-WEAPON Laser
-FIRE_SOUND assets/audio/sfx/weapons/laser_fire.wav
-HIT_SOUND assets/audio/sfx/weapons/laser_hit.wav
-CHARGE_SOUND assets/audio/sfx/weapons/laser_charge.wav
+Internal stage name
+Display title
+Next level
+Background image
+Level music
+Boss music
 ```
 
+Audio files are referenced by path. The current SDL audio package still uses
+hooks/stubs and does not yet decode the soundtrack files.
+
+## Project layout
+
 ```text
-POWERUP ShieldRecharge
-PICKUP_SOUND assets/audio/sfx/pickups/shield.wav
-EFFECT ADD_SHIELD 25
+src/editor/                   GtkAda editor source
+src/ecs/systems/level.*       current level format shared with the game
+assets/ui/                    GtkBuilder UI
+assets/levels/                maps and editor sidecar metadata
+assets/database/              reusable template/configuration data
+assets/images/                map and sprite assets
+assets/audio/                 local audio, ignored by Git
+docs/                         design and workflow notes
 ```
 
 ## Copyrighted audio
 
-Do not commit copyrighted music or sound files.
-
-The repository should ignore:
+Do not commit copyrighted music or sound files. Keep these patterns in
+`.gitignore`:
 
 ```gitignore
 assets/audio/**/*.mp3
@@ -213,87 +172,32 @@ assets/audio/**/*.ogg
 assets/audio/**/*.flac
 ```
 
-Commit placeholder `.keep` files only.
+## Current boundary
 
-## Current status
+Phase 13 is a UI and workflow rewrite. It preserves the SDL game and existing
+level format. It does not yet make every Database field affect gameplay.
+Runtime synchronization should follow only after the editor workflow has been
+validated.
 
-The native editor builds and opens after the Phase 11 runtime fixes. Some behavior is still being stabilized:
+## Capability roadmap
 
-- Save and Playtest need null-safe UI lookups.
-- Grid rendering needs to preserve pan and zoom.
-- Minimap placement needs to remain stable.
-- Toolbar/menu behavior needs cleanup.
-- The editor needs real data editing for each workspace.
-
-
-## Phase 11B editor notes
-
-The editor currently has a safer map canvas and a more useful inspector.
-
-Important behavior:
+The comprehensive grouped editor capability plan is in:
 
 ```text
-Select tool    click map objects to inspect them
-Brush tool     place the selected terrain or object from the palette
-Right click    cancel brush and return to select mode
-Grid           redraws the map with the grid layer enabled/disabled
-Inspector      shows object name, type, components, geometry, and motion
+docs/MAP_EDITOR_CAPABILITIES.md
 ```
 
-Object names are generated from their type and order in the level, for example:
+## Phase 13B runtime sync
 
-```text
-Platform_01
-Platform_02
-Enemy_01
-Miner_01
+Editor-created motion paths now run in the SDL game. The runtime reads the
+level's `.map.editor` sidecar when the main `.map` file loads. MP3/Ogg/WAV/FLAC
+music playback uses SDL2_mixer, and the game uses the level's `MUSIC` field.
+
+```bash
+sudo apt install libsdl2-mixer-dev
+tools/check_phase13b_runtime.sh
+alr build
+alr run
 ```
 
-The Motion Path section currently displays the old patrol data as two nodes.
-This is the bridge between the old `Patrol_X` / `Patrol_Y` system and the future
-node-based path editor.
-
-Next editor step:
-
-```text
-Phase 11C
-  Add real node insertion
-  Split a path segment
-  Delete a node
-  Drag nodes
-  Set per-node timing
-  Set interpolation: Snap / Linear / Smooth
-  Save/load arbitrary paths
-```
-
-## Phase 11C editor workflow
-
-Phase 11C resets the editor workflow around the idea that the level editor places entities, while entity/path/weapon/objective editors define behavior.
-
-Important changes:
-
-- Select, Brush, Erase, Pan, and Path are exclusive tools.
-- Grid is a view overlay, not an editing tool.
-- Motion paths belong to selected entities.
-- Select an entity, click **Edit Path / Add Nodes**, then click the map to add path nodes.
-- The first two path nodes can also be edited manually from the right inspector.
-- Path metadata is saved next to the level as a `.editor` sidecar file.
-
-See `docs/EDITOR_WORKFLOW.md` for the current workflow contract.
-
-## Native Editor Controls
-
-The editor is the primary content tool. Use the Map tab to paint tiles and place entities, then select entities to edit geometry and motion data in the Inspector.
-
-Common controls:
-
-- Mouse wheel: zoom.
-- Pan tool or background drag: move around the map.
-- Select: inspect tiles/entities.
-- Brush: paint the selected palette item.
-- Erase: remove an object or clear a tile.
-- Path: add motion nodes to the selected entity.
-- Grid: toggle the map grid overlay.
-- Playtest: save and launch the SDL game runtime.
-
-Document tabs are Map, Player, Enemies, Bosses, Weapons, Powerups, Audio, and Objectives. The minimap is docked in the lower-right inspector area.
+See `docs/PHASE13B_RUNTIME_SYNC.md` for path timing and audio details.

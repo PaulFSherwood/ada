@@ -1,3 +1,7 @@
+with Ada.Characters.Handling;
+with Ada.Directories;
+with Ada.Strings;
+with Ada.Strings.Fixed;
 with Ada.Text_IO; use Ada.Text_IO;
 
 package body Level is
@@ -7,6 +11,93 @@ package body Level is
    package Object_Kind_IO is new Ada.Text_IO.Enumeration_IO (Object_Kind);
    package Motion_Kind_IO is new Ada.Text_IO.Enumeration_IO (Motion_Kind);
    package Float_IO is new Ada.Text_IO.Float_IO (Float);
+
+   function Trim (Text : String) return String is
+   begin
+      return Ada.Strings.Fixed.Trim (Text, Ada.Strings.Both);
+   end Trim;
+
+   function Token
+     (Text  : String;
+      Index : Positive) return String is
+      Current : Positive := 1;
+      First   : Natural := 0;
+      Last    : Natural := 0;
+      I       : Integer := Text'First;
+   begin
+      while I <= Text'Last loop
+         while I <= Text'Last and then Text (I) = ' ' loop
+            I := I + 1;
+         end loop;
+
+         exit when I > Text'Last;
+         First := I;
+
+         while I <= Text'Last and then Text (I) /= ' ' loop
+            I := I + 1;
+         end loop;
+
+         Last := I - 1;
+
+         if Current = Index then
+            return Text (First .. Last);
+         end if;
+
+         Current := Current + 1;
+      end loop;
+
+      return "";
+   end Token;
+
+   function To_Natural
+     (Text    : String;
+      Default : Natural) return Natural is
+   begin
+      return Natural'Value (Trim (Text));
+   exception
+      when others =>
+         return Default;
+   end To_Natural;
+
+   function To_Float
+     (Text    : String;
+      Default : Float) return Float is
+   begin
+      return Float'Value (Trim (Text));
+   exception
+      when others =>
+         return Default;
+   end To_Float;
+
+   function Parse_Path_Mode (Text : String) return Path_Playback_Mode is
+      Upper : constant String :=
+        Ada.Characters.Handling.To_Upper (Trim (Text));
+   begin
+      if Upper = "ONCE" then
+         return Once_Path;
+      elsif Upper = "LOOP" then
+         return Loop_Path;
+      elsif Upper = "PINGPONG" then
+         return Pingpong_Path;
+      else
+         return No_Path;
+      end if;
+   end Parse_Path_Mode;
+
+   function Parse_Path_Easing (Text : String) return Path_Easing_Kind is
+      Upper : constant String :=
+        Ada.Characters.Handling.To_Upper (Trim (Text));
+   begin
+      if Upper = "SNAP" then
+         return Snap_Ease;
+      elsif Upper = "SMOOTH" then
+         return Smooth_Ease;
+      elsif Upper = "ARC" then
+         return Arc_Ease;
+      else
+         return Linear_Ease;
+      end if;
+   end Parse_Path_Easing;
 
    function Default_Level_Info return Level_Info is
    begin
@@ -452,40 +543,373 @@ package body Level is
       end if;
    end Clamp_Point;
 
-   procedure Move_Dynamic_Objects
-     (Objects : in out Object_Array;
-      DT      : Float) is
+   procedure Initialise_Runtime_Path
+     (Obj : in out Object_Record) is
+   begin
+      Obj.Path_Elapsed := 0.0;
+      Obj.Path_Complete := False;
+      Obj.Path_Direction := 1;
+
+      if Obj.Path_Count >= 2 and then Obj.Path_Mode /= No_Path then
+         Obj.Path_From_Node := 1;
+         Obj.Path_To_Node := 2;
+         Obj.X := Obj.Path_Nodes (1).X;
+         Obj.Y := Obj.Path_Nodes (1).Y;
+      else
+         Obj.Path_From_Node := 0;
+         Obj.Path_To_Node := 0;
+      end if;
+   end Initialise_Runtime_Path;
+
+   function Object_Index_At_Order
+     (Objects  : Object_Array;
+      Position : Positive;
+      Index    : out Object_Index) return Boolean is
+      Seen : Natural := 0;
    begin
       for I in Object_Index loop
          if Objects (I).Used then
-            case Objects (I).Motion is
-               when Static =>
-                  null;
+            Seen := Seen + 1;
 
-               when Patrol_X =>
-                  Objects (I).X :=
-                    Objects (I).X + Objects (I).Speed * Objects (I).Dir * DT;
+            if Seen = Position then
+               Index := I;
+               return True;
+            end if;
+         end if;
+      end loop;
 
-                  if Objects (I).X < Objects (I).Min_Pos then
-                     Objects (I).X := Objects (I).Min_Pos;
-                     Objects (I).Dir := 1.0;
-                  elsif Objects (I).X > Objects (I).Max_Pos then
-                     Objects (I).X := Objects (I).Max_Pos;
-                     Objects (I).Dir := -1.0;
-                  end if;
+      Index := Object_Index'First;
+      return False;
+   end Object_Index_At_Order;
 
-               when Patrol_Y =>
-                  Objects (I).Y :=
-                    Objects (I).Y + Objects (I).Speed * Objects (I).Dir * DT;
+   procedure Load_Editor_Paths
+     (Objects    : in out Object_Array;
+      Level_Path : String) is
+      Metadata_Path : constant String := Level_Path & ".editor";
+      File          : File_Type;
+      Line          : String (1 .. 512);
+      Last          : Natural;
+      Current       : Natural := 0;
+      Object_Order  : Natural := 0;
+      Loaded_Count  : Natural := 0;
+   begin
+      if not Ada.Directories.Exists (Metadata_Path) then
+         Put_Line ("No runtime path metadata: " & Metadata_Path);
+         return;
+      end if;
 
-                  if Objects (I).Y < Objects (I).Min_Pos then
-                     Objects (I).Y := Objects (I).Min_Pos;
-                     Objects (I).Dir := 1.0;
-                  elsif Objects (I).Y > Objects (I).Max_Pos then
-                     Objects (I).Y := Objects (I).Max_Pos;
-                     Objects (I).Dir := -1.0;
-                  end if;
-            end case;
+      Open (File, In_File, Metadata_Path);
+
+      while not End_Of_File (File) loop
+         Get_Line (File, Line, Last);
+
+         if Last = 0 then
+            null;
+         elsif Token (Line (1 .. Last), 1) = "OBJECT" then
+            Object_Order := Object_Order + 1;
+            Current := 0;
+
+            declare
+               Index : Object_Index;
+            begin
+               if Object_Index_At_Order
+                 (Objects, Positive (Object_Order), Index)
+               then
+                  Current := Natural (Index);
+               end if;
+            end;
+         elsif Current >= Natural (Object_Index'First)
+           and then Current <= Natural (Object_Index'Last)
+           and then Objects (Object_Index (Current)).Used
+         then
+            declare
+               Obj : Object_Record renames Objects (Object_Index (Current));
+               Key : constant String := Token (Line (1 .. Last), 1);
+            begin
+               if Key = "PATH_MODE" then
+                  Obj.Path_Mode :=
+                    Parse_Path_Mode (Token (Line (1 .. Last), 2));
+               elsif Key = "PATH_EASING" then
+                  Obj.Path_Easing :=
+                    Parse_Path_Easing (Token (Line (1 .. Last), 2));
+               elsif Key = "PATH_COUNT" then
+                  declare
+                     Count : constant Natural :=
+                       To_Natural (Token (Line (1 .. Last), 2), 0);
+                  begin
+                     if Count > Max_Path_Nodes then
+                        Obj.Path_Count := Max_Path_Nodes;
+                     else
+                        Obj.Path_Count := Motion_Path_Node_Count (Count);
+                     end if;
+                  end;
+               elsif Key = "NODE" then
+                  declare
+                     Node_Number : constant Natural :=
+                       To_Natural (Token (Line (1 .. Last), 2), 0);
+                  begin
+                     if Node_Number >=
+                       Natural (Motion_Path_Node_Index'First)
+                       and then Node_Number <=
+                         Natural (Motion_Path_Node_Index'Last)
+                     then
+                        Obj.Path_Nodes
+                          (Motion_Path_Node_Index (Node_Number)) :=
+                          (X => To_Float
+                             (Token (Line (1 .. Last), 3), 0.0),
+                           Y => To_Float
+                             (Token (Line (1 .. Last), 4), 0.0),
+                           Time => To_Float
+                             (Token (Line (1 .. Last), 5), 0.0));
+                     end if;
+                  end;
+               end if;
+            end;
+         end if;
+      end loop;
+
+      Close (File);
+
+      for I in Object_Index loop
+         if Objects (I).Used
+           and then Objects (I).Path_Count >= 2
+           and then Objects (I).Path_Mode /= No_Path
+         then
+            Initialise_Runtime_Path (Objects (I));
+            Loaded_Count := Loaded_Count + 1;
+         end if;
+      end loop;
+
+      Put_Line
+        ("Loaded runtime paths:" & Natural'Image (Loaded_Count)
+         & " from " & Metadata_Path);
+   exception
+      when others =>
+         if Is_Open (File) then
+            Close (File);
+         end if;
+
+         Put_Line ("Could not load runtime paths: " & Metadata_Path);
+   end Load_Editor_Paths;
+
+   function Segment_Duration
+     (Obj : Object_Record) return Float is
+      From_Time : Float;
+      To_Time   : Float;
+      Duration  : Float;
+   begin
+      if Obj.Path_From_Node = 0 or else Obj.Path_To_Node = 0 then
+         return 1.0;
+      end if;
+
+      From_Time := Obj.Path_Nodes
+        (Motion_Path_Node_Index (Obj.Path_From_Node)).Time;
+      To_Time := Obj.Path_Nodes
+        (Motion_Path_Node_Index (Obj.Path_To_Node)).Time;
+      Duration := abs (To_Time - From_Time);
+
+      if Duration < 0.01 then
+         return 1.0;
+      else
+         return Duration;
+      end if;
+   end Segment_Duration;
+
+   function Eased_Progress
+     (Kind     : Path_Easing_Kind;
+      Progress : Float) return Float is
+      T : Float := Progress;
+   begin
+      if T < 0.0 then
+         T := 0.0;
+      elsif T > 1.0 then
+         T := 1.0;
+      end if;
+
+      case Kind is
+         when Snap_Ease =>
+            if T < 1.0 then
+               return 0.0;
+            else
+               return 1.0;
+            end if;
+
+         when Linear_Ease =>
+            return T;
+
+         when Smooth_Ease | Arc_Ease =>
+            return T * T * (3.0 - 2.0 * T);
+      end case;
+   end Eased_Progress;
+
+   procedure Set_Path_Position
+     (Obj      : in out Object_Record;
+      Progress : Float) is
+      From_Node : Motion_Path_Node;
+      To_Node   : Motion_Path_Node;
+      T         : constant Float :=
+        Eased_Progress (Obj.Path_Easing, Progress);
+      From_X    : Float;
+      From_Y    : Float;
+      To_X      : Float;
+      To_Y      : Float;
+   begin
+      if Obj.Path_From_Node = 0 or else Obj.Path_To_Node = 0 then
+         return;
+      end if;
+
+      From_Node := Obj.Path_Nodes
+        (Motion_Path_Node_Index (Obj.Path_From_Node));
+      To_Node := Obj.Path_Nodes
+        (Motion_Path_Node_Index (Obj.Path_To_Node));
+      From_X := From_Node.X;
+      From_Y := From_Node.Y;
+      To_X := To_Node.X;
+      To_Y := To_Node.Y;
+
+      Obj.X := From_X + (To_X - From_X) * T;
+      Obj.Y := From_Y + (To_Y - From_Y) * T;
+   end Set_Path_Position;
+
+   procedure Advance_Path_Segment
+     (Obj : in out Object_Record) is
+      Count : constant Natural := Natural (Obj.Path_Count);
+   begin
+      case Obj.Path_Mode is
+         when No_Path =>
+            Obj.Path_Complete := True;
+
+         when Once_Path =>
+            if Obj.Path_To_Node >= Count then
+               Obj.Path_Complete := True;
+            else
+               Obj.Path_From_Node := Obj.Path_To_Node;
+               Obj.Path_To_Node := Obj.Path_To_Node + 1;
+            end if;
+
+         when Loop_Path =>
+            Obj.Path_From_Node := Obj.Path_To_Node;
+
+            if Obj.Path_To_Node >= Count then
+               Obj.Path_To_Node := 1;
+            else
+               Obj.Path_To_Node := Obj.Path_To_Node + 1;
+            end if;
+
+         when Pingpong_Path =>
+            if Obj.Path_Direction > 0 then
+               if Obj.Path_To_Node >= Count then
+                  Obj.Path_Direction := -1;
+                  Obj.Path_From_Node := Count;
+                  Obj.Path_To_Node := Count - 1;
+               else
+                  Obj.Path_From_Node := Obj.Path_To_Node;
+                  Obj.Path_To_Node := Obj.Path_To_Node + 1;
+               end if;
+            elsif Obj.Path_To_Node <= 1 then
+               Obj.Path_Direction := 1;
+               Obj.Path_From_Node := 1;
+               Obj.Path_To_Node := 2;
+            else
+               Obj.Path_From_Node := Obj.Path_To_Node;
+               Obj.Path_To_Node := Obj.Path_To_Node - 1;
+            end if;
+      end case;
+   end Advance_Path_Segment;
+
+   procedure Move_Along_Path
+     (Obj : in out Object_Record;
+      DT  : Float) is
+      Remaining : Float := DT;
+      Duration  : Float;
+      Available : Float;
+      Progress  : Float;
+      Steps     : Natural := 0;
+   begin
+      if Obj.Path_Count < 2
+        or else Obj.Path_Mode = No_Path
+        or else Obj.Path_Complete
+        or else DT <= 0.0
+      then
+         return;
+      end if;
+
+      while Remaining > 0.0
+        and then not Obj.Path_Complete
+        and then Steps < Max_Path_Nodes * 2
+      loop
+         Duration := Segment_Duration (Obj);
+         Available := Duration - Obj.Path_Elapsed;
+
+         if Available < 0.0 then
+            Available := 0.0;
+         end if;
+
+         if Remaining >= Available then
+            Obj.Path_Elapsed := Duration;
+            Set_Path_Position (Obj, 1.0);
+            Remaining := Remaining - Available;
+            Advance_Path_Segment (Obj);
+            Obj.Path_Elapsed := 0.0;
+         else
+            Obj.Path_Elapsed := Obj.Path_Elapsed + Remaining;
+            Progress := Obj.Path_Elapsed / Duration;
+            Set_Path_Position (Obj, Progress);
+            Remaining := 0.0;
+         end if;
+
+         Steps := Steps + 1;
+      end loop;
+   end Move_Along_Path;
+
+   procedure Move_Dynamic_Objects
+     (Objects : in out Object_Array;
+      DT      : Float) is
+      Old_X : Float;
+      Old_Y : Float;
+   begin
+      for I in Object_Index loop
+         if Objects (I).Used then
+            Old_X := Objects (I).X;
+            Old_Y := Objects (I).Y;
+
+            if Objects (I).Path_Count >= 2
+              and then Objects (I).Path_Mode /= No_Path
+            then
+               Move_Along_Path (Objects (I), DT);
+            else
+               case Objects (I).Motion is
+                  when Static =>
+                     null;
+
+                  when Patrol_X =>
+                     Objects (I).X := Objects (I).X
+                       + Objects (I).Speed * Objects (I).Dir * DT;
+
+                     if Objects (I).X < Objects (I).Min_Pos then
+                        Objects (I).X := Objects (I).Min_Pos;
+                        Objects (I).Dir := 1.0;
+                     elsif Objects (I).X > Objects (I).Max_Pos then
+                        Objects (I).X := Objects (I).Max_Pos;
+                        Objects (I).Dir := -1.0;
+                     end if;
+
+                  when Patrol_Y =>
+                     Objects (I).Y := Objects (I).Y
+                       + Objects (I).Speed * Objects (I).Dir * DT;
+
+                     if Objects (I).Y < Objects (I).Min_Pos then
+                        Objects (I).Y := Objects (I).Min_Pos;
+                        Objects (I).Dir := 1.0;
+                     elsif Objects (I).Y > Objects (I).Max_Pos then
+                        Objects (I).Y := Objects (I).Max_Pos;
+                        Objects (I).Dir := -1.0;
+                     end if;
+               end case;
+            end if;
+
+            Objects (I).Delta_X := Objects (I).X - Old_X;
+            Objects (I).Delta_Y := Objects (I).Y - Old_Y;
          end if;
       end loop;
    end Move_Dynamic_Objects;
@@ -676,6 +1100,7 @@ package body Level is
       end loop;
 
       Close (File);
+      Load_Editor_Paths (Objects, Path);
       Loaded := True;
       Put_Line ("Loaded " & Path);
    exception

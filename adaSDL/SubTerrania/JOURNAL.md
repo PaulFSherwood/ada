@@ -267,3 +267,81 @@ Known limitation after this phase: mouse-drag panning is still not a full custom
 - Made active tool buttons snap back to the current tool if the user tries to deselect the only active tool.
 - Drew the grid after terrain/objects/motion guides so it is visible as a map overlay.
 - Restored GtkAda background-scroll panning so map movement is possible again without relying only on zoom/scroll tricks.
+
+## Phase 13 - RPG Maker-style editor rewrite
+
+The Phase 11/12 editor technically opened, but its layout had no clear mental
+model. Map editing, template editing, boss phases, raw path coordinates, and a
+broken minimap were all presented at the same time. Users could not reliably
+answer what mode was active, what object owned a path, or why project buttons
+changed the central document.
+
+Phase 13 replaces that interface rather than adding another overlay.
+
+Changes:
+
+- The main window is now map-focused: menu, icon toolbar, left palette/layers,
+  project resources, central map, and bottom status/output.
+- The permanent right inspector and nonfunctional minimap were removed.
+- Player, enemy, boss, weapon, pickup, platform, destructible, animation,
+  audio, objective, and project definitions moved into a separate Database
+  window opened by the gear icon.
+- Placed object properties moved into a focused Object Properties window.
+- Level metadata moved into a focused Level Properties window.
+- Middle-mouse drag and Pan-tool left drag route through canvas background
+  scrolling.
+- Rebuilding the canvas now restores the previous pan and zoom.
+- Grid, background, tiles, objects, and path guides share model coordinates.
+- Layers gained visibility controls.
+- Path mode now names the selected object in a visible banner and requires
+  Ctrl-click to add numbered nodes. The first and last nodes have distinct
+  colors.
+- Database defaults are stored in `assets/database/`.
+
+Deliberate omissions:
+
+- The old minimap was not retained because it displayed an empty gray widget.
+- Segment timing/easing UI, draggable path nodes, Bezier handles, multiple
+  definitions per database category, destructible runtime behavior, and full
+  game/database synchronization remain future work.
+- The SDL game and existing `stage01.map` data were preserved.
+
+The rewrite installer creates a complete project snapshot under `backups/`
+before replacing any files.
+
+## Phase 13A - Visual path editing controls
+
+The first Phase 13 path workflow identified the selected object, but adding
+numbered points did not make route construction understandable. It also lacked
+reliable node dragging, a clear START/END distinction, transaction cancel, and
+a focused way to inspect or remove one waypoint.
+
+Phase 13A changes the path interaction:
+
+- Routes display START, intermediate P1/P2 labels, END, and dashed segments.
+- Left-click selects a node; left-drag moves it.
+- Ctrl-click a dashed segment inserts a waypoint at that position.
+- If no route exists, a simple START/END route is created slightly apart.
+- Ctrl-right-click a node opens a focused Path Node window.
+- Intermediate waypoints can be deleted; START and END remain.
+- Enter finishes and keeps the transaction.
+- Escape cancels and restores the path snapshot from before editing.
+- Leaving Path mode deliberately keeps completed edits rather than leaving a
+  hidden transaction active.
+- The editor capability roadmap is documented in
+  `docs/MAP_EDITOR_CAPABILITIES.md`.
+
+## Phase 13B — Editor paths and music were not reaching the game
+
+**Problem:** Platforms and enemies displayed editor paths, but the SDL game
+continued using only `STATIC`, `PATROL_X`, or `PATROL_Y`. Music calls printed a
+name but produced no audio.
+
+**Cause:** The game never loaded the `.map.editor` sidecar, and `Audio` was a
+console-only stub.
+
+**Fix:** `Level.Load_Level` now loads path nodes, playback mode, easing, and
+segment timing from the sidecar. Runtime object movement follows those paths.
+Music now uses SDL2_mixer and the exact `MUSIC` path stored in the level file.
+Menu/editor music use `assets/database/audio.cfg` with a local-file fallback.
+MP3 conversion is not required.

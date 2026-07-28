@@ -28,6 +28,10 @@ package body Editor_State is
    Active_Tile   : Level.Tile_Kind := Level.Wall_Tile;
    Active_Object : Level.Object_Kind := Level.Miner;
    Show_Grid     : Boolean := True;
+
+   type Layer_Visibility_Array is array (Layer_Kind) of Boolean;
+   Layer_Visibility : Layer_Visibility_Array := (others => True);
+
    Selected      : Selection_Info;
 
    type Object_Name_Array is array
@@ -60,6 +64,17 @@ package body Editor_State is
 
    Object_Path_Easings : Object_Path_Easing_Array :=
      (others => Linear_Ease);
+
+   Path_Edit_Is_Active : Boolean := False;
+   Path_Edit_Object     : Natural := 0;
+   Path_Edit_Node       : Natural := 0;
+   Path_Edit_Changed    : Boolean := False;
+   Path_Edit_Old_Dirty  : Boolean := False;
+   Path_Edit_Old_Count  : Path_Node_Count := 0;
+   Path_Edit_Old_Nodes  : Path_Node_Array :=
+     (others => (X => 0.0, Y => 0.0, Time => 0.0));
+   Path_Edit_Old_Mode   : Path_Mode_Kind := No_Path;
+   Path_Edit_Old_Easing : Path_Easing_Kind := Linear_Ease;
 
    Max_History : constant Positive := 32;
 
@@ -312,6 +327,10 @@ package body Editor_State is
         (others => (others => (X => 0.0, Y => 0.0, Time => 0.0)));
       Object_Path_Modes := (others => No_Path);
       Object_Path_Easings := (others => Linear_Ease);
+      Path_Edit_Is_Active := False;
+      Path_Edit_Object := 0;
+      Path_Edit_Node := 0;
+      Path_Edit_Changed := False;
    end Reset_Editor_Metadata;
 
    procedure Save_Editor_Metadata (Path : String) is
@@ -656,6 +675,18 @@ package body Editor_State is
       Show_Grid := Visible;
    end Set_Grid_Visible;
 
+   function Layer_Visible (Layer : Layer_Kind) return Boolean is
+   begin
+      return Layer_Visibility (Layer);
+   end Layer_Visible;
+
+   procedure Set_Layer_Visible
+     (Layer   : Layer_Kind;
+      Visible : Boolean) is
+   begin
+      Layer_Visibility (Layer) := Visible;
+   end Set_Layer_Visible;
+
    procedure Name_New_Object
      (Kind : Level.Object_Kind;
       X    : Float;
@@ -838,47 +869,8 @@ package body Editor_State is
       Changed := True;
    end Update_Selected_Geometry;
 
-   procedure Add_Path_Node_To_Selected
-     (World_X : Float;
-      World_Y : Float;
-      Added   : out Boolean) is
-      Index : Level.Object_Index;
-      Count : Path_Node_Count;
-   begin
-      Added := False;
-      if Selected.Kind /= Object_Selected
-        or else Selected.Object_Index = 0
-      then
-         return;
-      end if;
-
-      Index := Level.Object_Index (Selected.Object_Index);
-      Count := Object_Path_Counts (Index);
-
-      if Count = Max_Path_Nodes then
-         return;
-      end if;
-
-      Count := Count + 1;
-      Object_Path_Counts (Index) := Count;
-      Object_Path_Nodes (Index) (Path_Node_Index (Count)) :=
-        (X    => World_X,
-         Y    => World_Y,
-         Time => Float (Count - 1));
-      Object_Path_Modes (Index) := Pingpong_Path;
-      Object_Path_Easings (Index) := Smooth_Ease;
-      Dirty := True;
-      Store_Current_Snapshot;
-      Added := True;
-   end Add_Path_Node_To_Selected;
-
-   procedure Set_Selected_Two_Node_Path
-     (X1      : Float;
-      Y1      : Float;
-      T1      : Float;
-      X2      : Float;
-      Y2      : Float;
-      T2      : Float;
+   procedure Rename_Selected_Object
+     (Name    : String;
       Changed : out Boolean) is
       Index : Level.Object_Index;
    begin
@@ -890,32 +882,387 @@ package body Editor_State is
       end if;
 
       Index := Level.Object_Index (Selected.Object_Index);
+      Object_Names (Index) := US.To_Unbounded_String (Trim (Name));
+      Dirty := True;
+      Store_Current_Snapshot;
+      Changed := True;
+   end Rename_Selected_Object;
+
+   procedure Delete_Selected (Changed : out Boolean) is
+      Index : Level.Object_Index;
+   begin
+      Changed := False;
+      if Selected.Kind = Object_Selected
+        and then Selected.Object_Index /= 0
+      then
+         Index := Level.Object_Index (Selected.Object_Index);
+         Current_Objects (Index).Used := False;
+         Object_Names (Index) := US.Null_Unbounded_String;
+         Object_Path_Counts (Index) := 0;
+         Object_Path_Modes (Index) := No_Path;
+         Object_Path_Easings (Index) := Linear_Ease;
+         Selected := (others => <>);
+         Dirty := True;
+         Store_Current_Snapshot;
+         Changed := True;
+      elsif Selected.Kind = Tile_Selected then
+         Level.Set_Tile_At_World
+           (Tiles => Current_Tiles,
+            X     => Selected.World_X,
+            Y     => Selected.World_Y,
+            Tile  => Level.Space_Tile);
+         Selected := (others => <>);
+         Dirty := True;
+         Store_Current_Snapshot;
+         Changed := True;
+      end if;
+   end Delete_Selected;
+
+   function Selected_Object_Index return Natural is
+   begin
+      if Selected.Kind = Object_Selected
+        and then Selected.Object_Index /= 0
+      then
+         return Selected.Object_Index;
+      end if;
+
+      return 0;
+   end Selected_Object_Index;
+
+   procedure Mark_Path_Edit_Changed is
+   begin
+      Path_Edit_Changed := True;
+      Dirty := True;
+   end Mark_Path_Edit_Changed;
+
+   procedure Begin_Path_Edit (Started : out Boolean) is
+      Selected_Index : constant Natural := Selected_Object_Index;
+      Index          : Level.Object_Index;
+   begin
+      Started := False;
+      if Selected_Index = 0 then
+         return;
+      end if;
+
+      if Path_Edit_Is_Active
+        and then Path_Edit_Object = Selected_Index
+      then
+         Started := True;
+         return;
+      end if;
+
+      Index := Level.Object_Index (Selected_Index);
+      Path_Edit_Is_Active := True;
+      Path_Edit_Object := Selected_Index;
+      Path_Edit_Node := 0;
+      Path_Edit_Changed := False;
+      Path_Edit_Old_Dirty := Dirty;
+      Path_Edit_Old_Count := Object_Path_Counts (Index);
+      Path_Edit_Old_Nodes := Object_Path_Nodes (Index);
+      Path_Edit_Old_Mode := Object_Path_Modes (Index);
+      Path_Edit_Old_Easing := Object_Path_Easings (Index);
+      Started := True;
+   end Begin_Path_Edit;
+
+   procedure Finish_Path_Edit (Changed : out Boolean) is
+   begin
+      Changed := Path_Edit_Is_Active and then Path_Edit_Changed;
+
+      if Changed then
+         Store_Current_Snapshot;
+      end if;
+
+      Path_Edit_Is_Active := False;
+      Path_Edit_Object := 0;
+      Path_Edit_Node := 0;
+      Path_Edit_Changed := False;
+   end Finish_Path_Edit;
+
+   procedure Cancel_Path_Edit (Changed : out Boolean) is
+      Index : Level.Object_Index;
+   begin
+      Changed := Path_Edit_Is_Active and then Path_Edit_Changed;
+
+      if Path_Edit_Is_Active and then Path_Edit_Object /= 0 then
+         Index := Level.Object_Index (Path_Edit_Object);
+         Object_Path_Counts (Index) := Path_Edit_Old_Count;
+         Object_Path_Nodes (Index) := Path_Edit_Old_Nodes;
+         Object_Path_Modes (Index) := Path_Edit_Old_Mode;
+         Object_Path_Easings (Index) := Path_Edit_Old_Easing;
+         Dirty := Path_Edit_Old_Dirty;
+      end if;
+
+      Path_Edit_Is_Active := False;
+      Path_Edit_Object := 0;
+      Path_Edit_Node := 0;
+      Path_Edit_Changed := False;
+   end Cancel_Path_Edit;
+
+   function Path_Edit_Active return Boolean is
+   begin
+      return Path_Edit_Is_Active;
+   end Path_Edit_Active;
+
+   procedure Ensure_Simple_Path_For_Selected (Created : out Boolean) is
+      Selected_Index : constant Natural := Selected_Object_Index;
+      Index          : Level.Object_Index;
+      Object_Data    : Level.Object_Record;
+      Start_X        : Float;
+      Start_Y        : Float;
+   begin
+      Created := False;
+      if Selected_Index = 0 then
+         return;
+      end if;
+
+      Index := Level.Object_Index (Selected_Index);
+      if Object_Path_Counts (Index) /= 0 then
+         return;
+      end if;
+
+      Object_Data := Current_Objects (Index);
+      Start_X := Object_Data.X + Object_Data.W / 2.0;
+      Start_Y := Object_Data.Y + Object_Data.H / 2.0;
+
+      Object_Path_Counts (Index) := 2;
+      Object_Path_Modes (Index) := Pingpong_Path;
+      Object_Path_Easings (Index) := Smooth_Ease;
+      Object_Path_Nodes (Index) (1) :=
+        (X => Start_X, Y => Start_Y, Time => 0.0);
+      Object_Path_Nodes (Index) (2) :=
+        (X => Start_X + 96.0, Y => Start_Y, Time => 1.0);
+      Path_Edit_Node := 2;
+      Mark_Path_Edit_Changed;
+      Created := True;
+   end Ensure_Simple_Path_For_Selected;
+
+   function Selected_Path_Node return Natural is
+   begin
+      return Path_Edit_Node;
+   end Selected_Path_Node;
+
+   procedure Select_Path_Node (Node : Natural) is
+      Selected_Index : constant Natural := Selected_Object_Index;
+   begin
+      if Selected_Index = 0 then
+         Path_Edit_Node := 0;
+         return;
+      end if;
+
+      if Node = 0
+        or else Node > Natural
+          (Object_Path_Counts (Level.Object_Index (Selected_Index)))
+      then
+         Path_Edit_Node := 0;
+      else
+         Path_Edit_Node := Node;
+      end if;
+   end Select_Path_Node;
+
+   procedure Move_Selected_Path_Node
+     (World_X : Float;
+      World_Y : Float;
+      Changed : out Boolean) is
+      Selected_Index : constant Natural := Selected_Object_Index;
+      Index          : Level.Object_Index;
+   begin
+      Changed := False;
+      if Selected_Index = 0 or else Path_Edit_Node = 0 then
+         return;
+      end if;
+
+      Index := Level.Object_Index (Selected_Index);
+      if Path_Edit_Node > Natural (Object_Path_Counts (Index)) then
+         return;
+      end if;
+
+      Object_Path_Nodes (Index) (Path_Node_Index (Path_Edit_Node)).X := World_X;
+      Object_Path_Nodes (Index) (Path_Node_Index (Path_Edit_Node)).Y := World_Y;
+      Mark_Path_Edit_Changed;
+      Changed := True;
+   end Move_Selected_Path_Node;
+
+   procedure Update_Selected_Path_Node
+     (World_X : Float;
+      World_Y : Float;
+      Time    : Float;
+      Changed : out Boolean) is
+      Selected_Index : constant Natural := Selected_Object_Index;
+      Index          : Level.Object_Index;
+   begin
+      Changed := False;
+      if Selected_Index = 0 or else Path_Edit_Node = 0 then
+         return;
+      end if;
+
+      Index := Level.Object_Index (Selected_Index);
+      if Path_Edit_Node > Natural (Object_Path_Counts (Index)) then
+         return;
+      end if;
+
+      Object_Path_Nodes (Index) (Path_Node_Index (Path_Edit_Node)) :=
+        (X => World_X, Y => World_Y, Time => Time);
+      Mark_Path_Edit_Changed;
+      Changed := True;
+   end Update_Selected_Path_Node;
+
+   procedure Insert_Path_Node
+     (After_Node : Path_Node_Index;
+      World_X    : Float;
+      World_Y    : Float;
+      Inserted   : out Boolean) is
+      Selected_Index : constant Natural := Selected_Object_Index;
+      Index          : Level.Object_Index;
+      Count          : Path_Node_Count;
+      Insert_At      : Natural;
+      Time_A         : Float;
+      Time_B         : Float;
+   begin
+      Inserted := False;
+      if Selected_Index = 0 then
+         return;
+      end if;
+
+      Index := Level.Object_Index (Selected_Index);
+      Count := Object_Path_Counts (Index);
+      if Count < 2
+        or else Count = Max_Path_Nodes
+        or else Natural (After_Node) >= Natural (Count)
+      then
+         return;
+      end if;
+
+      Insert_At := Natural (After_Node) + 1;
+      for N in reverse Insert_At .. Natural (Count) loop
+         Object_Path_Nodes (Index) (Path_Node_Index (N + 1)) :=
+           Object_Path_Nodes (Index) (Path_Node_Index (N));
+      end loop;
+
+      Time_A := Object_Path_Nodes (Index) (After_Node).Time;
+      Time_B := Object_Path_Nodes
+        (Index) (Path_Node_Index (Insert_At)).Time;
+      Object_Path_Nodes (Index) (Path_Node_Index (Insert_At)) :=
+        (X => World_X,
+         Y => World_Y,
+         Time => (Time_A + Time_B) / 2.0);
+      Object_Path_Counts (Index) := Count + 1;
+      Path_Edit_Node := Insert_At;
+      Mark_Path_Edit_Changed;
+      Inserted := True;
+   end Insert_Path_Node;
+
+   procedure Delete_Selected_Path_Node (Deleted : out Boolean) is
+      Selected_Index : constant Natural := Selected_Object_Index;
+      Index          : Level.Object_Index;
+      Count          : Path_Node_Count;
+   begin
+      Deleted := False;
+      if Selected_Index = 0 or else Path_Edit_Node = 0 then
+         return;
+      end if;
+
+      Index := Level.Object_Index (Selected_Index);
+      Count := Object_Path_Counts (Index);
+      if Count <= 2
+        or else Path_Edit_Node = 1
+        or else Path_Edit_Node = Natural (Count)
+      then
+         return;
+      end if;
+
+      for N in Path_Edit_Node .. Natural (Count) - 1 loop
+         Object_Path_Nodes (Index) (Path_Node_Index (N)) :=
+           Object_Path_Nodes (Index) (Path_Node_Index (N + 1));
+      end loop;
+
+      Object_Path_Nodes (Index) (Path_Node_Index (Natural (Count))) :=
+        (X => 0.0, Y => 0.0, Time => 0.0);
+      Object_Path_Counts (Index) := Count - 1;
+      if Path_Edit_Node > Natural (Object_Path_Counts (Index)) then
+         Path_Edit_Node := Natural (Object_Path_Counts (Index));
+      end if;
+      Mark_Path_Edit_Changed;
+      Deleted := True;
+   end Delete_Selected_Path_Node;
+
+   procedure Add_Path_Node_To_Selected
+     (World_X : Float;
+      World_Y : Float;
+      Added   : out Boolean) is
+      Selected_Index : constant Natural := Selected_Object_Index;
+      Index          : Level.Object_Index;
+      Count          : Path_Node_Count;
+   begin
+      Added := False;
+      if Selected_Index = 0 then
+         return;
+      end if;
+
+      Index := Level.Object_Index (Selected_Index);
+      Count := Object_Path_Counts (Index);
+      if Count = Max_Path_Nodes then
+         return;
+      end if;
+
+      Count := Count + 1;
+      Object_Path_Counts (Index) := Count;
+      Object_Path_Nodes (Index) (Path_Node_Index (Count)) :=
+        (X => World_X, Y => World_Y, Time => Float (Count - 1));
+      Object_Path_Modes (Index) := Pingpong_Path;
+      Object_Path_Easings (Index) := Smooth_Ease;
+      Path_Edit_Node := Natural (Count);
+      Mark_Path_Edit_Changed;
+      Added := True;
+   end Add_Path_Node_To_Selected;
+
+   procedure Set_Selected_Two_Node_Path
+     (X1      : Float;
+      Y1      : Float;
+      T1      : Float;
+      X2      : Float;
+      Y2      : Float;
+      T2      : Float;
+      Changed : out Boolean) is
+      Selected_Index : constant Natural := Selected_Object_Index;
+      Index          : Level.Object_Index;
+   begin
+      Changed := False;
+      if Selected_Index = 0 then
+         return;
+      end if;
+
+      Index := Level.Object_Index (Selected_Index);
       Object_Path_Counts (Index) := 2;
       Object_Path_Modes (Index) := Pingpong_Path;
       Object_Path_Easings (Index) := Smooth_Ease;
       Object_Path_Nodes (Index) (1) := (X => X1, Y => Y1, Time => T1);
       Object_Path_Nodes (Index) (2) := (X => X2, Y => Y2, Time => T2);
-      Dirty := True;
-      Store_Current_Snapshot;
+      Path_Edit_Node := 2;
+      Mark_Path_Edit_Changed;
       Changed := True;
    end Set_Selected_Two_Node_Path;
 
    procedure Clear_Selected_Path (Changed : out Boolean) is
-      Index : Level.Object_Index;
+      Selected_Index : constant Natural := Selected_Object_Index;
+      Index          : Level.Object_Index;
    begin
       Changed := False;
-      if Selected.Kind /= Object_Selected
-        or else Selected.Object_Index = 0
-      then
+      if Selected_Index = 0 then
          return;
       end if;
 
-      Index := Level.Object_Index (Selected.Object_Index);
+      Index := Level.Object_Index (Selected_Index);
+      if Object_Path_Counts (Index) = 0 then
+         return;
+      end if;
+
       Object_Path_Counts (Index) := 0;
       Object_Path_Modes (Index) := No_Path;
       Object_Path_Easings (Index) := Linear_Ease;
-      Dirty := True;
-      Store_Current_Snapshot;
+      Object_Path_Nodes (Index) :=
+        (others => (X => 0.0, Y => 0.0, Time => 0.0));
+      Path_Edit_Node := 0;
+      Mark_Path_Edit_Changed;
       Changed := True;
    end Clear_Selected_Path;
 

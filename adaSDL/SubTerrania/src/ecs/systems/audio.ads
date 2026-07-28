@@ -25,6 +25,9 @@ package Audio is
    procedure Play_Music
      (Music : Music_ID);
 
+   procedure Play_Music_File
+     (Path : String);
+
    procedure Stop_Music;
 
 end Audio;

@@ -1,3 +1,4 @@
+with Ada.Strings.Unbounded;
 with Ada.Text_IO; use Ada.Text_IO;
 with Interfaces.C;
 
@@ -552,6 +553,12 @@ package body Application is
       end if;
    end Update_Camera;
 
+   procedure Play_Current_Level_Music is
+   begin
+      Audio.Play_Music_File
+        (Ada.Strings.Unbounded.To_String (Current_Level.Music));
+   end Play_Current_Level_Music;
+
    procedure Start_Editor_Playtest is
    begin
       Configure_Player_From_Map;
@@ -559,7 +566,7 @@ package body Application is
       Update_Camera;
       Mode := Level.Play_Mode;
       Current_Screen := Editor_Playtest_Screen;
-      Audio.Play_Music (Audio.Mission_One_Music);
+      Play_Current_Level_Music;
       Put_Line ("EDITOR PLAYTEST");
    end Start_Editor_Playtest;
 
@@ -612,7 +619,7 @@ package body Application is
       Update_Camera;
       Mode := Level.Play_Mode;
       Current_Screen := Play_Screen;
-      Audio.Play_Music (Audio.Mission_One_Music);
+      Play_Current_Level_Music;
    end Start_Game;
 
    procedure Start_Editor is
