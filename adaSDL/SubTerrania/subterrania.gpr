@@ -20,7 +20,7 @@ project subterrania is
    end Install;
 
    package Linker is
-      for Switches ("Ada") use ("-lSDL2");
+      for Switches ("Ada") use ("-lSDL2_mixer", "-lSDL2");
    end Linker;
 
 end subterrania;

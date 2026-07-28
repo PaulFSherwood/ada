@@ -1,49 +1,2417 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version='1.0' encoding='utf-8'?>
 <interface>
-  <requires lib="gtk+" version="3.20"/>
+  <requires lib="gtk+" version="3.20" />
   <object class="GtkWindow" id="main_window">
     <property name="title">SubTerrania Editor</property>
-    <property name="default-width">1600</property>
-    <property name="default-height">920</property>
+    <property name="default-width">1500</property>
+    <property name="default-height">900</property>
     <property name="window-position">center</property>
-    <signal name="destroy" handler="on_quit"/>
-    <child><object class="GtkBox" id="root_box"><property name="orientation">vertical</property><property name="spacing">0</property><property name="margin">0</property><property name="hexpand">true</property><property name="vexpand">true</property><child><object class="GtkMenuBar" id="menu_bar">
-<child><object class="GtkMenuItem"><property name="label">File</property>
-<child type="submenu"><object class="GtkMenu"><child><object class="GtkMenuItem"><property name="label">New</property><signal name="activate" handler="on_new"/></object></child><child><object class="GtkMenuItem"><property name="label">Open Level</property><signal name="activate" handler="on_open"/></object></child><child><object class="GtkMenuItem"><property name="label">Save</property><signal name="activate" handler="on_save"/></object></child><child><object class="GtkMenuItem"><property name="label">Save As</property><signal name="activate" handler="on_save_as"/></object></child><child><object class="GtkMenuItem"><property name="label">Quit</property><signal name="activate" handler="on_quit"/></object></child></object></child>
-</object></child>
-<child><object class="GtkMenuItem"><property name="label">Edit</property>
-<child type="submenu"><object class="GtkMenu"><child><object class="GtkMenuItem"><property name="label">Undo</property><signal name="activate" handler="on_undo"/></object></child><child><object class="GtkMenuItem"><property name="label">Redo</property><signal name="activate" handler="on_redo"/></object></child><child><object class="GtkMenuItem"><property name="label">Delete Selection</property><signal name="activate" handler="on_delete_selection"/></object></child></object></child>
-</object></child>
-<child><object class="GtkMenuItem"><property name="label">View</property>
-<child type="submenu"><object class="GtkMenu"><child><object class="GtkMenuItem"><property name="label">Fullscreen</property><signal name="activate" handler="on_fullscreen"/></object></child><child><object class="GtkMenuItem"><property name="label">Fit Map</property><signal name="activate" handler="on_fit_map"/></object></child><child><object class="GtkCheckMenuItem" id="grid_menu_item"><property name="label">Show Grid</property><property name="active">true</property><signal name="toggled" handler="on_grid_menu_toggled"/></object></child></object></child>
-</object></child>
-<child><object class="GtkMenuItem"><property name="label">Project</property>
-<child type="submenu"><object class="GtkMenu"><child><object class="GtkMenuItem"><property name="label">Validate</property><signal name="activate" handler="on_validate"/></object></child><child><object class="GtkMenuItem"><property name="label">Build Game</property><signal name="activate" handler="on_build_game"/></object></child><child><object class="GtkMenuItem"><property name="label">Playtest</property><signal name="activate" handler="on_playtest"/></object></child></object></child>
-</object></child>
-<child><object class="GtkMenuItem"><property name="label">Help</property>
-<child type="submenu"><object class="GtkMenu"><child><object class="GtkMenuItem"><property name="label">Help</property><signal name="activate" handler="on_help"/></object></child><child><object class="GtkMenuItem"><property name="label">About</property><signal name="activate" handler="on_about"/></object></child></object></child>
-</object></child>
-</object></child><child><object class="GtkToolbar" id="toolbar"><property name="toolbar-style">icons</property>
-<child><object class="GtkToolButton"><property name="label">New</property><property name="icon-name">document-new</property><property name="tooltip-text">New level</property><signal name="clicked" handler="on_new"/></object></child>
-<child><object class="GtkToolButton"><property name="label">Open</property><property name="icon-name">document-open</property><property name="tooltip-text">Open level</property><signal name="clicked" handler="on_open"/></object></child>
-<child><object class="GtkToolButton"><property name="label">Save</property><property name="icon-name">document-save</property><property name="tooltip-text">Save level and editor data</property><signal name="clicked" handler="on_save"/></object></child>
-<child><object class="GtkSeparatorToolItem"/></child>
-<child><object class="GtkToggleToolButton" id="select_tool"><property name="label">Select</property><property name="icon-name">cursor-default</property><property name="tooltip-text">Select tiles or objects</property><property name="active">true</property><signal name="toggled" handler="on_tool_select"/></object></child>
-<child><object class="GtkToggleToolButton" id="brush_tool"><property name="label">Brush</property><property name="icon-name">draw-brush</property><property name="tooltip-text">Paint selected palette item</property><signal name="toggled" handler="on_tool_brush"/></object></child>
-<child><object class="GtkToggleToolButton" id="eraser_tool"><property name="label">Erase</property><property name="icon-name">edit-clear</property><property name="tooltip-text">Erase terrain/object under cursor</property><signal name="toggled" handler="on_tool_eraser"/></object></child>
-<child><object class="GtkToggleToolButton" id="pan_tool"><property name="label">Pan</property><property name="icon-name">transform-move</property><property name="tooltip-text">Drag/pan around the map</property><signal name="toggled" handler="on_tool_pan"/></object></child>
-<child><object class="GtkToggleToolButton" id="path_tool"><property name="label">Path</property><property name="icon-name">insert-link</property><property name="tooltip-text">Add motion nodes to selected object</property><signal name="toggled" handler="on_tool_path"/></object></child>
-<child><object class="GtkSeparatorToolItem"/></child>
-<child><object class="GtkToggleToolButton" id="grid_tool"><property name="label">Grid</property><property name="icon-name">view-grid-symbolic</property><property name="tooltip-text">Toggle map grid overlay</property><property name="active">true</property><signal name="toggled" handler="on_grid_toolbar_toggled"/></object></child>
-<child><object class="GtkToolButton"><property name="label">Fit</property><property name="icon-name">zoom-fit-best</property><property name="tooltip-text">Fit map to viewport</property><signal name="clicked" handler="on_fit_map"/></object></child>
-<child><object class="GtkToolButton"><property name="label">Playtest</property><property name="icon-name">media-playback-start</property><property name="tooltip-text">Save and run the game</property><signal name="clicked" handler="on_playtest"/></object></child>
-<child><object class="GtkToolButton"><property name="label">Build</property><property name="icon-name">system-run</property><property name="tooltip-text">Build game</property><signal name="clicked" handler="on_build_game"/></object></child>
-</object></child><child><object class="GtkBox" id="work_area"><property name="orientation">horizontal</property><property name="spacing">4</property><property name="margin">0</property><property name="hexpand">true</property><property name="vexpand">true</property><child><object class="GtkBox" id="left_panel"><property name="orientation">vertical</property><property name="spacing">4</property><property name="margin">6</property><property name="width-request">240</property><child><object class="GtkLabel"><property name="label">Project</property><property name="use-markup">true</property><property name="xalign">0</property></object></child><child><object class="GtkButton"><property name="label">🗺  Level</property><signal name="clicked" handler="on_open_level_document"/></object></child><child><object class="GtkButton"><property name="label">🚀  Player Ship</property><signal name="clicked" handler="on_open_player_document"/></object></child><child><object class="GtkButton"><property name="label">👾  Enemies</property><signal name="clicked" handler="on_open_enemy_document"/></object></child><child><object class="GtkButton"><property name="label">🐙  Bosses / Encounters</property><signal name="clicked" handler="on_open_boss_document"/></object></child><child><object class="GtkButton"><property name="label">⚡  Weapons</property><signal name="clicked" handler="on_open_weapon_document"/></object></child><child><object class="GtkButton"><property name="label">✚  Powerups</property><signal name="clicked" handler="on_open_powerup_document"/></object></child><child><object class="GtkButton"><property name="label">♫  Audio</property><signal name="clicked" handler="on_open_audio_document"/></object></child><child><object class="GtkButton"><property name="label">◆  Triggers / Objectives</property><signal name="clicked" handler="on_open_trigger_document"/></object></child><child><object class="GtkLabel"><property name="label">Palette</property><property name="use-markup">true</property><property name="xalign">0</property></object></child><child><object class="GtkLabel"><property name="label">Terrain</property><property name="xalign">0</property></object></child><child><object class="GtkButton"><property name="label">■  Wall</property><property name="tooltip-text">Paint collision wall tile</property><signal name="clicked" handler="on_palette_wall"/></object></child><child><object class="GtkButton"><property name="label">≈  Water</property><property name="tooltip-text">Paint water/gravity tile</property><signal name="clicked" handler="on_palette_water"/></object></child><child><object class="GtkButton"><property name="label">▣  Landing</property><property name="tooltip-text">Paint landing tile</property><signal name="clicked" handler="on_palette_landing"/></object></child><child><object class="GtkButton"><property name="label">S  Start/Base</property><property name="tooltip-text">Paint player start tile</property><signal name="clicked" handler="on_palette_start"/></object></child><child><object class="GtkButton"><property name="label">□  Space / Clear Tile</property><signal name="clicked" handler="on_palette_space"/></object></child><child><object class="GtkLabel"><property name="label">Entities</property><property name="xalign">0</property></object></child><child><object class="GtkButton"><property name="label">M  Miner</property><signal name="clicked" handler="on_palette_miner"/></object></child><child><object class="GtkButton"><property name="label">E  Enemy</property><signal name="clicked" handler="on_palette_enemy"/></object></child><child><object class="GtkButton"><property name="label">P  Platform</property><signal name="clicked" handler="on_palette_platform"/></object></child><child><object class="GtkButton"><property name="label">G  Gate</property><signal name="clicked" handler="on_palette_gate"/></object></child><child><object class="GtkButton"><property name="label">B  Boss Spawn</property><signal name="clicked" handler="on_palette_boss"/></object></child><child><object class="GtkLabel"><property name="label">Pickups</property><property name="xalign">0</property></object></child><child><object class="GtkButton"><property name="label">F  Fuel</property><signal name="clicked" handler="on_palette_fuel"/></object></child><child><object class="GtkButton"><property name="label">S  Shield</property><signal name="clicked" handler="on_palette_shield"/></object></child></object></child><child><object class="GtkBox" id="center_panel"><property name="orientation">vertical</property><property name="spacing">4</property><property name="margin">0</property><property name="hexpand">true</property><property name="vexpand">true</property><child><object class="GtkNotebook" id="document_notebook"><property name="hexpand">true</property><property name="vexpand">true</property>
-<child><object class="GtkFrame" id="map_canvas_frame"><property name="label">Map Canvas</property><property name="hexpand">true</property><property name="vexpand">true</property></object></child><child type="tab"><object class="GtkLabel"><property name="label">Map</property></object></child>
-<child><object class="GtkBox" id="player_page"><property name="orientation">vertical</property><property name="spacing">8</property><property name="margin">12</property><property name="hexpand">true</property><property name="vexpand">true</property><child><object class="GtkLabel"><property name="label">Player Ship Editor</property><property name="use-markup">true</property><property name="xalign">0</property></object></child><child><object class="GtkLabel"><property name="label">Defines the ship template, thrust/fuel/shield values, sprite, and player sounds.</property><property name="xalign">0</property><property name="wrap">true</property></object></child><child><object class="GtkLabel"><property name="label">Name</property><property name="xalign">0</property></object></child><child><object class="GtkEntry" id="player_name_entry"><property name="text">RescueShip01</property></object></child><child><object class="GtkLabel"><property name="label">Sprite</property><property name="xalign">0</property></object></child><child><object class="GtkEntry" id="player_sprite_entry"><property name="text">assets/images/sprites/ship01.png</property></object></child><child><object class="GtkButton"><property name="label">Browse Ship Sprite</property><signal name="clicked" handler="on_browse_player_sprite"/></object></child><child><object class="GtkLabel"><property name="label">Thrust</property><property name="xalign">0</property></object></child><child><object class="GtkEntry" id="player_thrust_entry"><property name="text">260</property></object></child><child><object class="GtkLabel"><property name="label">Drag</property><property name="xalign">0</property></object></child><child><object class="GtkEntry" id="player_drag_entry"><property name="text">0.96</property></object></child><child><object class="GtkLabel"><property name="label">Fuel Max</property><property name="xalign">0</property></object></child><child><object class="GtkEntry" id="player_fuel_entry"><property name="text">100</property></object></child><child><object class="GtkLabel"><property name="label">Shield Max</property><property name="xalign">0</property></object></child><child><object class="GtkEntry" id="player_shield_entry"><property name="text">100</property></object></child><child><object class="GtkLabel"><property name="label">Engine Thrust Sound</property><property name="xalign">0</property></object></child><child><object class="GtkEntry" id="player_engine_sound_entry"><property name="text">assets/audio/sfx/ship/thrust.wav</property></object></child><child><object class="GtkLabel"><property name="label">Shield Hit Sound</property><property name="xalign">0</property></object></child><child><object class="GtkEntry" id="player_shield_hit_entry"><property name="text">assets/audio/sfx/shields/hit.wav</property></object></child><child><object class="GtkLabel"><property name="label">Shield Low Sound</property><property name="xalign">0</property></object></child><child><object class="GtkEntry" id="player_shield_low_entry"><property name="text">assets/audio/sfx/shields/low.wav</property></object></child><child><object class="GtkButton"><property name="label">Browse Player Sound</property><signal name="clicked" handler="on_browse_player_sound"/></object></child></object></child><child type="tab"><object class="GtkLabel"><property name="label">Player</property></object></child><child><object class="GtkBox" id="enemy_page"><property name="orientation">vertical</property><property name="spacing">8</property><property name="margin">12</property><property name="hexpand">true</property><property name="vexpand">true</property><child><object class="GtkLabel"><property name="label">Enemy Template Editor</property><property name="use-markup">true</property><property name="xalign">0</property></object></child><child><object class="GtkLabel"><property name="label">Define reusable enemy behavior: animation, movement/path, weapon rule, fire arc, and detection.</property><property name="xalign">0</property><property name="wrap">true</property></object></child><child><object class="GtkLabel"><property name="label">Name</property><property name="xalign">0</property></object></child><child><object class="GtkEntry" id="enemy_name_entry"><property name="text">Enemy_Scout</property></object></child><child><object class="GtkLabel"><property name="label">Health</property><property name="xalign">0</property></object></child><child><object class="GtkEntry" id="enemy_health_entry"><property name="text">50</property></object></child><child><object class="GtkLabel"><property name="label">Fire Rate Seconds</property><property name="xalign">0</property></object></child><child><object class="GtkEntry" id="enemy_fire_rate_entry"><property name="text">1.50</property></object></child><child><object class="GtkLabel"><property name="label">Planned fields: animation set, flying/walking mode, fire arc, weapon, detection range.</property><property name="xalign">0</property><property name="wrap">true</property></object></child></object></child><child type="tab"><object class="GtkLabel"><property name="label">Enemies</property></object></child><child><object class="GtkBox" id="boss_page"><property name="orientation">vertical</property><property name="spacing">8</property><property name="margin">12</property><property name="hexpand">true</property><property name="vexpand">true</property><child><object class="GtkLabel"><property name="label">Boss / Encounter Editor</property><property name="use-markup">true</property><property name="xalign">0</property></object></child><child><object class="GtkLabel"><property name="label">Bosses are enemy templates plus phases, body-part animations, movement paths, attacks, and music.</property><property name="xalign">0</property><property name="wrap">true</property></object></child><child><object class="GtkLabel"><property name="label">Name</property><property name="xalign">0</property></object></child><child><object class="GtkEntry" id="boss_name_entry"><property name="text">Boss_01</property></object></child><child><object class="GtkLabel"><property name="label">Max HP</property><property name="xalign">0</property></object></child><child><object class="GtkEntry" id="boss_hp_entry"><property name="text">300</property></object></child><child><object class="GtkLabel"><property name="label">Spawn Trigger</property><property name="xalign">0</property></object></child><child><object class="GtkEntry" id="boss_trigger_entry"><property name="text">Boss_Zone</property></object></child><child><object class="GtkLabel"><property name="label">Music</property><property name="xalign">0</property></object></child><child><object class="GtkEntry" id="boss_music_entry"><property name="text">assets/audio/music/boss01.mp3</property></object></child><child><object class="GtkButton"><property name="label">Browse Boss Music</property><signal name="clicked" handler="on_browse_boss_music"/></object></child><child><object class="GtkLabel"><property name="label">Phase 1 Condition</property><property name="xalign">0</property></object></child><child><object class="GtkEntry" id="boss_phase1_hp_entry"><property name="text">HP_ABOVE 200</property></object></child><child><object class="GtkLabel"><property name="label">Phase 1 Path</property><property name="xalign">0</property></object></child><child><object class="GtkEntry" id="boss_phase1_path_entry"><property name="text">Boss_01_Phase1</property></object></child><child><object class="GtkLabel"><property name="label">Phase 2 Condition</property><property name="xalign">0</property></object></child><child><object class="GtkEntry" id="boss_phase2_hp_entry"><property name="text">HP_BELOW 200</property></object></child><child><object class="GtkLabel"><property name="label">Phase 2 Path</property><property name="xalign">0</property></object></child><child><object class="GtkEntry" id="boss_phase2_path_entry"><property name="text">Boss_01_Phase2</property></object></child><child><object class="GtkLabel"><property name="label">Phase 3 Condition</property><property name="xalign">0</property></object></child><child><object class="GtkEntry" id="boss_phase3_hp_entry"><property name="text">HP_BELOW 80</property></object></child><child><object class="GtkLabel"><property name="label">Phase 3 Path</property><property name="xalign">0</property></object></child><child><object class="GtkEntry" id="boss_phase3_path_entry"><property name="text">Boss_01_Phase3</property></object></child><child><object class="GtkLabel"><property name="label">Animations</property><property name="xalign">0</property></object></child><child><object class="GtkEntry" id="boss_normal_animation_entry"><property name="text">normal</property></object></child><child><object class="GtkEntry" id="boss_damaged_animation_entry"><property name="text">damaged</property></object></child><child><object class="GtkEntry" id="boss_critical_animation_entry"><property name="text">critical</property></object></child><child><object class="GtkEntry" id="boss_death_animation_entry"><property name="text">death</property></object></child></object></child><child type="tab"><object class="GtkLabel"><property name="label">Bosses</property></object></child><child><object class="GtkBox" id="weapon_page"><property name="orientation">vertical</property><property name="spacing">8</property><property name="margin">12</property><property name="hexpand">true</property><property name="vexpand">true</property><child><object class="GtkLabel"><property name="label">Weapon Editor</property><property name="use-markup">true</property><property name="xalign">0</property></object></child><child><object class="GtkLabel"><property name="label">Define red/blue/green lasers, missiles, Mega Shot, tube bombs, mirror laser, and projectile sounds.</property><property name="xalign">0</property><property name="wrap">true</property></object></child><child><object class="GtkLabel"><property name="label">Name</property><property name="xalign">0</property></object></child><child><object class="GtkEntry" id="weapon_name_entry"><property name="text">Red_Laser</property></object></child><child><object class="GtkLabel"><property name="label">Damage</property><property name="xalign">0</property></object></child><child><object class="GtkEntry" id="weapon_damage_entry"><property name="text">10</property></object></child><child><object class="GtkLabel"><property name="label">Cooldown</property><property name="xalign">0</property></object></child><child><object class="GtkEntry" id="weapon_cooldown_entry"><property name="text">0.25</property></object></child><child><object class="GtkLabel"><property name="label">Projectile Speed</property><property name="xalign">0</property></object></child><child><object class="GtkEntry" id="weapon_speed_entry"><property name="text">400</property></object></child><child><object class="GtkLabel"><property name="label">Charge States</property><property name="xalign">0</property></object></child><child><object class="GtkEntry" id="weapon_charge_entry"><property name="text">none,charging,charged</property></object></child><child><object class="GtkLabel"><property name="label">Fire Sound</property><property name="xalign">0</property></object></child><child><object class="GtkEntry" id="weapon_fire_sound_entry"><property name="text">assets/audio/sfx/weapons/laser_fire.wav</property></object></child><child><object class="GtkLabel"><property name="label">Hit Sound</property><property name="xalign">0</property></object></child><child><object class="GtkEntry" id="weapon_hit_sound_entry"><property name="text">assets/audio/sfx/weapons/laser_hit.wav</property></object></child><child><object class="GtkLabel"><property name="label">Charge Sound</property><property name="xalign">0</property></object></child><child><object class="GtkEntry" id="weapon_charge_sound_entry"><property name="text">assets/audio/sfx/weapons/laser_charge.wav</property></object></child></object></child><child type="tab"><object class="GtkLabel"><property name="label">Weapons</property></object></child><child><object class="GtkBox" id="powerup_page"><property name="orientation">vertical</property><property name="spacing">8</property><property name="margin">12</property><property name="hexpand">true</property><property name="vexpand">true</property><child><object class="GtkLabel"><property name="label">Powerup Editor</property><property name="use-markup">true</property><property name="xalign">0</property></object></child><child><object class="GtkLabel"><property name="label">Items can glow, be collected, switch to a used state, and apply a defined effect.</property><property name="xalign">0</property><property name="wrap">true</property></object></child><child><object class="GtkLabel"><property name="label">Name</property><property name="xalign">0</property></object></child><child><object class="GtkEntry" id="powerup_name_entry"><property name="text">Shield_Recharge</property></object></child><child><object class="GtkLabel"><property name="label">Value</property><property name="xalign">0</property></object></child><child><object class="GtkEntry" id="powerup_value_entry"><property name="text">25</property></object></child><child><object class="GtkLabel"><property name="label">Duration</property><property name="xalign">0</property></object></child><child><object class="GtkEntry" id="powerup_duration_entry"><property name="text">0</property></object></child><child><object class="GtkLabel"><property name="label">Pickup Sound</property><property name="xalign">0</property></object></child><child><object class="GtkEntry" id="powerup_sound_entry"><property name="text">assets/audio/sfx/pickups/shield.wav</property></object></child></object></child><child type="tab"><object class="GtkLabel"><property name="label">Powerups</property></object></child><child><object class="GtkBox" id="audio_page"><property name="orientation">vertical</property><property name="spacing">8</property><property name="margin">12</property><property name="hexpand">true</property><property name="vexpand">true</property><child><object class="GtkLabel"><property name="label">Audio Assignment Editor</property><property name="use-markup">true</property><property name="xalign">0</property></object></child><child><object class="GtkLabel"><property name="label">Assign local music/sfx paths. Audio files remain ignored by Git.</property><property name="xalign">0</property><property name="wrap">true</property></object></child><child><object class="GtkLabel"><property name="label">Main Menu Music</property><property name="xalign">0</property></object></child><child><object class="GtkEntry" id="menu_music_entry"><property name="text">assets/audio/music/menu_carousel.mp3</property></object></child><child><object class="GtkButton"><property name="label">Browse Menu Music</property><signal name="clicked" handler="on_browse_menu_music"/></object></child><child><object class="GtkLabel"><property name="label">Level Music</property><property name="xalign">0</property></object></child><child><object class="GtkEntry" id="music_entry"><property name="text">assets/audio/music/mission01.ogg</property></object></child><child><object class="GtkEntry" id="level_music_entry"><property name="text">assets/audio/music/mission01.ogg</property></object></child><child><object class="GtkButton"><property name="label">Browse Level Music</property><signal name="clicked" handler="on_browse_level_music"/></object></child><child><object class="GtkLabel"><property name="label">Boss Music</property><property name="xalign">0</property></object></child><child><object class="GtkEntry" id="audio_boss_music_entry"><property name="text">assets/audio/music/boss01.ogg</property></object></child><child><object class="GtkButton"><property name="label">Browse Boss Music</property><signal name="clicked" handler="on_browse_audio_boss_music"/></object></child></object></child><child type="tab"><object class="GtkLabel"><property name="label">Audio</property></object></child><child><object class="GtkBox" id="triggers_page"><property name="orientation">vertical</property><property name="spacing">8</property><property name="margin">12</property><property name="hexpand">true</property><property name="vexpand">true</property><child><object class="GtkLabel"><property name="label">Triggers and Objectives</property><property name="use-markup">true</property><property name="xalign">0</property></object></child><child><object class="GtkLabel"><property name="label">SubTerrania goals are rules: rescue miners, return to base, destroy targets, or collect special items.</property><property name="xalign">0</property><property name="wrap">true</property></object></child><child><object class="GtkButton"><property name="label">Add Trigger Zone</property><signal name="clicked" handler="on_add_trigger"/></object></child><child><object class="GtkButton"><property name="label">Add Rescue-Miners Objective</property><signal name="clicked" handler="on_add_objective"/></object></child><child><object class="GtkButton"><property name="label">Add Timeline Event</property><signal name="clicked" handler="on_add_event"/></object></child><child><object class="GtkLabel"><property name="label">Planned: Required miners, return-to-base flag, target objects, locked gates, music events.</property><property name="xalign">0</property><property name="wrap">true</property></object></child></object></child><child type="tab"><object class="GtkLabel"><property name="label">Objectives</property></object></child>
-</object></child><child><object class="GtkBox" id="bottom_panel"><property name="orientation">horizontal</property><property name="spacing">4</property><property name="margin">0</property><property name="height-request">140</property><child><object class="GtkScrolledWindow" id="output_scroller"><property name="hexpand">true</property><property name="vexpand">true</property><child><object class="GtkTextView" id="output_text_view"><property name="editable">false</property><property name="monospace">true</property></object></child></object></child></object></child></object></child><child><object class="GtkBox" id="right_panel"><property name="orientation">vertical</property><property name="spacing">6</property><property name="margin">6</property><property name="width-request">360</property><child><object class="GtkScrolledWindow" id="inspector_scroller"><property name="vexpand">true</property><property name="hexpand">true</property><child><object class="GtkNotebook" id="inspector_notebook"><property name="vexpand">true</property>
-<child><object class="GtkBox" id="selected_inspector"><property name="orientation">vertical</property><property name="spacing">6</property><property name="margin">12</property><child><object class="GtkLabel"><property name="label">Selected Object</property><property name="use-markup">true</property><property name="xalign">0</property></object></child><child><object class="GtkLabel" id="selected_name_label"><property name="label">Nothing selected</property><property name="xalign">0</property></object></child><child><object class="GtkLabel" id="selected_type_label"><property name="label">Select an item</property><property name="xalign">0</property></object></child><child><object class="GtkLabel" id="selected_components_label"><property name="label">Components: none</property><property name="xalign">0</property><property name="wrap">true</property></object></child><child><object class="GtkLabel"><property name="label">Transform</property><property name="use-markup">true</property><property name="xalign">0</property></object></child><child><object class="GtkLabel"><property name="label">X</property><property name="xalign">0</property></object></child><child><object class="GtkEntry" id="selected_x_entry"><property name="text">0</property></object></child><child><object class="GtkLabel"><property name="label">Y</property><property name="xalign">0</property></object></child><child><object class="GtkEntry" id="selected_y_entry"><property name="text">0</property></object></child><child><object class="GtkLabel"><property name="label">Width</property><property name="xalign">0</property></object></child><child><object class="GtkEntry" id="selected_w_entry"><property name="text">32</property></object></child><child><object class="GtkLabel"><property name="label">Height</property><property name="xalign">0</property></object></child><child><object class="GtkEntry" id="selected_h_entry"><property name="text">32</property></object></child><child><object class="GtkButton"><property name="label">Apply Geometry</property><signal name="clicked" handler="on_apply_selected_geometry"/></object></child><child><object class="GtkButton"><property name="label">Delete Selection</property><signal name="clicked" handler="on_delete_selection"/></object></child><child><object class="GtkLabel"><property name="label">Motion Path</property><property name="use-markup">true</property><property name="xalign">0</property></object></child><child><object class="GtkLabel" id="selected_motion_label"><property name="label">Motion: Static</property><property name="xalign">0</property><property name="wrap">true</property></object></child><child><object class="GtkLabel"><property name="label">Node 1 X</property><property name="xalign">0</property></object></child><child><object class="GtkEntry" id="path1_x"><property name="text">0</property></object></child><child><object class="GtkLabel"><property name="label">Node 1 Y</property><property name="xalign">0</property></object></child><child><object class="GtkEntry" id="path1_y"><property name="text">0</property></object></child><child><object class="GtkLabel"><property name="label">Node 1 Time</property><property name="xalign">0</property></object></child><child><object class="GtkEntry" id="path1_t"><property name="text">0.00</property></object></child><child><object class="GtkLabel"><property name="label">Node 2 X</property><property name="xalign">0</property></object></child><child><object class="GtkEntry" id="path2_x"><property name="text">0</property></object></child><child><object class="GtkLabel"><property name="label">Node 2 Y</property><property name="xalign">0</property></object></child><child><object class="GtkEntry" id="path2_y"><property name="text">0</property></object></child><child><object class="GtkLabel"><property name="label">Node 2 Time</property><property name="xalign">0</property></object></child><child><object class="GtkEntry" id="path2_t"><property name="text">1.00</property></object></child><child><object class="GtkButton"><property name="label">Edit Path / Add Nodes</property><signal name="clicked" handler="on_edit_selected_path"/></object></child><child><object class="GtkButton"><property name="label">Apply Path Fields</property><signal name="clicked" handler="on_apply_selected_path"/></object></child><child><object class="GtkButton"><property name="label">Clear Path</property><signal name="clicked" handler="on_clear_selected_path"/></object></child><child><object class="GtkLabel"><property name="label">Workflow: select an entity, click Edit Path, then click map points to add nodes. Later we will add segment easing/timing per node pair.</property><property name="xalign">0</property><property name="wrap">true</property></object></child></object></child><child type="tab"><object class="GtkLabel"><property name="label">Inspector</property></object></child>
-<child><object class="GtkBox" id="level_inspector"><property name="orientation">vertical</property><property name="spacing">6</property><property name="margin">12</property><child><object class="GtkLabel"><property name="label">Level Properties</property><property name="use-markup">true</property><property name="xalign">0</property></object></child><child><object class="GtkLabel"><property name="label">Stage Name</property><property name="xalign">0</property></object></child><child><object class="GtkEntry" id="level_name_entry"><property name="text">STAGE01</property></object></child><child><object class="GtkLabel"><property name="label">Title</property><property name="xalign">0</property></object></child><child><object class="GtkEntry" id="level_title_entry"><property name="text">MISSION 1</property></object></child><child><object class="GtkLabel"><property name="label">Next Level</property><property name="xalign">0</property></object></child><child><object class="GtkEntry" id="next_level_entry"><property name="text">assets/levels/stage02.map</property></object></child><child><object class="GtkLabel"><property name="label">Background Image</property><property name="xalign">0</property></object></child><child><object class="GtkEntry" id="background_entry"><property name="text">assets/images/maps/sub-terrania-mission-1.png</property></object></child><child><object class="GtkButton"><property name="label">Browse Background</property><signal name="clicked" handler="on_browse_background"/></object></child><child><object class="GtkLabel"><property name="label">Level Music</property><property name="xalign">0</property></object></child><child><object class="GtkEntry" id="level_boss_music_entry"><property name="text">assets/audio/music/boss01.ogg</property></object></child><child><object class="GtkButton"><property name="label">Browse Boss Music</property><signal name="clicked" handler="on_browse_boss_music"/></object></child><child><object class="GtkButton"><property name="label">Apply Level Properties</property><signal name="clicked" handler="on_apply_level_properties"/></object></child><child><object class="GtkButton"><property name="label">Save Project Assets</property><signal name="clicked" handler="on_save_project_assets"/></object></child></object></child><child type="tab"><object class="GtkLabel"><property name="label">Level</property></object></child>
-</object></child></object></child><child><object class="GtkFrame" id="minimap_frame"><property name="label">Minimap</property><property name="height-request">220</property><property name="width-request">320</property></object></child><child><object class="GtkLabel" id="status_label"><property name="label">Ready</property><property name="xalign">0</property></object></child><child><object class="GtkLabel" id="tool_status_label"><property name="label">Tool: Select    Brush: Wall</property><property name="xalign">0</property></object></child></object></child></object></child></object></child>
+    <property name="icon-name">applications-graphics</property>
+    <signal name="destroy" handler="on_quit" />
+    <child>
+      <object class="GtkBox" id="root_box">
+        <property name="orientation">vertical</property>
+        <property name="spacing">0</property>
+        <property name="hexpand">true</property>
+        <property name="vexpand">true</property>
+        <child>
+          <object class="GtkMenuBar" id="menu_bar">
+            <child>
+              <object class="GtkMenuItem">
+                <property name="label">File</property>
+                <child type="submenu">
+                  <object class="GtkMenu">
+                    <child>
+                      <object class="GtkMenuItem">
+                        <property name="label">New Level</property>
+                        <signal name="activate" handler="on_new" />
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkMenuItem">
+                        <property name="label">Open Level</property>
+                        <signal name="activate" handler="on_open" />
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkMenuItem">
+                        <property name="label">Save</property>
+                        <signal name="activate" handler="on_save" />
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkMenuItem">
+                        <property name="label">Save As</property>
+                        <signal name="activate" handler="on_save_as" />
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkMenuItem">
+                        <property name="label">Quit</property>
+                        <signal name="activate" handler="on_quit" />
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkMenuItem">
+                <property name="label">Edit</property>
+                <child type="submenu">
+                  <object class="GtkMenu">
+                    <child>
+                      <object class="GtkMenuItem">
+                        <property name="label">Undo</property>
+                        <signal name="activate" handler="on_undo" />
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkMenuItem">
+                        <property name="label">Redo</property>
+                        <signal name="activate" handler="on_redo" />
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkMenuItem">
+                        <property name="label">Delete Selection</property>
+                        <signal name="activate" handler="on_delete" />
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkMenuItem">
+                        <property name="label">Object Properties</property>
+                        <signal name="activate" handler="on_object_properties" />
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkMenuItem">
+                <property name="label">Mode</property>
+                <child type="submenu">
+                  <object class="GtkMenu">
+                    <child>
+                      <object class="GtkMenuItem">
+                        <property name="label">Map</property>
+                        <signal name="activate" handler="on_mode_map" />
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkMenuItem">
+                        <property name="label">Object</property>
+                        <signal name="activate" handler="on_mode_object" />
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkMenuItem">
+                        <property name="label">Path</property>
+                        <signal name="activate" handler="on_mode_path" />
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkMenuItem">
+                        <property name="label">Trigger</property>
+                        <signal name="activate" handler="on_mode_trigger" />
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkMenuItem">
+                <property name="label">Draw</property>
+                <child type="submenu">
+                  <object class="GtkMenu">
+                    <child>
+                      <object class="GtkMenuItem">
+                        <property name="label">Select</property>
+                        <signal name="activate" handler="on_tool_select" />
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkMenuItem">
+                        <property name="label">Pencil</property>
+                        <signal name="activate" handler="on_tool_brush" />
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkMenuItem">
+                        <property name="label">Erase</property>
+                        <signal name="activate" handler="on_tool_erase" />
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkMenuItem">
+                        <property name="label">Pan</property>
+                        <signal name="activate" handler="on_tool_pan" />
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkMenuItem">
+                <property name="label">Scale</property>
+                <child type="submenu">
+                  <object class="GtkMenu">
+                    <child>
+                      <object class="GtkMenuItem">
+                        <property name="label">Zoom In</property>
+                        <signal name="activate" handler="on_zoom_in" />
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkMenuItem">
+                        <property name="label">Zoom Out</property>
+                        <signal name="activate" handler="on_zoom_out" />
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkMenuItem">
+                        <property name="label">Fit Map</property>
+                        <signal name="activate" handler="on_fit" />
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkMenuItem">
+                        <property name="label">Center on Start</property>
+                        <signal name="activate" handler="on_home" />
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkCheckMenuItem" id="grid_menu_item">
+                        <property name="label">Show Grid</property>
+                        <property name="active">true</property>
+                        <signal name="toggled" handler="on_grid_menu" />
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkMenuItem">
+                <property name="label">Tools</property>
+                <child type="submenu">
+                  <object class="GtkMenu">
+                    <child>
+                      <object class="GtkMenuItem">
+                        <property name="label">Database</property>
+                        <signal name="activate" handler="on_database" />
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkMenuItem">
+                        <property name="label">Level Properties</property>
+                        <signal name="activate" handler="on_level_properties" />
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkMenuItem">
+                        <property name="label">Validate Level</property>
+                        <signal name="activate" handler="on_validate" />
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkMenuItem">
+                <property name="label">Game</property>
+                <child type="submenu">
+                  <object class="GtkMenu">
+                    <child>
+                      <object class="GtkMenuItem">
+                        <property name="label">Playtest</property>
+                        <signal name="activate" handler="on_playtest" />
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkMenuItem">
+                        <property name="label">Build Game</property>
+                        <signal name="activate" handler="on_build" />
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkMenuItem">
+                <property name="label">Help</property>
+                <child type="submenu">
+                  <object class="GtkMenu">
+                    <child>
+                      <object class="GtkMenuItem">
+                        <property name="label">Editor Help</property>
+                        <signal name="activate" handler="on_help" />
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="GtkToolbar" id="toolbar">
+            <property name="toolbar-style">icons</property>
+            <property name="icon-size">large-toolbar</property>
+            <child>
+              <object class="GtkToolButton">
+                <property name="label">New</property>
+                <property name="icon-name">document-new</property>
+                <property name="tooltip-text">New level</property>
+                <signal name="clicked" handler="on_new" />
+              </object>
+            </child>
+            <child>
+              <object class="GtkToolButton">
+                <property name="label">Open</property>
+                <property name="icon-name">document-open</property>
+                <property name="tooltip-text">Open level</property>
+                <signal name="clicked" handler="on_open" />
+              </object>
+            </child>
+            <child>
+              <object class="GtkToolButton">
+                <property name="label">Save</property>
+                <property name="icon-name">document-save</property>
+                <property name="tooltip-text">Save level</property>
+                <signal name="clicked" handler="on_save" />
+              </object>
+            </child>
+            <child>
+              <object class="GtkSeparatorToolItem" />
+            </child>
+            <child>
+              <object class="GtkToolButton">
+                <property name="label">Undo</property>
+                <property name="icon-name">edit-undo</property>
+                <property name="tooltip-text">Undo</property>
+                <signal name="clicked" handler="on_undo" />
+              </object>
+            </child>
+            <child>
+              <object class="GtkToolButton">
+                <property name="label">Redo</property>
+                <property name="icon-name">edit-redo</property>
+                <property name="tooltip-text">Redo</property>
+                <signal name="clicked" handler="on_redo" />
+              </object>
+            </child>
+            <child>
+              <object class="GtkSeparatorToolItem" />
+            </child>
+            <child>
+              <object class="GtkToggleToolButton" id="mode_map_tool">
+                <property name="label">Map</property>
+                <property name="icon-name">applications-graphics</property>
+                <property name="active">true</property>
+                <property name="tooltip-text">Map editing mode</property>
+                <signal name="toggled" handler="on_mode_map" />
+              </object>
+            </child>
+            <child>
+              <object class="GtkToggleToolButton" id="mode_object_tool">
+                <property name="label">Object</property>
+                <property name="icon-name">insert-object</property>
+                <property name="tooltip-text">Object placement and selection</property>
+                <signal name="toggled" handler="on_mode_object" />
+              </object>
+            </child>
+            <child>
+              <object class="GtkToggleToolButton" id="mode_path_tool">
+                <property name="label">Path</property>
+                <property name="icon-name">draw-line</property>
+                <property name="tooltip-text">Edit selected object path</property>
+                <signal name="toggled" handler="on_mode_path" />
+              </object>
+            </child>
+            <child>
+              <object class="GtkToggleToolButton" id="mode_trigger_tool">
+                <property name="label">Trigger</property>
+                <property name="icon-name">system-run</property>
+                <property name="tooltip-text">Trigger and objective zones</property>
+                <signal name="toggled" handler="on_mode_trigger" />
+              </object>
+            </child>
+            <child>
+              <object class="GtkSeparatorToolItem" />
+            </child>
+            <child>
+              <object class="GtkToggleToolButton" id="select_tool">
+                <property name="label">Select</property>
+                <property name="icon-name">cursor-default</property>
+                <property name="active">true</property>
+                <property name="tooltip-text">Select an item</property>
+                <signal name="toggled" handler="on_tool_select" />
+              </object>
+            </child>
+            <child>
+              <object class="GtkToggleToolButton" id="brush_tool">
+                <property name="label">Pencil</property>
+                <property name="icon-name">draw-freehand</property>
+                <property name="tooltip-text">Paint/place selected palette item</property>
+                <signal name="toggled" handler="on_tool_brush" />
+              </object>
+            </child>
+            <child>
+              <object class="GtkToggleToolButton" id="eraser_tool">
+                <property name="label">Erase</property>
+                <property name="icon-name">edit-clear</property>
+                <property name="tooltip-text">Erase at cursor</property>
+                <signal name="toggled" handler="on_tool_erase" />
+              </object>
+            </child>
+            <child>
+              <object class="GtkToggleToolButton" id="pan_tool">
+                <property name="label">Pan</property>
+                <property name="icon-name">transform-move</property>
+                <property name="tooltip-text">Left-drag to pan; middle-drag always pans</property>
+                <signal name="toggled" handler="on_tool_pan" />
+              </object>
+            </child>
+            <child>
+              <object class="GtkSeparatorToolItem" />
+            </child>
+            <child>
+              <object class="GtkToolButton">
+                <property name="label">Zoom In</property>
+                <property name="icon-name">zoom-in</property>
+                <property name="tooltip-text">Zoom in</property>
+                <signal name="clicked" handler="on_zoom_in" />
+              </object>
+            </child>
+            <child>
+              <object class="GtkToolButton">
+                <property name="label">Zoom Out</property>
+                <property name="icon-name">zoom-out</property>
+                <property name="tooltip-text">Zoom out</property>
+                <signal name="clicked" handler="on_zoom_out" />
+              </object>
+            </child>
+            <child>
+              <object class="GtkToolButton">
+                <property name="label">Fit</property>
+                <property name="icon-name">zoom-fit-best</property>
+                <property name="tooltip-text">Fit whole map</property>
+                <signal name="clicked" handler="on_fit" />
+              </object>
+            </child>
+            <child>
+              <object class="GtkToolButton">
+                <property name="label">Home</property>
+                <property name="icon-name">go-home</property>
+                <property name="tooltip-text">Center on player start</property>
+                <signal name="clicked" handler="on_home" />
+              </object>
+            </child>
+            <child>
+              <object class="GtkToggleToolButton" id="grid_tool">
+                <property name="label">Grid</property>
+                <property name="icon-name">view-grid</property>
+                <property name="active">true</property>
+                <property name="tooltip-text">Toggle grid</property>
+                <signal name="toggled" handler="on_grid" />
+              </object>
+            </child>
+            <child>
+              <object class="GtkSeparatorToolItem" />
+            </child>
+            <child>
+              <object class="GtkToolButton">
+                <property name="label">Database</property>
+                <property name="icon-name">preferences-system</property>
+                <property name="tooltip-text">Open game database</property>
+                <signal name="clicked" handler="on_database" />
+              </object>
+            </child>
+            <child>
+              <object class="GtkToolButton">
+                <property name="label">Object</property>
+                <property name="icon-name">document-properties</property>
+                <property name="tooltip-text">Edit selected object</property>
+                <signal name="clicked" handler="on_object_properties" />
+              </object>
+            </child>
+            <child>
+              <object class="GtkToolButton">
+                <property name="label">Level</property>
+                <property name="icon-name">emblem-system</property>
+                <property name="tooltip-text">Level properties</property>
+                <signal name="clicked" handler="on_level_properties" />
+              </object>
+            </child>
+            <child>
+              <object class="GtkToolButton">
+                <property name="label">Playtest</property>
+                <property name="icon-name">media-playback-start</property>
+                <property name="tooltip-text">Save and run game</property>
+                <signal name="clicked" handler="on_playtest" />
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="GtkPaned" id="main_paned">
+            <property name="orientation">horizontal</property>
+            <property name="position">300</property>
+            <property name="wide-handle">true</property>
+            <property name="hexpand">true</property>
+            <property name="vexpand">true</property>
+            <child>
+              <object class="GtkBox" id="left_sidebar">
+                <property name="orientation">vertical</property>
+                <property name="spacing">4</property>
+                <property name="width-request">280</property>
+                <property name="vexpand">true</property>
+                <child>
+                  <object class="GtkPaned" id="left_paned">
+                    <property name="orientation">vertical</property>
+                    <property name="position">470</property>
+                    <property name="wide-handle">true</property>
+                    <property name="vexpand">true</property>
+                    <child>
+                      <object class="GtkNotebook" id="palette_notebook">
+                        <property name="vexpand">true</property>
+                        <child>
+                          <object class="GtkScrolledWindow">
+                            <property name="hscrollbar-policy">never</property>
+                            <property name="vexpand">true</property>
+                            <child>
+                              <object class="GtkBox">
+                                <property name="orientation">vertical</property>
+                                <property name="spacing">5</property>
+                                <property name="margin">6</property>
+                                <child>
+                                  <object class="GtkButton">
+                                    <property name="label">Wall</property>
+                                    <signal name="clicked" handler="on_palette_wall" />
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkButton">
+                                    <property name="label">Water</property>
+                                    <signal name="clicked" handler="on_palette_water" />
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkButton">
+                                    <property name="label">Landing Pad</property>
+                                    <signal name="clicked" handler="on_palette_landing" />
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkButton">
+                                    <property name="label">Start / Base</property>
+                                    <signal name="clicked" handler="on_palette_start" />
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkButton">
+                                    <property name="label">Clear Tile</property>
+                                    <signal name="clicked" handler="on_palette_space" />
+                                  </object>
+                                </child>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                        <child type="tab">
+                          <object class="GtkLabel">
+                            <property name="label">Tiles</property>
+                            <property name="xalign">0.5</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkScrolledWindow">
+                            <property name="hscrollbar-policy">never</property>
+                            <property name="vexpand">true</property>
+                            <child>
+                              <object class="GtkBox">
+                                <property name="orientation">vertical</property>
+                                <property name="spacing">5</property>
+                                <property name="margin">6</property>
+                                <child>
+                                  <object class="GtkButton">
+                                    <property name="label">Miner</property>
+                                    <signal name="clicked" handler="on_palette_miner" />
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkButton">
+                                    <property name="label">Enemy</property>
+                                    <signal name="clicked" handler="on_palette_enemy" />
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkButton">
+                                    <property name="label">Moving Platform</property>
+                                    <signal name="clicked" handler="on_palette_platform" />
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkButton">
+                                    <property name="label">Gate / Base</property>
+                                    <signal name="clicked" handler="on_palette_gate" />
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkButton">
+                                    <property name="label">Boss Spawn</property>
+                                    <signal name="clicked" handler="on_palette_boss" />
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkButton">
+                                    <property name="label">Fuel Pickup</property>
+                                    <signal name="clicked" handler="on_palette_fuel" />
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkButton">
+                                    <property name="label">Shield Pickup</property>
+                                    <signal name="clicked" handler="on_palette_shield" />
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkButton">
+                                    <property name="label">Generic Powerup</property>
+                                    <signal name="clicked" handler="on_palette_powerup" />
+                                  </object>
+                                </child>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                        <child type="tab">
+                          <object class="GtkLabel">
+                            <property name="label">Objects</property>
+                            <property name="xalign">0.5</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkScrolledWindow">
+                            <property name="hscrollbar-policy">never</property>
+                            <property name="vexpand">true</property>
+                            <child>
+                              <object class="GtkBox">
+                                <property name="orientation">vertical</property>
+                                <property name="spacing">4</property>
+                                <property name="margin">8</property>
+                                <child>
+                                  <object class="GtkCheckButton" id="layer_background">
+                                    <property name="label">Background</property>
+                                    <property name="active">true</property>
+                                    <signal name="toggled" handler="on_layer_background" />
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkCheckButton" id="layer_terrain">
+                                    <property name="label">Terrain / Collision</property>
+                                    <property name="active">true</property>
+                                    <signal name="toggled" handler="on_layer_terrain" />
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkCheckButton" id="layer_water">
+                                    <property name="label">Water</property>
+                                    <property name="active">true</property>
+                                    <signal name="toggled" handler="on_layer_water" />
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkCheckButton" id="layer_pickups">
+                                    <property name="label">Pickups</property>
+                                    <property name="active">true</property>
+                                    <signal name="toggled" handler="on_layer_pickups" />
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkCheckButton" id="layer_destructibles">
+                                    <property name="label">Destructibles</property>
+                                    <property name="active">true</property>
+                                    <signal name="toggled" handler="on_layer_destructibles" />
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkCheckButton" id="layer_platforms">
+                                    <property name="label">Platforms</property>
+                                    <property name="active">true</property>
+                                    <signal name="toggled" handler="on_layer_platforms" />
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkCheckButton" id="layer_miners">
+                                    <property name="label">Miners</property>
+                                    <property name="active">true</property>
+                                    <signal name="toggled" handler="on_layer_miners" />
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkCheckButton" id="layer_enemies">
+                                    <property name="label">Enemies / Bosses</property>
+                                    <property name="active">true</property>
+                                    <signal name="toggled" handler="on_layer_enemies" />
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkCheckButton" id="layer_triggers">
+                                    <property name="label">Triggers / Bases</property>
+                                    <property name="active">true</property>
+                                    <signal name="toggled" handler="on_layer_triggers" />
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkCheckButton" id="layer_paths">
+                                    <property name="label">Paths / Debug</property>
+                                    <property name="active">true</property>
+                                    <signal name="toggled" handler="on_layer_paths" />
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkLabel">
+                                    <property name="label">Layers control visibility. Draw order is fixed for Phase 13.</property>
+                                    <property name="xalign">0</property>
+                                    <property name="wrap">true</property>
+                                  </object>
+                                </child>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                        <child type="tab">
+                          <object class="GtkLabel">
+                            <property name="label">Layers</property>
+                            <property name="xalign">0.5</property>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkScrolledWindow">
+                        <property name="hscrollbar-policy">never</property>
+                        <property name="vexpand">true</property>
+                        <child>
+                          <object class="GtkBox">
+                            <property name="orientation">vertical</property>
+                            <property name="spacing">3</property>
+                            <property name="margin">6</property>
+                            <child>
+                              <object class="GtkLabel">
+                                <property name="label">Project</property>
+                                <property name="xalign">0</property>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="GtkLabel">
+                                <property name="label">Levels</property>
+                                <property name="xalign">0</property>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="GtkButton">
+                                <property name="label">    Stage01</property>
+                                <signal name="clicked" handler="on_open_stage01" />
+                              </object>
+                            </child>
+                            <child>
+                              <object class="GtkSeparator" />
+                            </child>
+                            <child>
+                              <object class="GtkLabel">
+                                <property name="label">Database</property>
+                                <property name="xalign">0</property>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="GtkButton">
+                                <property name="label">    Player Ships</property>
+                                <signal name="clicked" handler="on_db_player" />
+                              </object>
+                            </child>
+                            <child>
+                              <object class="GtkButton">
+                                <property name="label">    Enemies</property>
+                                <signal name="clicked" handler="on_db_enemies" />
+                              </object>
+                            </child>
+                            <child>
+                              <object class="GtkButton">
+                                <property name="label">    Bosses</property>
+                                <signal name="clicked" handler="on_db_bosses" />
+                              </object>
+                            </child>
+                            <child>
+                              <object class="GtkButton">
+                                <property name="label">    Weapons</property>
+                                <signal name="clicked" handler="on_db_weapons" />
+                              </object>
+                            </child>
+                            <child>
+                              <object class="GtkButton">
+                                <property name="label">    Pickups</property>
+                                <signal name="clicked" handler="on_db_pickups" />
+                              </object>
+                            </child>
+                            <child>
+                              <object class="GtkButton">
+                                <property name="label">    Platforms</property>
+                                <signal name="clicked" handler="on_db_platforms" />
+                              </object>
+                            </child>
+                            <child>
+                              <object class="GtkButton">
+                                <property name="label">    Destructibles</property>
+                                <signal name="clicked" handler="on_db_destructibles" />
+                              </object>
+                            </child>
+                            <child>
+                              <object class="GtkButton">
+                                <property name="label">    Animations</property>
+                                <signal name="clicked" handler="on_db_animations" />
+                              </object>
+                            </child>
+                            <child>
+                              <object class="GtkButton">
+                                <property name="label">    Audio</property>
+                                <signal name="clicked" handler="on_db_audio" />
+                              </object>
+                            </child>
+                            <child>
+                              <object class="GtkButton">
+                                <property name="label">    Objectives</property>
+                                <signal name="clicked" handler="on_db_objectives" />
+                              </object>
+                            </child>
+                            <child>
+                              <object class="GtkButton">
+                                <property name="label">    Project Settings</property>
+                                <signal name="clicked" handler="on_db_project" />
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkBox" id="center_panel">
+                <property name="orientation">vertical</property>
+                <property name="spacing">2</property>
+                <property name="hexpand">true</property>
+                <property name="vexpand">true</property>
+                <child>
+                  <object class="GtkBox" id="path_banner">
+                    <property name="orientation">horizontal</property>
+                    <property name="spacing">8</property>
+                    <property name="margin">6</property>
+                    <property name="visible">false</property>
+                    <property name="no-show-all">true</property>
+                    <child>
+                      <object class="GtkLabel" id="path_banner_label">
+                        <property name="label">EDITING PATH</property>
+                        <property name="xalign">0</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkButton">
+                        <property name="label">Create Simple Path</property>
+                        <signal name="clicked" handler="on_new_path" />
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkButton">
+                        <property name="label">Finish Path</property>
+                        <signal name="clicked" handler="on_finish_path" />
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkButton">
+                        <property name="label">Cancel</property>
+                        <signal name="clicked" handler="on_cancel_path" />
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkFrame" id="map_canvas_frame">
+                    <property name="label">Map Canvas</property>
+                    <property name="hexpand">true</property>
+                    <property name="vexpand">true</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkExpander">
+                    <property name="label">Output</property>
+                    <property name="expanded">false</property>
+                    <child>
+                      <object class="GtkScrolledWindow">
+                        <property name="height-request">110</property>
+                        <child>
+                          <object class="GtkTextView" id="output_text_view">
+                            <property name="editable">false</property>
+                            <property name="cursor-visible">false</property>
+                            <property name="monospace">true</property>
+                            <property name="wrap-mode">word-char</property>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkBox" id="status_bar">
+                    <property name="orientation">horizontal</property>
+                    <property name="spacing">16</property>
+                    <property name="margin">4</property>
+                    <child>
+                      <object class="GtkLabel" id="status_label">
+                        <property name="label">Ready</property>
+                        <property name="xalign">0</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkSeparator">
+                        <property name="orientation">vertical</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="selection_status_label">
+                        <property name="label">Selected: none</property>
+                        <property name="xalign">0</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkSeparator">
+                        <property name="orientation">vertical</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="path_target_label">
+                        <property name="label">No object selected</property>
+                        <property name="xalign">0</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkSeparator">
+                        <property name="orientation">vertical</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="tool_status_label">
+                        <property name="label">Mode: Select   Brush: Select</property>
+                        <property name="xalign">0</property>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+  </object>
+  <object class="GtkWindow" id="object_editor_window">
+    <property name="title">Object Properties</property>
+    <property name="default-width">560</property>
+    <property name="default-height">620</property>
+    <property name="window-position">center-on-parent</property>
+    <property name="deletable">false</property>
+    <child>
+      <object class="GtkBox">
+        <property name="orientation">vertical</property>
+        <property name="spacing">8</property>
+        <property name="margin">12</property>
+        <child>
+          <object class="GtkLabel">
+            <property name="label">Placed Object</property>
+            <property name="xalign">0</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkLabel">
+            <property name="label">Name</property>
+            <property name="xalign">0</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkEntry" id="object_name_entry">
+            <property name="text" />
+            <property name="hexpand">true</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkLabel">
+            <property name="label">Type</property>
+            <property name="xalign">0</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkLabel" id="object_type_label">
+            <property name="label">Unknown</property>
+            <property name="xalign">0</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkFrame">
+            <property name="label">Transform</property>
+            <child>
+              <object class="GtkBox">
+                <property name="orientation">vertical</property>
+                <property name="spacing">5</property>
+                <property name="margin">8</property>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="label">X</property>
+                    <property name="xalign">0</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkEntry" id="object_x_entry">
+                    <property name="text" />
+                    <property name="hexpand">true</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="label">Y</property>
+                    <property name="xalign">0</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkEntry" id="object_y_entry">
+                    <property name="text" />
+                    <property name="hexpand">true</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="label">Width</property>
+                    <property name="xalign">0</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkEntry" id="object_w_entry">
+                    <property name="text" />
+                    <property name="hexpand">true</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="label">Height</property>
+                    <property name="xalign">0</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkEntry" id="object_h_entry">
+                    <property name="text" />
+                    <property name="hexpand">true</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="GtkFrame">
+            <property name="label">Motion Path</property>
+            <child>
+              <object class="GtkBox">
+                <property name="orientation">vertical</property>
+                <property name="spacing">6</property>
+                <property name="margin">8</property>
+                <child>
+                  <object class="GtkLabel" id="object_path_summary_label">
+                    <property name="label">Motion path nodes: 0</property>
+                    <property name="xalign">0</property>
+                    <property name="wrap">true</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkButton">
+                    <property name="label">Edit Selected Object Path</property>
+                    <signal name="clicked" handler="on_edit_path" />
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkButton">
+                    <property name="label">Create Simple Path</property>
+                    <signal name="clicked" handler="on_new_path" />
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkButton">
+                    <property name="label">Clear Path</property>
+                    <signal name="clicked" handler="on_clear_path" />
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="GtkButtonBox">
+            <property name="layout-style">end</property>
+            <property name="spacing">8</property>
+            <child>
+              <object class="GtkButton">
+                <property name="label">Apply</property>
+                <signal name="clicked" handler="on_apply_object" />
+              </object>
+            </child>
+            <child>
+              <object class="GtkButton">
+                <property name="label">Close</property>
+                <signal name="clicked" handler="on_close_object" />
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+  </object>
+  <object class="GtkWindow" id="path_node_window">
+    <property name="title">Path Node</property>
+    <property name="default-width">430</property>
+    <property name="default-height">390</property>
+    <property name="window-position">center-on-parent</property>
+    <property name="deletable">false</property>
+    <child>
+      <object class="GtkBox">
+        <property name="orientation">vertical</property>
+        <property name="spacing">8</property>
+        <property name="margin">12</property>
+        <child>
+          <object class="GtkLabel" id="path_node_title_label">
+            <property name="label">Path Node</property>
+            <property name="xalign">0</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkLabel">
+            <property name="label">Position X</property>
+            <property name="xalign">0</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkEntry" id="path_node_x_entry">
+            <property name="text">0</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkLabel">
+            <property name="label">Position Y</property>
+            <property name="xalign">0</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkEntry" id="path_node_y_entry">
+            <property name="text">0</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkLabel">
+            <property name="label">Arrival Time (seconds)</property>
+            <property name="xalign">0</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkEntry" id="path_node_time_entry">
+            <property name="text">0.00</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkLabel" id="path_node_delete_note">
+            <property name="label">Intermediate waypoints can be deleted.</property>
+            <property name="xalign">0</property>
+            <property name="wrap">true</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkButtonBox">
+            <property name="layout-style">end</property>
+            <property name="spacing">8</property>
+            <child>
+              <object class="GtkButton">
+                <property name="label">Apply</property>
+                <signal name="clicked" handler="on_apply_path_node" />
+              </object>
+            </child>
+            <child>
+              <object class="GtkButton">
+                <property name="label">Delete Waypoint</property>
+                <signal name="clicked" handler="on_delete_path_node" />
+              </object>
+            </child>
+            <child>
+              <object class="GtkButton">
+                <property name="label">Close</property>
+                <signal name="clicked" handler="on_close_path_node" />
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+  </object>
+  <object class="GtkWindow" id="level_properties_window">
+    <property name="title">Level Properties</property>
+    <property name="default-width">650</property>
+    <property name="default-height">600</property>
+    <property name="window-position">center-on-parent</property>
+    <property name="deletable">false</property>
+    <child>
+      <object class="GtkBox">
+        <property name="orientation">vertical</property>
+        <property name="spacing">8</property>
+        <property name="margin">12</property>
+        <child>
+          <object class="GtkLabel">
+            <property name="label">Level Properties</property>
+            <property name="xalign">0</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkLabel">
+            <property name="label">Internal Name</property>
+            <property name="xalign">0</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkEntry" id="level_name_entry">
+            <property name="text">stage01</property>
+            <property name="hexpand">true</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkLabel">
+            <property name="label">Title</property>
+            <property name="xalign">0</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkEntry" id="level_title_entry">
+            <property name="text">Mission 1</property>
+            <property name="hexpand">true</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkLabel">
+            <property name="label">Next Level</property>
+            <property name="xalign">0</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkEntry" id="next_level_entry">
+            <property name="text">stage02.map</property>
+            <property name="hexpand">true</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkLabel">
+            <property name="label">Background Image</property>
+            <property name="xalign">0</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkEntry" id="background_entry">
+            <property name="text">assets/images/maps/sub-terrania-mission-1.png</property>
+            <property name="hexpand">true</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkButton">
+            <property name="label">Browse Background</property>
+            <signal name="clicked" handler="on_browse_background" />
+          </object>
+        </child>
+        <child>
+          <object class="GtkLabel">
+            <property name="label">Level Music</property>
+            <property name="xalign">0</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkEntry" id="music_entry">
+            <property name="text">assets/audio/music/mission01.ogg</property>
+            <property name="hexpand">true</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkButton">
+            <property name="label">Browse Level Music</property>
+            <signal name="clicked" handler="on_browse_music" />
+          </object>
+        </child>
+        <child>
+          <object class="GtkLabel">
+            <property name="label">Boss Music</property>
+            <property name="xalign">0</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkEntry" id="boss_music_entry">
+            <property name="text">assets/audio/music/boss01.ogg</property>
+            <property name="hexpand">true</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkButton">
+            <property name="label">Browse Boss Music</property>
+            <signal name="clicked" handler="on_browse_boss_music" />
+          </object>
+        </child>
+        <child>
+          <object class="GtkButtonBox">
+            <property name="layout-style">end</property>
+            <property name="spacing">8</property>
+            <child>
+              <object class="GtkButton">
+                <property name="label">Apply</property>
+                <signal name="clicked" handler="on_apply_level" />
+              </object>
+            </child>
+            <child>
+              <object class="GtkButton">
+                <property name="label">Close</property>
+                <signal name="clicked" handler="on_close_level" />
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+  </object>
+  <object class="GtkWindow" id="database_window">
+    <property name="title">SubTerrania Database</property>
+    <property name="default-width">1180</property>
+    <property name="default-height">780</property>
+    <property name="window-position">center-on-parent</property>
+    <property name="deletable">false</property>
+    <child>
+      <object class="GtkBox">
+        <property name="orientation">vertical</property>
+        <property name="spacing">6</property>
+        <property name="margin">8</property>
+        <child>
+          <object class="GtkPaned">
+            <property name="orientation">horizontal</property>
+            <property name="position">190</property>
+            <property name="wide-handle">true</property>
+            <property name="vexpand">true</property>
+            <child>
+              <object class="GtkScrolledWindow">
+                <property name="hscrollbar-policy">never</property>
+                <property name="width-request">180</property>
+                <child>
+                  <object class="GtkBox">
+                    <property name="orientation">vertical</property>
+                    <property name="spacing">3</property>
+                    <property name="margin">4</property>
+                    <child>
+                      <object class="GtkButton">
+                        <property name="label">Player Ships</property>
+                        <signal name="clicked" handler="on_db_player" />
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkButton">
+                        <property name="label">Enemies</property>
+                        <signal name="clicked" handler="on_db_enemies" />
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkButton">
+                        <property name="label">Bosses</property>
+                        <signal name="clicked" handler="on_db_bosses" />
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkButton">
+                        <property name="label">Weapons</property>
+                        <signal name="clicked" handler="on_db_weapons" />
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkButton">
+                        <property name="label">Pickups</property>
+                        <signal name="clicked" handler="on_db_pickups" />
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkButton">
+                        <property name="label">Platforms</property>
+                        <signal name="clicked" handler="on_db_platforms" />
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkButton">
+                        <property name="label">Destructibles</property>
+                        <signal name="clicked" handler="on_db_destructibles" />
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkButton">
+                        <property name="label">Animations</property>
+                        <signal name="clicked" handler="on_db_animations" />
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkButton">
+                        <property name="label">Audio</property>
+                        <signal name="clicked" handler="on_db_audio" />
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkButton">
+                        <property name="label">Objectives</property>
+                        <signal name="clicked" handler="on_db_objectives" />
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkButton">
+                        <property name="label">Project Settings</property>
+                        <signal name="clicked" handler="on_db_project" />
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkNotebook" id="database_notebook">
+                <property name="show-tabs">false</property>
+                <property name="show-border">false</property>
+                <property name="hexpand">true</property>
+                <property name="vexpand">true</property>
+                <child>
+                  <object class="GtkScrolledWindow">
+                    <property name="hscrollbar-policy">never</property>
+                    <property name="vexpand">true</property>
+                    <child>
+                      <object class="GtkBox">
+                        <property name="orientation">vertical</property>
+                        <property name="spacing">8</property>
+                        <property name="margin">12</property>
+                        <property name="vexpand">true</property>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Player Ships</property>
+                            <property name="xalign">0</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Reusable player template. Sounds and weapon slots belong to the player definition.</property>
+                            <property name="xalign">0</property>
+                            <property name="wrap">true</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Name</property>
+                            <property name="xalign">0</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkEntry" id="db_player_name">
+                            <property name="text">RescueShip01</property>
+                            <property name="hexpand">true</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Sprite</property>
+                            <property name="xalign">0</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkEntry" id="db_player_sprite">
+                            <property name="text">assets/images/sprites/ship01.png</property>
+                            <property name="hexpand">true</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Thrust</property>
+                            <property name="xalign">0</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkEntry" id="db_player_thrust">
+                            <property name="text">260</property>
+                            <property name="hexpand">true</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Fuel Maximum</property>
+                            <property name="xalign">0</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkEntry" id="db_player_fuel">
+                            <property name="text">100</property>
+                            <property name="hexpand">true</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Shield Maximum</property>
+                            <property name="xalign">0</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkEntry" id="db_player_shield">
+                            <property name="text">100</property>
+                            <property name="hexpand">true</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Engine Thrust Sound</property>
+                            <property name="xalign">0</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkEntry" id="db_player_engine_sound">
+                            <property name="text">assets/audio/sfx/ship/thrust.wav</property>
+                            <property name="hexpand">true</property>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkScrolledWindow">
+                    <property name="hscrollbar-policy">never</property>
+                    <property name="vexpand">true</property>
+                    <child>
+                      <object class="GtkBox">
+                        <property name="orientation">vertical</property>
+                        <property name="spacing">8</property>
+                        <property name="margin">12</property>
+                        <property name="vexpand">true</property>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Enemies</property>
+                            <property name="xalign">0</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Define reusable enemy animation, movement, detection and firing rules. Place instances on maps later.</property>
+                            <property name="xalign">0</property>
+                            <property name="wrap">true</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Name</property>
+                            <property name="xalign">0</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkEntry" id="db_enemy_name">
+                            <property name="text">GunTurret</property>
+                            <property name="hexpand">true</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Health</property>
+                            <property name="xalign">0</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkEntry" id="db_enemy_health">
+                            <property name="text">50</property>
+                            <property name="hexpand">true</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Animation</property>
+                            <property name="xalign">0</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkEntry" id="db_enemy_animation">
+                            <property name="text">turret_idle</property>
+                            <property name="hexpand">true</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Movement</property>
+                            <property name="xalign">0</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkEntry" id="db_enemy_movement">
+                            <property name="text">Static</property>
+                            <property name="hexpand">true</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Weapon</property>
+                            <property name="xalign">0</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkEntry" id="db_enemy_weapon">
+                            <property name="text">RedLaser</property>
+                            <property name="hexpand">true</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Fire Arc / Aim Rule</property>
+                            <property name="xalign">0</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkEntry" id="db_enemy_fire_arc">
+                            <property name="text">45 degrees left/right</property>
+                            <property name="hexpand">true</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Detection Range</property>
+                            <property name="xalign">0</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkEntry" id="db_enemy_detection">
+                            <property name="text">300</property>
+                            <property name="hexpand">true</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Notes</property>
+                            <property name="xalign">0</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkEntry" id="db_enemy_notes">
+                            <property name="text">Wall or ceiling mounted turret.</property>
+                            <property name="hexpand">true</property>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkScrolledWindow">
+                    <property name="hscrollbar-policy">never</property>
+                    <property name="vexpand">true</property>
+                    <child>
+                      <object class="GtkBox">
+                        <property name="orientation">vertical</property>
+                        <property name="spacing">8</property>
+                        <property name="margin">12</property>
+                        <property name="vexpand">true</property>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Bosses</property>
+                            <property name="xalign">0</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Boss templates combine enemy behavior, body-part animations, phases and encounter data.</property>
+                            <property name="xalign">0</property>
+                            <property name="wrap">true</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Name</property>
+                            <property name="xalign">0</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkEntry" id="db_boss_name">
+                            <property name="text">FourFaceBoss</property>
+                            <property name="hexpand">true</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Health</property>
+                            <property name="xalign">0</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkEntry" id="db_boss_health">
+                            <property name="text">500</property>
+                            <property name="hexpand">true</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Body Animations</property>
+                            <property name="xalign">0</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkEntry" id="db_boss_animations">
+                            <property name="text">face, arms, tentacles, beak</property>
+                            <property name="hexpand">true</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Phase Count</property>
+                            <property name="xalign">0</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkEntry" id="db_boss_phases">
+                            <property name="text">3</property>
+                            <property name="hexpand">true</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Movement</property>
+                            <property name="xalign">0</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkEntry" id="db_boss_movement">
+                            <property name="text">Cardinal + path</property>
+                            <property name="hexpand">true</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Weapons</property>
+                            <property name="xalign">0</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkEntry" id="db_boss_weapons">
+                            <property name="text">Fireball, RedLaser</property>
+                            <property name="hexpand">true</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Boss Music</property>
+                            <property name="xalign">0</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkEntry" id="db_boss_music">
+                            <property name="text">assets/audio/music/boss01.ogg</property>
+                            <property name="hexpand">true</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Notes</property>
+                            <property name="xalign">0</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkEntry" id="db_boss_notes">
+                            <property name="text">Phase data and attacks are expanded later.</property>
+                            <property name="hexpand">true</property>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkScrolledWindow">
+                    <property name="hscrollbar-policy">never</property>
+                    <property name="vexpand">true</property>
+                    <child>
+                      <object class="GtkBox">
+                        <property name="orientation">vertical</property>
+                        <property name="spacing">8</property>
+                        <property name="margin">12</property>
+                        <property name="vexpand">true</property>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Weapons</property>
+                            <property name="xalign">0</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Weapon definitions are equipped by player ships, enemies and bosses.</property>
+                            <property name="xalign">0</property>
+                            <property name="wrap">true</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Name</property>
+                            <property name="xalign">0</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkEntry" id="db_weapon_name">
+                            <property name="text">RedLaser</property>
+                            <property name="hexpand">true</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Behavior</property>
+                            <property name="xalign">0</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkEntry" id="db_weapon_behavior">
+                            <property name="text">Forward; affected by gravity</property>
+                            <property name="hexpand">true</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Damage</property>
+                            <property name="xalign">0</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkEntry" id="db_weapon_damage">
+                            <property name="text">10</property>
+                            <property name="hexpand">true</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Cooldown Seconds</property>
+                            <property name="xalign">0</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkEntry" id="db_weapon_cooldown">
+                            <property name="text">0.25</property>
+                            <property name="hexpand">true</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Projectile / Animation</property>
+                            <property name="xalign">0</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkEntry" id="db_weapon_projectile">
+                            <property name="text">laser_red</property>
+                            <property name="hexpand">true</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Fire Sound</property>
+                            <property name="xalign">0</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkEntry" id="db_weapon_sound">
+                            <property name="text">assets/audio/sfx/weapons/red.wav</property>
+                            <property name="hexpand">true</property>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkScrolledWindow">
+                    <property name="hscrollbar-policy">never</property>
+                    <property name="vexpand">true</property>
+                    <child>
+                      <object class="GtkBox">
+                        <property name="orientation">vertical</property>
+                        <property name="spacing">8</property>
+                        <property name="margin">12</property>
+                        <property name="vexpand">true</property>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Pickups</property>
+                            <property name="xalign">0</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Pickups can glow, change to a used state and apply an effect when collected.</property>
+                            <property name="xalign">0</property>
+                            <property name="wrap">true</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Name</property>
+                            <property name="xalign">0</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkEntry" id="db_pickup_name">
+                            <property name="text">MissilePickup</property>
+                            <property name="hexpand">true</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Effect</property>
+                            <property name="xalign">0</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkEntry" id="db_pickup_effect">
+                            <property name="text">Equip missiles</property>
+                            <property name="hexpand">true</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Value</property>
+                            <property name="xalign">0</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkEntry" id="db_pickup_value">
+                            <property name="text">1</property>
+                            <property name="hexpand">true</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Glow Animation</property>
+                            <property name="xalign">0</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkEntry" id="db_pickup_glow">
+                            <property name="text">pickup_glow</property>
+                            <property name="hexpand">true</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Pickup Sound</property>
+                            <property name="xalign">0</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkEntry" id="db_pickup_sound">
+                            <property name="text">assets/audio/sfx/pickups/item.wav</property>
+                            <property name="hexpand">true</property>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkScrolledWindow">
+                    <property name="hscrollbar-policy">never</property>
+                    <property name="vexpand">true</property>
+                    <child>
+                      <object class="GtkBox">
+                        <property name="orientation">vertical</property>
+                        <property name="spacing">8</property>
+                        <property name="margin">12</property>
+                        <property name="vexpand">true</property>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Platforms</property>
+                            <property name="xalign">0</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Platforms are landable moving objects and may crush the ship against cave walls.</property>
+                            <property name="xalign">0</property>
+                            <property name="wrap">true</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Name</property>
+                            <property name="xalign">0</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkEntry" id="db_platform_name">
+                            <property name="text">MovingPlatform</property>
+                            <property name="hexpand">true</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Sprite</property>
+                            <property name="xalign">0</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkEntry" id="db_platform_sprite">
+                            <property name="text">platform_default</property>
+                            <property name="hexpand">true</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Landable</property>
+                            <property name="xalign">0</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkEntry" id="db_platform_landable">
+                            <property name="text">true</property>
+                            <property name="hexpand">true</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Crush Hazard</property>
+                            <property name="xalign">0</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkEntry" id="db_platform_crush">
+                            <property name="text">true</property>
+                            <property name="hexpand">true</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Default Path Mode</property>
+                            <property name="xalign">0</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkEntry" id="db_platform_path">
+                            <property name="text">PingPong / Smooth</property>
+                            <property name="hexpand">true</property>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkScrolledWindow">
+                    <property name="hscrollbar-policy">never</property>
+                    <property name="vexpand">true</property>
+                    <child>
+                      <object class="GtkBox">
+                        <property name="orientation">vertical</property>
+                        <property name="spacing">8</property>
+                        <property name="margin">12</property>
+                        <property name="vexpand">true</property>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Destructibles</property>
+                            <property name="xalign">0</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Pixel-eroded covers can hide pickups and explode after the destroyed threshold is reached.</property>
+                            <property name="xalign">0</property>
+                            <property name="wrap">true</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Name</property>
+                            <property name="xalign">0</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkEntry" id="db_destructible_name">
+                            <property name="text">RockCover</property>
+                            <property name="hexpand">true</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Pixel Mask</property>
+                            <property name="xalign">0</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkEntry" id="db_destructible_mask">
+                            <property name="text">rock_cover_mask.png</property>
+                            <property name="hexpand">true</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Destroy Threshold Percent</property>
+                            <property name="xalign">0</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkEntry" id="db_destructible_threshold">
+                            <property name="text">75</property>
+                            <property name="hexpand">true</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Reveals / Covers</property>
+                            <property name="xalign">0</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkEntry" id="db_destructible_reveals">
+                            <property name="text">MissilePickup</property>
+                            <property name="hexpand">true</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Break Sound</property>
+                            <property name="xalign">0</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkEntry" id="db_destructible_sound">
+                            <property name="text">assets/audio/sfx/rock_break.wav</property>
+                            <property name="hexpand">true</property>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkScrolledWindow">
+                    <property name="hscrollbar-policy">never</property>
+                    <property name="vexpand">true</property>
+                    <child>
+                      <object class="GtkBox">
+                        <property name="orientation">vertical</property>
+                        <property name="spacing">8</property>
+                        <property name="margin">12</property>
+                        <property name="vexpand">true</property>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Animations</property>
+                            <property name="xalign">0</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Animation definitions may be assigned to ships, miners, enemies, bosses and pickups.</property>
+                            <property name="xalign">0</property>
+                            <property name="wrap">true</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Name</property>
+                            <property name="xalign">0</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkEntry" id="db_animation_name">
+                            <property name="text">MinerWalk</property>
+                            <property name="hexpand">true</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Sprite Sheet</property>
+                            <property name="xalign">0</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkEntry" id="db_animation_sheet">
+                            <property name="text">assets/images/sprites/miner.png</property>
+                            <property name="hexpand">true</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Frames Per Second</property>
+                            <property name="xalign">0</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkEntry" id="db_animation_fps">
+                            <property name="text">8</property>
+                            <property name="hexpand">true</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Frames</property>
+                            <property name="xalign">0</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkEntry" id="db_animation_frames">
+                            <property name="text">0,1,2,3</property>
+                            <property name="hexpand">true</property>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkScrolledWindow">
+                    <property name="hscrollbar-policy">never</property>
+                    <property name="vexpand">true</property>
+                    <child>
+                      <object class="GtkBox">
+                        <property name="orientation">vertical</property>
+                        <property name="spacing">8</property>
+                        <property name="margin">12</property>
+                        <property name="vexpand">true</property>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Audio</property>
+                            <property name="xalign">0</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Project-wide defaults. Level-specific music is configured in Level Properties.</property>
+                            <property name="xalign">0</property>
+                            <property name="wrap">true</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Main Menu Music</property>
+                            <property name="xalign">0</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkEntry" id="db_audio_menu">
+                            <property name="text">assets/audio/music/menu.ogg</property>
+                            <property name="hexpand">true</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Default Level Music</property>
+                            <property name="xalign">0</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkEntry" id="db_audio_level">
+                            <property name="text">assets/audio/music/mission01.ogg</property>
+                            <property name="hexpand">true</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Default Boss Music</property>
+                            <property name="xalign">0</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkEntry" id="db_audio_boss">
+                            <property name="text">assets/audio/music/boss01.ogg</property>
+                            <property name="hexpand">true</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">UI Select Sound</property>
+                            <property name="xalign">0</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkEntry" id="db_audio_select">
+                            <property name="text">assets/audio/sfx/ui/select.wav</property>
+                            <property name="hexpand">true</property>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkScrolledWindow">
+                    <property name="hscrollbar-policy">never</property>
+                    <property name="vexpand">true</property>
+                    <child>
+                      <object class="GtkBox">
+                        <property name="orientation">vertical</property>
+                        <property name="spacing">8</property>
+                        <property name="margin">12</property>
+                        <property name="vexpand">true</property>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Objectives</property>
+                            <property name="xalign">0</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Objectives are mission rules, not map squares. Miners and bases are placed objects referenced by these rules.</property>
+                            <property name="xalign">0</property>
+                            <property name="wrap">true</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Required Miners</property>
+                            <property name="xalign">0</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkEntry" id="db_objective_miners">
+                            <property name="text">1</property>
+                            <property name="hexpand">true</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Return to Base</property>
+                            <property name="xalign">0</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkEntry" id="db_objective_return">
+                            <property name="text">true</property>
+                            <property name="hexpand">true</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Destroy Target</property>
+                            <property name="xalign">0</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkEntry" id="db_objective_destroy">
+                            <property name="text" />
+                            <property name="hexpand">true</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Collect Item</property>
+                            <property name="xalign">0</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkEntry" id="db_objective_collect">
+                            <property name="text" />
+                            <property name="hexpand">true</property>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkScrolledWindow">
+                    <property name="hscrollbar-policy">never</property>
+                    <property name="vexpand">true</property>
+                    <child>
+                      <object class="GtkBox">
+                        <property name="orientation">vertical</property>
+                        <property name="spacing">8</property>
+                        <property name="margin">12</property>
+                        <property name="vexpand">true</property>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Project Settings</property>
+                            <property name="xalign">0</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Project defaults used by the editor and later by the game runtime.</property>
+                            <property name="xalign">0</property>
+                            <property name="wrap">true</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Game Title</property>
+                            <property name="xalign">0</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkEntry" id="db_project_title">
+                            <property name="text">SubTerrania</property>
+                            <property name="hexpand">true</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Start Level</property>
+                            <property name="xalign">0</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkEntry" id="db_project_start">
+                            <property name="text">assets/levels/stage01.map</property>
+                            <property name="hexpand">true</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label">Player Template</property>
+                            <property name="xalign">0</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkEntry" id="db_project_player">
+                            <property name="text">RescueShip01</property>
+                            <property name="hexpand">true</property>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="GtkButtonBox">
+            <property name="layout-style">end</property>
+            <property name="spacing">8</property>
+            <child>
+              <object class="GtkButton">
+                <property name="label">Save Database</property>
+                <signal name="clicked" handler="on_save_database" />
+              </object>
+            </child>
+            <child>
+              <object class="GtkButton">
+                <property name="label">Close</property>
+                <signal name="clicked" handler="on_close_database" />
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
   </object>
 </interface>
