@@ -502,10 +502,14 @@ package body Editor_Canvas is
       Selected_Node : constant Natural := Editor_State.Selected_Path_Node;
       Index         : Level.Object_Index;
       Count         : Editor_State.Path_Node_Count;
+      Route_Count   : Editor_State.Path_Route_Step_Count;
       Node          : Rect_Item;
       Node_Label    : Text_Item;
+      Route_Label   : Text_Item;
       Label_Style   : constant Drawing_Style := Gtk_New
         (Stroke => (1.0, 1.0, 1.0, 1.0));
+      Route_Style   : constant Drawing_Style := Gtk_New
+        (Stroke => (1.0, 0.85, 0.20, 1.0));
    begin
       Path_Node_Items := (others => null);
       Path_Label_Items := (others => null);
@@ -519,11 +523,38 @@ package body Editor_Canvas is
 
       Index := Level.Object_Index (Sel.Object_Index);
       Count := Editor_State.Object_Path_Count (Index);
+      Route_Count := Editor_State.Object_Path_Route_Count (Index);
       if Count = 0 then
          return;
       end if;
 
-      if Natural (Count) >= 2 then
+      if Natural (Route_Count) >= 2 then
+         for Step in 1 .. Natural (Route_Count) - 1 loop
+            declare
+               From_Step : constant Editor_State.Path_Route_Step_Record :=
+                 Editor_State.Object_Path_Route_Step
+                   (Index, Editor_State.Path_Route_Step_Index (Step));
+               To_Step : constant Editor_State.Path_Route_Step_Record :=
+                 Editor_State.Object_Path_Route_Step
+                   (Index, Editor_State.Path_Route_Step_Index (Step + 1));
+               A : constant Editor_State.Path_Node_Record :=
+                 Editor_State.Object_Path_Node (Index, From_Step.Node);
+               B : constant Editor_State.Path_Node_Record :=
+                 Editor_State.Object_Path_Node (Index, To_Step.Node);
+            begin
+               Add_Dashed_Segment (A, B);
+               Route_Label := Gtk_New_Text
+                 (Style  => Route_Style,
+                  Text   => Trimmed (Natural'Image (Step)),
+                  Width  => 24.0,
+                  Height => 18.0);
+               Route_Label.Set_Position
+                 ((Gdouble ((A.X + B.X) / 2.0),
+                   Gdouble ((A.Y + B.Y) / 2.0)));
+               Model.Add (Route_Label);
+            end;
+         end loop;
+      elsif Natural (Count) >= 2 then
          for N in 1 .. Natural (Count) - 1 loop
             Add_Dashed_Segment
               (Editor_State.Object_Path_Node

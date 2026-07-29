@@ -140,6 +140,18 @@ package body Editor_App is
       return Trimmed (Integer'Image (Integer (Value)));
    end Pixel_Text;
 
+   function Fixed_Float (Value : Float) return String is
+      package Local_Float_IO is new Ada.Text_IO.Float_IO (Float);
+      Buffer : String (1 .. 32) := (others => ' ');
+   begin
+      Local_Float_IO.Put
+        (To   => Buffer,
+         Item => Value,
+         Aft  => 2,
+         Exp  => 0);
+      return Trimmed (Buffer);
+   end Fixed_Float;
+
    procedure Log (Text : String) is
       View : constant Gtk_Text_View := Gtk_Text_View
         (Get_Object (Gtk_Builder (Builder), "output_text_view"));
@@ -645,8 +657,15 @@ package body Editor_App is
             "EDITING PATH - "
             & Editor_State.Object_Display_Name
               (Level.Object_Index (Sel.Object_Index))
+            & " | "
+            & Fixed_Float
+              (Editor_State.Object_Path_Travel_Time
+                 (Level.Object_Index (Sel.Object_Index)))
+            & " sec | "
+            & Editor_State.Object_Path_Route_Summary
+              (Level.Object_Index (Sel.Object_Index))
             & " | Drag nodes | Ctrl-click dashed line adds waypoint | "
-            & "Ctrl-right-click node opens properties | Enter finish | Esc cancel");
+            & "Enter finish | Esc cancel");
          UI_Widget ("path_banner").Show_All;
       end if;
    end Show_Path_Banner;
@@ -740,9 +759,14 @@ package body Editor_App is
          Set_Entry ("object_h_entry", Pixel_Text (Obj.H));
          Set_Label
            ("object_path_summary_label",
-            "Motion path nodes: "
+            "Nodes: "
             & Trimmed (Natural'Image (Natural (Count)))
-            & ". Edit the path visually on the map.");
+            & " | route time: "
+            & Fixed_Float (Editor_State.Object_Path_Travel_Time (Index))
+            & " sec | "
+            & Editor_State.Object_Path_Mode_Text (Index)
+            & ASCII.LF
+            & "Route: " & Editor_State.Object_Path_Route_Summary (Index));
       end;
    end Refresh_Object_Editor;
 
@@ -1236,6 +1260,113 @@ package body Editor_App is
       end if;
    end Cancel_Path_Editing;
 
+   procedure Refresh_Path_Timing_Window is
+      Sel : constant Editor_State.Selection_Info := Editor_State.Selection;
+   begin
+      if Sel.Kind /= Editor_State.Object_Selected
+        or else Sel.Object_Index = 0
+      then
+         return;
+      end if;
+
+      declare
+         Index : constant Level.Object_Index :=
+           Level.Object_Index (Sel.Object_Index);
+      begin
+         Set_Label
+           ("path_timing_target_label",
+            "Timing and route sequence - "
+            & Editor_State.Object_Display_Name (Index));
+         Set_Entry
+           ("path_travel_time_entry",
+            Fixed_Float (Editor_State.Object_Path_Travel_Time (Index)));
+         Set_Entry
+           ("path_playback_entry",
+            Editor_State.Object_Path_Mode_Text (Index));
+         Set_Entry
+           ("path_route_order_entry",
+            Editor_State.Object_Path_Route_Summary (Index));
+         Set_Entry
+           ("path_route_pauses_entry",
+            Editor_State.Object_Path_Pause_Summary (Index));
+         Set_Label
+           ("path_timing_preview_label",
+            "Movement time excludes pauses. Route: "
+            & Editor_State.Object_Path_Route_Summary (Index));
+      end;
+   end Refresh_Path_Timing_Window;
+
+   procedure On_Edit_Path_Timing
+     (Data : access Gtkada_Builder_Record'Class) is
+      pragma Unreferenced (Data);
+      Sel : constant Editor_State.Selection_Info := Editor_State.Selection;
+   begin
+      if Sel.Kind /= Editor_State.Object_Selected
+        or else Sel.Object_Index = 0
+      then
+         Log ("Select an object first");
+         return;
+      end if;
+
+      if Editor_State.Object_Path_Count
+        (Level.Object_Index (Sel.Object_Index)) < 2
+      then
+         Log ("Create a path before editing its timing");
+         return;
+      end if;
+
+      Refresh_Path_Timing_Window;
+      UI_Window ("path_timing_window").Show_All;
+   end On_Edit_Path_Timing;
+
+   procedure On_Apply_Path_Timing
+     (Data : access Gtkada_Builder_Record'Class) is
+      pragma Unreferenced (Data);
+      Changed : Boolean;
+      Valid   : Boolean;
+      Message : Unbounded_String;
+   begin
+      Editor_State.Configure_Selected_Path_Timing
+        (Travel_Time  => Float_Value ("path_travel_time_entry", 8.0),
+         Playback     => Get_Entry ("path_playback_entry", "PINGPONG"),
+         Route_Order  => Get_Entry ("path_route_order_entry", "START,END"),
+         Route_Pauses => Get_Entry ("path_route_pauses_entry", "0,0"),
+         Changed      => Changed,
+         Valid        => Valid,
+         Message      => Message);
+
+      Log (To_String (Message));
+      if Valid and then Changed then
+         Editor_Canvas.Rebuild;
+         Refresh_Object_Editor;
+         Refresh_Path_Timing_Window;
+         if Editor_State.Path_Edit_Active then
+            Show_Path_Banner;
+         end if;
+      end if;
+   end On_Apply_Path_Timing;
+
+   procedure On_Reset_Path_Timing
+     (Data : access Gtkada_Builder_Record'Class) is
+      pragma Unreferenced (Data);
+      Changed : Boolean;
+   begin
+      Editor_State.Reset_Selected_Path_Timing (Changed);
+      if Changed then
+         Editor_Canvas.Rebuild;
+         Refresh_Object_Editor;
+         Refresh_Path_Timing_Window;
+         Log ("Route reset to START through each point to END");
+      end if;
+   end On_Reset_Path_Timing;
+
+   procedure On_Close_Path_Timing
+     (Data : access Gtkada_Builder_Record'Class) is
+      pragma Unreferenced (Data);
+   begin
+      UI_Window ("path_timing_window").Hide;
+   end On_Close_Path_Timing;
+
    procedure On_Edit_Path
      (Data : access Gtkada_Builder_Record'Class) is
       pragma Unreferenced (Data);
@@ -1313,7 +1444,7 @@ package body Editor_App is
       Editor_State.Update_Selected_Path_Node
         (World_X => Float_Value ("path_node_x_entry", 0.0),
          World_Y => Float_Value ("path_node_y_entry", 0.0),
-         Time    => Float_Value ("path_node_time_entry", 0.0),
+         Time    => 0.0,
          Changed => Changed);
       if Changed then
          Editor_Canvas.Rebuild;
@@ -1588,6 +1719,14 @@ package body Editor_App is
         (Builder, "on_object_properties", On_Object_Properties'Access);
       Register_Handler (Builder, "on_apply_object", On_Apply_Object'Access);
       Register_Handler (Builder, "on_close_object", On_Close_Object'Access);
+      Register_Handler
+        (Builder, "on_edit_path_timing", On_Edit_Path_Timing'Access);
+      Register_Handler
+        (Builder, "on_apply_path_timing", On_Apply_Path_Timing'Access);
+      Register_Handler
+        (Builder, "on_reset_path_timing", On_Reset_Path_Timing'Access);
+      Register_Handler
+        (Builder, "on_close_path_timing", On_Close_Path_Timing'Access);
       Register_Handler (Builder, "on_edit_path", On_Edit_Path'Access);
       Register_Handler (Builder, "on_new_path", On_New_Path'Access);
       Register_Handler (Builder, "on_clear_path", On_Clear_Path'Access);

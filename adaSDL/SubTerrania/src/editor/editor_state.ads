@@ -6,6 +6,7 @@ package Editor_State is
    package US renames Ada.Strings.Unbounded;
 
    Max_Path_Nodes : constant Positive := 12;
+   Max_Path_Steps : constant Positive := 24;
 
    type Tool_Kind is
      (Select_Tool,
@@ -53,6 +54,14 @@ package Editor_State is
 
    subtype Path_Node_Count is Natural range 0 .. Max_Path_Nodes;
    subtype Path_Node_Index is Positive range 1 .. Max_Path_Nodes;
+
+   type Path_Route_Step_Record is record
+      Node  : Path_Node_Index := 1;
+      Pause : Float := 0.0;
+   end record;
+
+   subtype Path_Route_Step_Count is Natural range 0 .. Max_Path_Steps;
+   subtype Path_Route_Step_Index is Positive range 1 .. Max_Path_Steps;
 
    type Selection_Info is record
       Kind         : Selection_Kind := Nothing_Selected;
@@ -192,6 +201,37 @@ package Editor_State is
 
    function Object_Path_Easing
      (Index : Level.Object_Index) return Path_Easing_Kind;
+
+   function Object_Path_Travel_Time
+     (Index : Level.Object_Index) return Float;
+
+   function Object_Path_Route_Count
+     (Index : Level.Object_Index) return Path_Route_Step_Count;
+
+   function Object_Path_Route_Step
+     (Index : Level.Object_Index;
+      Step  : Path_Route_Step_Index) return Path_Route_Step_Record;
+
+   function Object_Path_Route_Summary
+     (Index : Level.Object_Index) return String;
+
+   function Object_Path_Pause_Summary
+     (Index : Level.Object_Index) return String;
+
+   function Object_Path_Mode_Text
+     (Index : Level.Object_Index) return String;
+
+   procedure Configure_Selected_Path_Timing
+     (Travel_Time  : Float;
+      Playback     : String;
+      Route_Order  : String;
+      Route_Pauses : String;
+      Changed      : out Boolean;
+      Valid        : out Boolean;
+      Message      : out US.Unbounded_String);
+
+   procedure Reset_Selected_Path_Timing
+     (Changed : out Boolean);
 
    function Tool_Name return String;
    function Brush_Name return String;

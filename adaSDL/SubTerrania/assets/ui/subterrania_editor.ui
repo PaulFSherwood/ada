@@ -1047,6 +1047,12 @@
                 </child>
                 <child>
                   <object class="GtkButton">
+                    <property name="label">Edit Timing / Route Sequence</property>
+                    <signal name="clicked" handler="on_edit_path_timing" />
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkButton">
                     <property name="label">Create Simple Path</property>
                     <signal name="clicked" handler="on_new_path" />
                   </object>
@@ -1075,6 +1081,115 @@
               <object class="GtkButton">
                 <property name="label">Close</property>
                 <signal name="clicked" handler="on_close_object" />
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+  </object>
+  <object class="GtkWindow" id="path_timing_window">
+    <property name="title">Path Timing and Route Sequence</property>
+    <property name="default-width">720</property>
+    <property name="default-height">520</property>
+    <property name="window-position">center-on-parent</property>
+    <property name="deletable">false</property>
+    <child>
+      <object class="GtkBox">
+        <property name="orientation">vertical</property>
+        <property name="spacing">8</property>
+        <property name="margin">12</property>
+        <child>
+          <object class="GtkLabel" id="path_timing_target_label">
+            <property name="label">Path Timing</property>
+            <property name="xalign">0</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkLabel">
+            <property name="label">START-to-END route time (seconds)</property>
+            <property name="xalign">0</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkEntry" id="path_travel_time_entry">
+            <property name="text">8.00</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkLabel">
+            <property name="label">Playback: ONCE, LOOP, or PINGPONG</property>
+            <property name="xalign">0</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkEntry" id="path_playback_entry">
+            <property name="text">PINGPONG</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkLabel">
+            <property name="label">Route order</property>
+            <property name="xalign">0</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkEntry" id="path_route_order_entry">
+            <property name="text">START,END</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkLabel">
+            <property name="label">Use point names such as START,P1,P2,P1,P3,END. Repeating a point briefly sends the object back there.</property>
+            <property name="xalign">0</property>
+            <property name="wrap">true</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkLabel">
+            <property name="label">Pause after each route visit (seconds)</property>
+            <property name="xalign">0</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkEntry" id="path_route_pauses_entry">
+            <property name="text">0,0</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkLabel">
+            <property name="label">Enter one pause for each route visit. Route time excludes pauses and covers the complete sequence from its first visit to its last.</property>
+            <property name="xalign">0</property>
+            <property name="wrap">true</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkLabel" id="path_timing_preview_label">
+            <property name="label">Preview</property>
+            <property name="xalign">0</property>
+            <property name="wrap">true</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkButtonBox">
+            <property name="layout-style">end</property>
+            <property name="spacing">8</property>
+            <child>
+              <object class="GtkButton">
+                <property name="label">Apply Timing</property>
+                <signal name="clicked" handler="on_apply_path_timing" />
+              </object>
+            </child>
+            <child>
+              <object class="GtkButton">
+                <property name="label">Reset Simple Order</property>
+                <signal name="clicked" handler="on_reset_path_timing" />
+              </object>
+            </child>
+            <child>
+              <object class="GtkButton">
+                <property name="label">Close</property>
+                <signal name="clicked" handler="on_close_path_timing" />
               </object>
             </child>
           </object>
@@ -1123,13 +1238,14 @@
         </child>
         <child>
           <object class="GtkLabel">
-            <property name="label">Arrival Time (seconds)</property>
+            <property name="label">Timing is edited in Timing / Route Sequence</property>
             <property name="xalign">0</property>
           </object>
         </child>
         <child>
           <object class="GtkEntry" id="path_node_time_entry">
             <property name="text">0.00</property>
+            <property name="visible">false</property>
           </object>
         </child>
         <child>

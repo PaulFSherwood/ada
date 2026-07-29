@@ -65,6 +65,7 @@ package Level is
       Patrol_Y);
 
    Max_Path_Nodes : constant Positive := 12;
+   Max_Path_Steps : constant Positive := 24;
 
    subtype Motion_Path_Node_Count is Natural range 0 .. Max_Path_Nodes;
    subtype Motion_Path_Node_Index is Positive range 1 .. Max_Path_Nodes;
@@ -90,6 +91,17 @@ package Level is
    type Motion_Path_Node_Array is array
      (Motion_Path_Node_Index) of Motion_Path_Node;
 
+   type Path_Route_Step is record
+      Node  : Motion_Path_Node_Index := 1;
+      Pause : Float := 0.0;
+   end record;
+
+   subtype Path_Route_Step_Count is Natural range 0 .. Max_Path_Steps;
+   subtype Path_Route_Step_Index is Positive range 1 .. Max_Path_Steps;
+
+   type Path_Route_Step_Array is array
+     (Path_Route_Step_Index) of Path_Route_Step;
+
    subtype Tile_X is Positive range 1 .. Map_Width;
    subtype Tile_Y is Positive range 1 .. Map_Height;
    type Tile_Map is array (Tile_Y, Tile_X) of Tile_Kind;
@@ -114,12 +126,20 @@ package Level is
         (others => (X => 0.0, Y => 0.0, Time => 0.0));
       Path_Mode   : Path_Playback_Mode := No_Path;
       Path_Easing : Path_Easing_Kind := Linear_Ease;
+      Path_Travel_Time : Float := 8.0;
+      Path_Route_Count : Path_Route_Step_Count := 0;
+      Path_Route : Path_Route_Step_Array :=
+        (others =>
+           (Node => Motion_Path_Node_Index'First, Pause => 0.0));
 
       Path_From_Node : Natural range 0 .. Max_Path_Nodes := 0;
       Path_To_Node   : Natural range 0 .. Max_Path_Nodes := 0;
       Path_Direction : Integer range -1 .. 1 := 1;
       Path_Elapsed   : Float := 0.0;
       Path_Complete  : Boolean := False;
+      Path_From_Step : Natural range 0 .. Max_Path_Steps := 0;
+      Path_To_Step   : Natural range 0 .. Max_Path_Steps := 0;
+      Path_Pause_Remaining : Float := 0.0;
 
       Delta_X : Float := 0.0;
       Delta_Y : Float := 0.0;

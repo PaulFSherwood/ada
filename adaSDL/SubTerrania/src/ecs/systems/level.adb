@@ -1,5 +1,6 @@
 with Ada.Characters.Handling;
 with Ada.Directories;
+with Ada.Numerics.Elementary_Functions;
 with Ada.Strings;
 with Ada.Strings.Fixed;
 with Ada.Text_IO; use Ada.Text_IO;
@@ -543,21 +544,71 @@ package body Level is
       end if;
    end Clamp_Point;
 
+   procedure Ensure_Runtime_Route
+     (Obj : in out Object_Record) is
+      Invalid : Boolean := False;
+   begin
+      if Obj.Path_Count < 2 then
+         Obj.Path_Route_Count := 0;
+         return;
+      end if;
+
+      if Obj.Path_Travel_Time < 0.10 then
+         Obj.Path_Travel_Time := 8.0;
+      end if;
+
+      if Obj.Path_Route_Count >= 2 then
+         for Step in 1 .. Natural (Obj.Path_Route_Count) loop
+            if Natural
+              (Obj.Path_Route (Path_Route_Step_Index (Step)).Node)
+                > Natural (Obj.Path_Count)
+            then
+               Invalid := True;
+            end if;
+         end loop;
+      else
+         Invalid := True;
+      end if;
+
+      if Invalid then
+         Obj.Path_Route :=
+           (others =>
+              (Node => Motion_Path_Node_Index'First, Pause => 0.0));
+         Obj.Path_Route_Count := Path_Route_Step_Count (Obj.Path_Count);
+
+         for Step in 1 .. Natural (Obj.Path_Count) loop
+            Obj.Path_Route (Path_Route_Step_Index (Step)) :=
+              (Node  => Motion_Path_Node_Index (Step),
+               Pause => 0.0);
+         end loop;
+      end if;
+
+      Obj.Path_Easing := Linear_Ease;
+   end Ensure_Runtime_Route;
+
    procedure Initialise_Runtime_Path
      (Obj : in out Object_Record) is
+      Start_Node : Motion_Path_Node_Index;
    begin
+      Ensure_Runtime_Route (Obj);
       Obj.Path_Elapsed := 0.0;
       Obj.Path_Complete := False;
       Obj.Path_Direction := 1;
+      Obj.Path_Pause_Remaining := 0.0;
 
-      if Obj.Path_Count >= 2 and then Obj.Path_Mode /= No_Path then
-         Obj.Path_From_Node := 1;
-         Obj.Path_To_Node := 2;
-         Obj.X := Obj.Path_Nodes (1).X;
-         Obj.Y := Obj.Path_Nodes (1).Y;
+      if Obj.Path_Count >= 2
+        and then Obj.Path_Route_Count >= 2
+        and then Obj.Path_Mode /= No_Path
+      then
+         Obj.Path_From_Step := 1;
+         Obj.Path_To_Step := 2;
+         Start_Node := Obj.Path_Route (1).Node;
+         Obj.X := Obj.Path_Nodes (Start_Node).X;
+         Obj.Y := Obj.Path_Nodes (Start_Node).Y;
+         Obj.Path_Pause_Remaining := Obj.Path_Route (1).Pause;
       else
-         Obj.Path_From_Node := 0;
-         Obj.Path_To_Node := 0;
+         Obj.Path_From_Step := 0;
+         Obj.Path_To_Step := 0;
       end if;
    end Initialise_Runtime_Path;
 
@@ -592,6 +643,7 @@ package body Level is
       Current       : Natural := 0;
       Object_Order  : Natural := 0;
       Loaded_Count  : Natural := 0;
+      Step_Number   : Natural := 0;
    begin
       if not Ada.Directories.Exists (Metadata_Path) then
          Put_Line ("No runtime path metadata: " & Metadata_Path);
@@ -643,6 +695,33 @@ package body Level is
                         Obj.Path_Count := Motion_Path_Node_Count (Count);
                      end if;
                   end;
+               elsif Key = "PATH_TRAVEL_TIME" then
+                  Obj.Path_Travel_Time :=
+                    To_Float (Token (Line (1 .. Last), 2), 8.0);
+               elsif Key = "ROUTE_STEP" then
+                  Step_Number :=
+                    To_Natural (Token (Line (1 .. Last), 2), 0);
+
+                  if Step_Number in Path_Route_Step_Index'Range then
+                     declare
+                        Node_Number : constant Natural :=
+                          To_Natural (Token (Line (1 .. Last), 3), 0);
+                        Pause : constant Float :=
+                          To_Float (Token (Line (1 .. Last), 4), 0.0);
+                     begin
+                        if Node_Number in Motion_Path_Node_Index'Range then
+                           Obj.Path_Route
+                             (Path_Route_Step_Index (Step_Number)) :=
+                             (Node => Motion_Path_Node_Index (Node_Number),
+                              Pause => Float'Max (0.0, Pause));
+
+                           if Step_Number > Natural (Obj.Path_Route_Count) then
+                              Obj.Path_Route_Count :=
+                                Path_Route_Step_Count (Step_Number);
+                           end if;
+                        end if;
+                     end;
+                  end if;
                elsif Key = "NODE" then
                   declare
                      Node_Number : constant Natural :=
@@ -692,27 +771,67 @@ package body Level is
          Put_Line ("Could not load runtime paths: " & Metadata_Path);
    end Load_Editor_Paths;
 
+   function Route_Node
+     (Obj  : Object_Record;
+      Step : Positive) return Motion_Path_Node is
+      Route_Step : constant Path_Route_Step :=
+        Obj.Path_Route (Path_Route_Step_Index (Step));
+   begin
+      return Obj.Path_Nodes (Route_Step.Node);
+   end Route_Node;
+
+   function Distance_Between
+     (A : Motion_Path_Node;
+      B : Motion_Path_Node) return Float is
+      DX : constant Float := B.X - A.X;
+      DY : constant Float := B.Y - A.Y;
+   begin
+      return Ada.Numerics.Elementary_Functions.Sqrt (DX * DX + DY * DY);
+   end Distance_Between;
+
+   function Route_Travel_Distance
+     (Obj : Object_Record) return Float is
+      Total : Float := 0.0;
+   begin
+      if Obj.Path_Route_Count < 2 then
+         return 0.0;
+      end if;
+
+      for Step in 1 .. Natural (Obj.Path_Route_Count) - 1 loop
+         Total := Total + Distance_Between
+           (Route_Node (Obj, Step), Route_Node (Obj, Step + 1));
+      end loop;
+
+      return Total;
+   end Route_Travel_Distance;
+
    function Segment_Duration
      (Obj : Object_Record) return Float is
-      From_Time : Float;
-      To_Time   : Float;
-      Duration  : Float;
+      Total_Distance   : constant Float := Route_Travel_Distance (Obj);
+      Segment_Distance : Float;
+      Segment_Count    : Natural;
    begin
-      if Obj.Path_From_Node = 0 or else Obj.Path_To_Node = 0 then
+      if Obj.Path_From_Step = 0 or else Obj.Path_To_Step = 0 then
          return 1.0;
       end if;
 
-      From_Time := Obj.Path_Nodes
-        (Motion_Path_Node_Index (Obj.Path_From_Node)).Time;
-      To_Time := Obj.Path_Nodes
-        (Motion_Path_Node_Index (Obj.Path_To_Node)).Time;
-      Duration := abs (To_Time - From_Time);
+      Segment_Distance := Distance_Between
+        (Route_Node (Obj, Obj.Path_From_Step),
+         Route_Node (Obj, Obj.Path_To_Step));
 
-      if Duration < 0.01 then
-         return 1.0;
-      else
-         return Duration;
+      if Total_Distance > 0.01 then
+         return Float'Max
+           (0.01,
+            Obj.Path_Travel_Time * Segment_Distance / Total_Distance);
       end if;
+
+      Segment_Count := Natural (Obj.Path_Route_Count) - 1;
+      if Segment_Count = 0 then
+         return Float'Max (0.01, Obj.Path_Travel_Time);
+      end if;
+
+      return Float'Max
+        (0.01, Obj.Path_Travel_Time / Float (Segment_Count));
    end Segment_Duration;
 
    function Eased_Progress
@@ -749,70 +868,59 @@ package body Level is
       To_Node   : Motion_Path_Node;
       T         : constant Float :=
         Eased_Progress (Obj.Path_Easing, Progress);
-      From_X    : Float;
-      From_Y    : Float;
-      To_X      : Float;
-      To_Y      : Float;
    begin
-      if Obj.Path_From_Node = 0 or else Obj.Path_To_Node = 0 then
+      if Obj.Path_From_Step = 0 or else Obj.Path_To_Step = 0 then
          return;
       end if;
 
-      From_Node := Obj.Path_Nodes
-        (Motion_Path_Node_Index (Obj.Path_From_Node));
-      To_Node := Obj.Path_Nodes
-        (Motion_Path_Node_Index (Obj.Path_To_Node));
-      From_X := From_Node.X;
-      From_Y := From_Node.Y;
-      To_X := To_Node.X;
-      To_Y := To_Node.Y;
-
-      Obj.X := From_X + (To_X - From_X) * T;
-      Obj.Y := From_Y + (To_Y - From_Y) * T;
+      From_Node := Route_Node (Obj, Obj.Path_From_Step);
+      To_Node := Route_Node (Obj, Obj.Path_To_Step);
+      Obj.X := From_Node.X + (To_Node.X - From_Node.X) * T;
+      Obj.Y := From_Node.Y + (To_Node.Y - From_Node.Y) * T;
    end Set_Path_Position;
 
    procedure Advance_Path_Segment
      (Obj : in out Object_Record) is
-      Count : constant Natural := Natural (Obj.Path_Count);
+      Count : constant Natural := Natural (Obj.Path_Route_Count);
    begin
       case Obj.Path_Mode is
          when No_Path =>
             Obj.Path_Complete := True;
 
          when Once_Path =>
-            if Obj.Path_To_Node >= Count then
+            if Obj.Path_To_Step >= Count then
                Obj.Path_Complete := True;
             else
-               Obj.Path_From_Node := Obj.Path_To_Node;
-               Obj.Path_To_Node := Obj.Path_To_Node + 1;
+               Obj.Path_From_Step := Obj.Path_To_Step;
+               Obj.Path_To_Step := Obj.Path_To_Step + 1;
             end if;
 
          when Loop_Path =>
-            Obj.Path_From_Node := Obj.Path_To_Node;
+            Obj.Path_From_Step := Obj.Path_To_Step;
 
-            if Obj.Path_To_Node >= Count then
-               Obj.Path_To_Node := 1;
+            if Obj.Path_To_Step >= Count then
+               Obj.Path_To_Step := 1;
             else
-               Obj.Path_To_Node := Obj.Path_To_Node + 1;
+               Obj.Path_To_Step := Obj.Path_To_Step + 1;
             end if;
 
          when Pingpong_Path =>
             if Obj.Path_Direction > 0 then
-               if Obj.Path_To_Node >= Count then
+               if Obj.Path_To_Step >= Count then
                   Obj.Path_Direction := -1;
-                  Obj.Path_From_Node := Count;
-                  Obj.Path_To_Node := Count - 1;
+                  Obj.Path_From_Step := Count;
+                  Obj.Path_To_Step := Count - 1;
                else
-                  Obj.Path_From_Node := Obj.Path_To_Node;
-                  Obj.Path_To_Node := Obj.Path_To_Node + 1;
+                  Obj.Path_From_Step := Obj.Path_To_Step;
+                  Obj.Path_To_Step := Obj.Path_To_Step + 1;
                end if;
-            elsif Obj.Path_To_Node <= 1 then
+            elsif Obj.Path_To_Step <= 1 then
                Obj.Path_Direction := 1;
-               Obj.Path_From_Node := 1;
-               Obj.Path_To_Node := 2;
+               Obj.Path_From_Step := 1;
+               Obj.Path_To_Step := 2;
             else
-               Obj.Path_From_Node := Obj.Path_To_Node;
-               Obj.Path_To_Node := Obj.Path_To_Node - 1;
+               Obj.Path_From_Step := Obj.Path_To_Step;
+               Obj.Path_To_Step := Obj.Path_To_Step - 1;
             end if;
       end case;
    end Advance_Path_Segment;
@@ -820,13 +928,16 @@ package body Level is
    procedure Move_Along_Path
      (Obj : in out Object_Record;
       DT  : Float) is
-      Remaining : Float := DT;
-      Duration  : Float;
-      Available : Float;
-      Progress  : Float;
-      Steps     : Natural := 0;
+      Remaining    : Float := DT;
+      Duration     : Float;
+      Available    : Float;
+      Progress     : Float;
+      Pause_Used   : Float;
+      Arrived_Step : Natural;
+      Steps        : Natural := 0;
    begin
       if Obj.Path_Count < 2
+        or else Obj.Path_Route_Count < 2
         or else Obj.Path_Mode = No_Path
         or else Obj.Path_Complete
         or else DT <= 0.0
@@ -836,21 +947,38 @@ package body Level is
 
       while Remaining > 0.0
         and then not Obj.Path_Complete
-        and then Steps < Max_Path_Nodes * 2
+        and then Steps < Max_Path_Steps * 4
       loop
+         if Obj.Path_Pause_Remaining > 0.0 then
+            Pause_Used := Float'Min
+              (Remaining, Obj.Path_Pause_Remaining);
+            Obj.Path_Pause_Remaining :=
+              Obj.Path_Pause_Remaining - Pause_Used;
+            Remaining := Remaining - Pause_Used;
+
+            if Remaining <= 0.0 then
+               exit;
+            end if;
+         end if;
+
          Duration := Segment_Duration (Obj);
          Available := Duration - Obj.Path_Elapsed;
 
-         if Available < 0.0 then
-            Available := 0.0;
-         end if;
-
-         if Remaining >= Available then
+         if Available <= 0.0001 or else Remaining >= Available then
             Obj.Path_Elapsed := Duration;
             Set_Path_Position (Obj, 1.0);
-            Remaining := Remaining - Available;
+            Remaining := Float'Max (0.0, Remaining - Available);
+            Arrived_Step := Obj.Path_To_Step;
             Advance_Path_Segment (Obj);
             Obj.Path_Elapsed := 0.0;
+
+            if Arrived_Step >= 1
+              and then Arrived_Step <= Natural (Obj.Path_Route_Count)
+            then
+               Obj.Path_Pause_Remaining :=
+                 Obj.Path_Route
+                   (Path_Route_Step_Index (Arrived_Step)).Pause;
+            end if;
          else
             Obj.Path_Elapsed := Obj.Path_Elapsed + Remaining;
             Progress := Obj.Path_Elapsed / Duration;

@@ -52,6 +52,18 @@ package body Editor_State is
    type Object_Path_Easing_Array is array
      (Level.Object_Index) of Path_Easing_Kind;
 
+   type Object_Path_Travel_Time_Array is array
+     (Level.Object_Index) of Float;
+
+   type Path_Route_Step_Array is array
+     (Path_Route_Step_Index) of Path_Route_Step_Record;
+
+   type Object_Path_Route_Array is array
+     (Level.Object_Index) of Path_Route_Step_Array;
+
+   type Object_Path_Route_Count_Array is array
+     (Level.Object_Index) of Path_Route_Step_Count;
+
    Object_Names : Object_Name_Array :=
      (others => US.Null_Unbounded_String);
 
@@ -65,6 +77,16 @@ package body Editor_State is
    Object_Path_Easings : Object_Path_Easing_Array :=
      (others => Linear_Ease);
 
+   Object_Path_Travel_Times : Object_Path_Travel_Time_Array :=
+     (others => 8.0);
+
+   Object_Path_Route_Counts : Object_Path_Route_Count_Array :=
+     (others => 0);
+
+   Object_Path_Routes : Object_Path_Route_Array :=
+     (others =>
+        (others => (Node => Path_Node_Index'First, Pause => 0.0)));
+
    Path_Edit_Is_Active : Boolean := False;
    Path_Edit_Object     : Natural := 0;
    Path_Edit_Node       : Natural := 0;
@@ -75,6 +97,10 @@ package body Editor_State is
      (others => (X => 0.0, Y => 0.0, Time => 0.0));
    Path_Edit_Old_Mode   : Path_Mode_Kind := No_Path;
    Path_Edit_Old_Easing : Path_Easing_Kind := Linear_Ease;
+   Path_Edit_Old_Travel_Time : Float := 8.0;
+   Path_Edit_Old_Route_Count : Path_Route_Step_Count := 0;
+   Path_Edit_Old_Route : Path_Route_Step_Array :=
+     (others => (Node => Path_Node_Index'First, Pause => 0.0));
 
    Max_History : constant Positive := 32;
 
@@ -85,8 +111,11 @@ package body Editor_State is
       Names        : Object_Name_Array;
       Path_Counts  : Object_Path_Count_Array;
       Path_Nodes   : Object_Path_Node_Array;
-      Path_Modes   : Object_Path_Mode_Array;
-      Path_Easings : Object_Path_Easing_Array;
+      Path_Modes        : Object_Path_Mode_Array;
+      Path_Easings      : Object_Path_Easing_Array;
+      Path_Travel_Times : Object_Path_Travel_Time_Array;
+      Path_Route_Counts : Object_Path_Route_Count_Array;
+      Path_Routes       : Object_Path_Route_Array;
    end record;
 
    type History_Array is array (Positive range <>) of Snapshot;
@@ -226,6 +255,349 @@ package body Editor_State is
       end if;
    end Parse_Path_Easing;
 
+   function Trim_Natural (Value : Natural) return String;
+
+   function Default_Travel_Time
+     (Kind : Level.Object_Kind) return Float is
+   begin
+      case Kind is
+         when Level.Platform   => return 8.0;
+         when Level.Miner      => return 6.0;
+         when Level.Enemy      => return 6.0;
+         when Level.Boss_Spawn => return 10.0;
+         when others           => return 6.0;
+      end case;
+   end Default_Travel_Time;
+
+   function Route_Node_Label
+     (Node  : Path_Node_Index;
+      Count : Path_Node_Count) return String is
+   begin
+      if Node = Path_Node_Index'First then
+         return "START";
+      elsif Natural (Node) = Natural (Count) then
+         return "END";
+      else
+         return "P" & Trim_Natural (Natural (Node) - 1);
+      end if;
+   end Route_Node_Label;
+
+   function Node_For_Label
+     (Label : String;
+      Count : Path_Node_Count) return Natural is
+      Upper : constant String :=
+        Ada.Characters.Handling.To_Upper (Trim (Label));
+      Value : Natural := 0;
+   begin
+      if Upper = "START" then
+         return 1;
+      elsif Upper = "END" then
+         return Natural (Count);
+      elsif Upper'Length >= 2 and then Upper (Upper'First) = 'P' then
+         Value := To_Natural
+           (Upper (Upper'First + 1 .. Upper'Last), 0) + 1;
+      else
+         Value := To_Natural (Upper, 0);
+      end if;
+
+      if Value >= 1 and then Value <= Natural (Count) then
+         return Value;
+      end if;
+
+      return 0;
+   end Node_For_Label;
+
+   procedure Build_Simple_Route (Index : Level.Object_Index) is
+      Count : constant Path_Node_Count := Object_Path_Counts (Index);
+   begin
+      Object_Path_Routes (Index) :=
+        (others => (Node => Path_Node_Index'First, Pause => 0.0));
+
+      if Count < 2 then
+         Object_Path_Route_Counts (Index) := 0;
+         return;
+      end if;
+
+      Object_Path_Route_Counts (Index) := Path_Route_Step_Count (Count);
+      for Step in 1 .. Natural (Count) loop
+         Object_Path_Routes (Index) (Path_Route_Step_Index (Step)) :=
+           (Node => Path_Node_Index (Step), Pause => 0.0);
+      end loop;
+   end Build_Simple_Route;
+
+   procedure Insert_Route_Reference
+     (Index       : Level.Object_Index;
+      After_Node  : Path_Node_Index;
+      Insert_Node : Path_Node_Index) is
+      Old_Count : constant Path_Route_Step_Count :=
+        Object_Path_Route_Counts (Index);
+      Old_Route : constant Path_Route_Step_Array :=
+        Object_Path_Routes (Index);
+      New_Route : Path_Route_Step_Array :=
+        (others => (Node => Path_Node_Index'First, Pause => 0.0));
+      New_Count : Natural := 0;
+      Old_Next  : constant Natural := Natural (Insert_Node) + 1;
+
+      procedure Append (Step : Path_Route_Step_Record) is
+      begin
+         if New_Count < Max_Path_Steps then
+            New_Count := New_Count + 1;
+            New_Route (Path_Route_Step_Index (New_Count)) := Step;
+         end if;
+      end Append;
+   begin
+      if Old_Count < 2 then
+         Build_Simple_Route (Index);
+         return;
+      end if;
+
+      for Step in 1 .. Natural (Old_Count) loop
+         declare
+            Current : Path_Route_Step_Record :=
+              Old_Route (Path_Route_Step_Index (Step));
+         begin
+            if Natural (Current.Node) >= Natural (Insert_Node) then
+               Current.Node :=
+                 Path_Node_Index (Natural (Current.Node) + 1);
+            end if;
+
+            Append (Current);
+
+            if Step < Natural (Old_Count) then
+               declare
+                  Next_Node : Natural := Natural
+                    (Old_Route (Path_Route_Step_Index (Step + 1)).Node);
+                  Current_Node : constant Natural := Natural (Current.Node);
+               begin
+                  if Next_Node >= Natural (Insert_Node) then
+                     Next_Node := Next_Node + 1;
+                  end if;
+
+                  if (Current_Node = Natural (After_Node)
+                      and then Next_Node = Old_Next)
+                    or else
+                      (Current_Node = Old_Next
+                       and then Next_Node = Natural (After_Node))
+                  then
+                     Append
+                       ((Node => Insert_Node,
+                         Pause => 0.0));
+                  end if;
+               end;
+            end if;
+         end;
+      end loop;
+
+      Object_Path_Routes (Index) := New_Route;
+      Object_Path_Route_Counts (Index) :=
+        Path_Route_Step_Count (New_Count);
+   end Insert_Route_Reference;
+
+   procedure Remove_Route_Reference
+     (Index       : Level.Object_Index;
+      Removed_Node : Path_Node_Index) is
+      Old_Count : constant Path_Route_Step_Count :=
+        Object_Path_Route_Counts (Index);
+      Old_Route : constant Path_Route_Step_Array :=
+        Object_Path_Routes (Index);
+      New_Route : Path_Route_Step_Array :=
+        (others => (Node => Path_Node_Index'First, Pause => 0.0));
+      New_Count : Natural := 0;
+   begin
+      for Step in 1 .. Natural (Old_Count) loop
+         declare
+            Current : Path_Route_Step_Record :=
+              Old_Route (Path_Route_Step_Index (Step));
+         begin
+            if Current.Node /= Removed_Node then
+               if Natural (Current.Node) > Natural (Removed_Node) then
+                  Current.Node :=
+                    Path_Node_Index (Natural (Current.Node) - 1);
+               end if;
+
+               if New_Count < Max_Path_Steps then
+                  New_Count := New_Count + 1;
+                  New_Route (Path_Route_Step_Index (New_Count)) := Current;
+               end if;
+            end if;
+         end;
+      end loop;
+
+      Object_Path_Routes (Index) := New_Route;
+      Object_Path_Route_Counts (Index) :=
+        Path_Route_Step_Count (New_Count);
+
+      if New_Count < 2 then
+         Build_Simple_Route (Index);
+      end if;
+   end Remove_Route_Reference;
+
+   procedure Ensure_Route_Default (Index : Level.Object_Index) is
+      Count : constant Path_Node_Count := Object_Path_Counts (Index);
+      Route_Count : constant Path_Route_Step_Count :=
+        Object_Path_Route_Counts (Index);
+      Invalid : Boolean := False;
+   begin
+      if Count < 2 then
+         Object_Path_Route_Counts (Index) := 0;
+         return;
+      end if;
+
+      if Object_Path_Travel_Times (Index) < 0.10 then
+         Object_Path_Travel_Times (Index) :=
+           Default_Travel_Time (Current_Objects (Index).Kind);
+      end if;
+
+      if Route_Count < 2 then
+         Build_Simple_Route (Index);
+         return;
+      end if;
+
+      for Step in 1 .. Natural (Route_Count) loop
+         if Natural
+           (Object_Path_Routes (Index)
+              (Path_Route_Step_Index (Step)).Node) > Natural (Count)
+         then
+            Invalid := True;
+         end if;
+      end loop;
+
+      if Invalid then
+         Build_Simple_Route (Index);
+      end if;
+   end Ensure_Route_Default;
+
+   procedure Parse_Route_Order
+     (Text        : String;
+      Node_Count  : Path_Node_Count;
+      Steps       : out Path_Route_Step_Array;
+      Step_Count  : out Path_Route_Step_Count;
+      Valid       : out Boolean;
+      Message     : out US.Unbounded_String) is
+      Cursor : Integer := Text'First;
+   begin
+      Steps :=
+        (others => (Node => Path_Node_Index'First, Pause => 0.0));
+      Step_Count := 0;
+      Valid := True;
+      Message := US.Null_Unbounded_String;
+
+      while Cursor <= Text'Last loop
+         while Cursor <= Text'Last
+           and then (Text (Cursor) = ' '
+                     or else Text (Cursor) = ','
+                     or else Text (Cursor) = '-'
+                     or else Text (Cursor) = '>')
+         loop
+            Cursor := Cursor + 1;
+         end loop;
+
+         exit when Cursor > Text'Last;
+
+         declare
+            First : constant Integer := Cursor;
+            Last  : Integer := Cursor;
+         begin
+            while Last <= Text'Last
+              and then Text (Last) /= ','
+              and then Text (Last) /= '-'
+              and then Text (Last) /= '>'
+            loop
+               Last := Last + 1;
+            end loop;
+
+            declare
+               Part : constant String := Trim (Text (First .. Last - 1));
+               Node : constant Natural := Node_For_Label (Part, Node_Count);
+            begin
+               if Node = 0 then
+                  Valid := False;
+                  Message := US.To_Unbounded_String
+                    ("Unknown route point: " & Part);
+                  return;
+               elsif Step_Count = Max_Path_Steps then
+                  Valid := False;
+                  Message := US.To_Unbounded_String
+                    ("The route is limited to 24 visits.");
+                  return;
+               end if;
+
+               Step_Count := Step_Count + 1;
+               Steps (Path_Route_Step_Index (Step_Count)).Node :=
+                 Path_Node_Index (Node);
+            end;
+
+            Cursor := Last + 1;
+         end;
+      end loop;
+
+      if Step_Count < 2 then
+         Valid := False;
+         Message := US.To_Unbounded_String
+           ("A route needs at least START and END.");
+      end if;
+   end Parse_Route_Order;
+
+   procedure Parse_Route_Pauses
+     (Text       : String;
+      Step_Count : Path_Route_Step_Count;
+      Steps      : in out Path_Route_Step_Array;
+      Valid      : out Boolean;
+      Message    : out US.Unbounded_String) is
+      Cursor : Integer := Text'First;
+      Number : Natural := 0;
+   begin
+      Valid := True;
+      Message := US.Null_Unbounded_String;
+
+      if Trim (Text) = "" then
+         return;
+      end if;
+
+      while Cursor <= Text'Last loop
+         while Cursor <= Text'Last
+           and then (Text (Cursor) = ' ' or else Text (Cursor) = ',')
+         loop
+            Cursor := Cursor + 1;
+         end loop;
+
+         exit when Cursor > Text'Last;
+
+         declare
+            First : constant Integer := Cursor;
+            Last  : Integer := Cursor;
+         begin
+            while Last <= Text'Last and then Text (Last) /= ',' loop
+               Last := Last + 1;
+            end loop;
+
+            Number := Number + 1;
+            if Number > Natural (Step_Count) then
+               Valid := False;
+               Message := US.To_Unbounded_String
+                 ("There are more pauses than route visits.");
+               return;
+            end if;
+
+            declare
+               Value : constant Float :=
+                 To_Float (Text (First .. Last - 1), -1.0);
+            begin
+               if Value < 0.0 then
+                  Valid := False;
+                  Message := US.To_Unbounded_String
+                    ("Pause values must be zero or greater.");
+                  return;
+               end if;
+
+               Steps (Path_Route_Step_Index (Number)).Pause := Value;
+            end;
+
+            Cursor := Last + 1;
+         end;
+      end loop;
+   end Parse_Route_Pauses;
+
    function Trim_Natural (Value : Natural) return String is
       Raw : constant String := Natural'Image (Value);
    begin
@@ -280,6 +652,8 @@ package body Editor_State is
                Object_Path_Counts (I) := 2;
                Object_Path_Modes (I) := Pingpong_Path;
                Object_Path_Easings (I) := Linear_Ease;
+               Object_Path_Travel_Times (I) :=
+                 Default_Travel_Time (Current_Objects (I).Kind);
 
                case Current_Objects (I).Motion is
                   when Level.Static =>
@@ -295,7 +669,7 @@ package body Editor_State is
                        (X    => Current_Objects (I).Max_Pos,
                         Y    => Current_Objects (I).Y
                           + Current_Objects (I).H / 2.0,
-                        Time => 1.0);
+                        Time => 0.0);
 
                   when Level.Patrol_Y =>
                      Object_Path_Nodes (I) (1) :=
@@ -307,14 +681,21 @@ package body Editor_State is
                        (X    => Current_Objects (I).X
                           + Current_Objects (I).W / 2.0,
                         Y    => Current_Objects (I).Max_Pos,
-                        Time => 1.0);
+                        Time => 0.0);
                end case;
             end if;
+
+            Ensure_Route_Default (I);
          else
             Object_Names (I) := US.Null_Unbounded_String;
             Object_Path_Counts (I) := 0;
             Object_Path_Modes (I) := No_Path;
             Object_Path_Easings (I) := Linear_Ease;
+            Object_Path_Travel_Times (I) := 8.0;
+            Object_Path_Route_Counts (I) := 0;
+            Object_Path_Routes (I) :=
+              (others =>
+                 (Node => Path_Node_Index'First, Pause => 0.0));
          end if;
       end loop;
    end Ensure_Metadata_Defaults;
@@ -327,6 +708,12 @@ package body Editor_State is
         (others => (others => (X => 0.0, Y => 0.0, Time => 0.0)));
       Object_Path_Modes := (others => No_Path);
       Object_Path_Easings := (others => Linear_Ease);
+      Object_Path_Travel_Times := (others => 8.0);
+      Object_Path_Route_Counts := (others => 0);
+      Object_Path_Routes :=
+        (others =>
+           (others =>
+              (Node => Path_Node_Index'First, Pause => 0.0)));
       Path_Edit_Is_Active := False;
       Path_Edit_Object := 0;
       Path_Edit_Node := 0;
@@ -347,7 +734,7 @@ package body Editor_State is
       Ada.Directories.Create_Path
         (Ada.Directories.Containing_Directory (Metadata_Path (Path)));
       TIO.Create (File, TIO.Out_File, Metadata_Path (Path));
-      TIO.Put_Line (File, "SUBTERRANIA_EDITOR_METADATA_V1");
+      TIO.Put_Line (File, "SUBTERRANIA_EDITOR_METADATA_V2");
 
       for I in Level.Object_Index loop
          if Current_Objects (I).Used then
@@ -363,12 +750,33 @@ package body Editor_State is
             TIO.Put_Line
               (File,
                "PATH_COUNT " & Trim_Natural (Object_Path_Counts (I)));
+            TIO.Put (File, "PATH_TRAVEL_TIME");
+            Put_Float (Object_Path_Travel_Times (I));
+            TIO.New_Line (File);
+            TIO.Put_Line
+              (File,
+               "ROUTE_COUNT "
+               & Trim_Natural (Object_Path_Route_Counts (I)));
 
             for N in 1 .. Object_Path_Counts (I) loop
                TIO.Put (File, "NODE " & Trim_Natural (N));
                Put_Float (Object_Path_Nodes (I) (Path_Node_Index (N)).X);
                Put_Float (Object_Path_Nodes (I) (Path_Node_Index (N)).Y);
                Put_Float (Object_Path_Nodes (I) (Path_Node_Index (N)).Time);
+               TIO.New_Line (File);
+            end loop;
+
+            for Step in 1 .. Object_Path_Route_Counts (I) loop
+               TIO.Put
+                 (File,
+                  "ROUTE_STEP " & Trim_Natural (Step) & " "
+                  & Trim_Natural
+                    (Natural
+                       (Object_Path_Routes (I)
+                          (Path_Route_Step_Index (Step)).Node)));
+               Put_Float
+                 (Object_Path_Routes (I)
+                    (Path_Route_Step_Index (Step)).Pause);
                TIO.New_Line (File);
             end loop;
 
@@ -390,6 +798,7 @@ package body Editor_State is
       Last          : Natural;
       Current_Index : Natural := 0;
       Node_Number   : Natural;
+      Step_Number   : Natural;
    begin
       Reset_Editor_Metadata;
 
@@ -422,6 +831,36 @@ package body Editor_State is
                   elsif Starts_With (Text, "PATH_EASING ") then
                      Object_Path_Easings (I) :=
                        Parse_Path_Easing (Tail_After (Text, "PATH_EASING "));
+                  elsif Starts_With (Text, "PATH_TRAVEL_TIME ") then
+                     Object_Path_Travel_Times (I) :=
+                       To_Float
+                         (Tail_After (Text, "PATH_TRAVEL_TIME "),
+                          Default_Travel_Time (Current_Objects (I).Kind));
+                  elsif Starts_With (Text, "ROUTE_STEP ") then
+                     Step_Number := To_Natural (Token (Text, 2), 0);
+
+                     if Step_Number in Path_Route_Step_Index'Range then
+                        declare
+                           Node : constant Natural :=
+                             To_Natural (Token (Text, 3), 0);
+                           Pause : constant Float :=
+                             To_Float (Token (Text, 4), 0.0);
+                        begin
+                           if Node in Path_Node_Index'Range then
+                              Object_Path_Routes (I)
+                                (Path_Route_Step_Index (Step_Number)) :=
+                                (Node  => Path_Node_Index (Node),
+                                 Pause => Float'Max (0.0, Pause));
+
+                              if Step_Number >
+                                Natural (Object_Path_Route_Counts (I))
+                              then
+                                 Object_Path_Route_Counts (I) :=
+                                   Path_Route_Step_Count (Step_Number);
+                              end if;
+                           end if;
+                        end;
+                  end if;
                   elsif Starts_With (Text, "NODE ") then
                      Node_Number := To_Natural (Token (Text, 2), 0);
 
@@ -473,10 +912,13 @@ package body Editor_State is
          Objects      => Current_Objects,
          Info         => Current_Info,
          Names        => Object_Names,
-         Path_Counts  => Object_Path_Counts,
-         Path_Nodes   => Object_Path_Nodes,
-         Path_Modes   => Object_Path_Modes,
-         Path_Easings => Object_Path_Easings);
+         Path_Counts      => Object_Path_Counts,
+         Path_Nodes       => Object_Path_Nodes,
+         Path_Modes       => Object_Path_Modes,
+         Path_Easings     => Object_Path_Easings,
+         Path_Travel_Times => Object_Path_Travel_Times,
+         Path_Route_Counts => Object_Path_Route_Counts,
+         Path_Routes       => Object_Path_Routes);
    end Store_Current_Snapshot;
 
    procedure Restore (Position : Positive) is
@@ -489,6 +931,9 @@ package body Editor_State is
       Object_Path_Nodes := History (Position).Path_Nodes;
       Object_Path_Modes := History (Position).Path_Modes;
       Object_Path_Easings := History (Position).Path_Easings;
+      Object_Path_Travel_Times := History (Position).Path_Travel_Times;
+      Object_Path_Route_Counts := History (Position).Path_Route_Counts;
+      Object_Path_Routes := History (Position).Path_Routes;
       Selected := (others => <>);
       Dirty := True;
    end Restore;
@@ -901,6 +1346,10 @@ package body Editor_State is
          Object_Path_Counts (Index) := 0;
          Object_Path_Modes (Index) := No_Path;
          Object_Path_Easings (Index) := Linear_Ease;
+         Object_Path_Travel_Times (Index) := 8.0;
+         Object_Path_Route_Counts (Index) := 0;
+         Object_Path_Routes (Index) :=
+           (others => (Node => Path_Node_Index'First, Pause => 0.0));
          Selected := (others => <>);
          Dirty := True;
          Store_Current_Snapshot;
@@ -961,6 +1410,9 @@ package body Editor_State is
       Path_Edit_Old_Nodes := Object_Path_Nodes (Index);
       Path_Edit_Old_Mode := Object_Path_Modes (Index);
       Path_Edit_Old_Easing := Object_Path_Easings (Index);
+      Path_Edit_Old_Travel_Time := Object_Path_Travel_Times (Index);
+      Path_Edit_Old_Route_Count := Object_Path_Route_Counts (Index);
+      Path_Edit_Old_Route := Object_Path_Routes (Index);
       Started := True;
    end Begin_Path_Edit;
 
@@ -989,6 +1441,9 @@ package body Editor_State is
          Object_Path_Nodes (Index) := Path_Edit_Old_Nodes;
          Object_Path_Modes (Index) := Path_Edit_Old_Mode;
          Object_Path_Easings (Index) := Path_Edit_Old_Easing;
+         Object_Path_Travel_Times (Index) := Path_Edit_Old_Travel_Time;
+         Object_Path_Route_Counts (Index) := Path_Edit_Old_Route_Count;
+         Object_Path_Routes (Index) := Path_Edit_Old_Route;
          Dirty := Path_Edit_Old_Dirty;
       end if;
 
@@ -1026,11 +1481,14 @@ package body Editor_State is
 
       Object_Path_Counts (Index) := 2;
       Object_Path_Modes (Index) := Pingpong_Path;
-      Object_Path_Easings (Index) := Smooth_Ease;
+      Object_Path_Easings (Index) := Linear_Ease;
+      Object_Path_Travel_Times (Index) :=
+        Default_Travel_Time (Current_Objects (Index).Kind);
       Object_Path_Nodes (Index) (1) :=
         (X => Start_X, Y => Start_Y, Time => 0.0);
       Object_Path_Nodes (Index) (2) :=
-        (X => Start_X + 96.0, Y => Start_Y, Time => 1.0);
+        (X => Start_X + 96.0, Y => Start_Y, Time => 0.0);
+      Build_Simple_Route (Index);
       Path_Edit_Node := 2;
       Mark_Path_Edit_Changed;
       Created := True;
@@ -1145,6 +1603,10 @@ package body Editor_State is
         (X => World_X,
          Y => World_Y,
          Time => (Time_A + Time_B) / 2.0);
+      Insert_Route_Reference
+        (Index       => Index,
+         After_Node  => After_Node,
+         Insert_Node => Path_Node_Index (Insert_At));
       Object_Path_Counts (Index) := Count + 1;
       Path_Edit_Node := Insert_At;
       Mark_Path_Edit_Changed;
@@ -1169,6 +1631,10 @@ package body Editor_State is
       then
          return;
       end if;
+
+      Remove_Route_Reference
+        (Index        => Index,
+         Removed_Node => Path_Node_Index (Path_Edit_Node));
 
       for N in Path_Edit_Node .. Natural (Count) - 1 loop
          Object_Path_Nodes (Index) (Path_Node_Index (N)) :=
@@ -1207,9 +1673,10 @@ package body Editor_State is
       Count := Count + 1;
       Object_Path_Counts (Index) := Count;
       Object_Path_Nodes (Index) (Path_Node_Index (Count)) :=
-        (X => World_X, Y => World_Y, Time => Float (Count - 1));
+        (X => World_X, Y => World_Y, Time => 0.0);
       Object_Path_Modes (Index) := Pingpong_Path;
-      Object_Path_Easings (Index) := Smooth_Ease;
+      Object_Path_Easings (Index) := Linear_Ease;
+      Build_Simple_Route (Index);
       Path_Edit_Node := Natural (Count);
       Mark_Path_Edit_Changed;
       Added := True;
@@ -1234,9 +1701,12 @@ package body Editor_State is
       Index := Level.Object_Index (Selected_Index);
       Object_Path_Counts (Index) := 2;
       Object_Path_Modes (Index) := Pingpong_Path;
-      Object_Path_Easings (Index) := Smooth_Ease;
+      Object_Path_Easings (Index) := Linear_Ease;
+      Object_Path_Travel_Times (Index) :=
+        Default_Travel_Time (Current_Objects (Index).Kind);
       Object_Path_Nodes (Index) (1) := (X => X1, Y => Y1, Time => T1);
       Object_Path_Nodes (Index) (2) := (X => X2, Y => Y2, Time => T2);
+      Build_Simple_Route (Index);
       Path_Edit_Node := 2;
       Mark_Path_Edit_Changed;
       Changed := True;
@@ -1259,8 +1729,13 @@ package body Editor_State is
       Object_Path_Counts (Index) := 0;
       Object_Path_Modes (Index) := No_Path;
       Object_Path_Easings (Index) := Linear_Ease;
+      Object_Path_Travel_Times (Index) :=
+        Default_Travel_Time (Current_Objects (Index).Kind);
       Object_Path_Nodes (Index) :=
         (others => (X => 0.0, Y => 0.0, Time => 0.0));
+      Object_Path_Route_Counts (Index) := 0;
+      Object_Path_Routes (Index) :=
+        (others => (Node => Path_Node_Index'First, Pause => 0.0));
       Path_Edit_Node := 0;
       Mark_Path_Edit_Changed;
       Changed := True;
@@ -1290,6 +1765,226 @@ package body Editor_State is
    begin
       return Object_Path_Easings (Index);
    end Object_Path_Easing;
+
+   function Fixed_Float (Value : Float) return String is
+      package Local_Float_IO is new TIO.Float_IO (Float);
+      Buffer : String (1 .. 32) := (others => ' ');
+   begin
+      Local_Float_IO.Put
+        (To   => Buffer,
+         Item => Value,
+         Aft  => 2,
+         Exp  => 0);
+      return Trim (Buffer);
+   end Fixed_Float;
+
+   function Object_Path_Travel_Time
+     (Index : Level.Object_Index) return Float is
+   begin
+      return Object_Path_Travel_Times (Index);
+   end Object_Path_Travel_Time;
+
+   function Object_Path_Route_Count
+     (Index : Level.Object_Index) return Path_Route_Step_Count is
+   begin
+      return Object_Path_Route_Counts (Index);
+   end Object_Path_Route_Count;
+
+   function Object_Path_Route_Step
+     (Index : Level.Object_Index;
+      Step  : Path_Route_Step_Index) return Path_Route_Step_Record is
+   begin
+      return Object_Path_Routes (Index) (Step);
+   end Object_Path_Route_Step;
+
+   function Object_Path_Route_Summary
+     (Index : Level.Object_Index) return String is
+      Result : US.Unbounded_String := US.Null_Unbounded_String;
+      Count  : constant Path_Node_Count := Object_Path_Counts (Index);
+      Route_Count : constant Path_Route_Step_Count :=
+        Object_Path_Route_Counts (Index);
+   begin
+      if Count < 2 or else Route_Count < 2 then
+         return "No route";
+      end if;
+
+      for Step in 1 .. Natural (Route_Count) loop
+         if Step > 1 then
+            US.Append (Result, " -> ");
+         end if;
+
+         US.Append
+           (Result,
+            Route_Node_Label
+              (Object_Path_Routes (Index)
+                 (Path_Route_Step_Index (Step)).Node,
+               Count));
+      end loop;
+
+      return US.To_String (Result);
+   end Object_Path_Route_Summary;
+
+   function Object_Path_Pause_Summary
+     (Index : Level.Object_Index) return String is
+      Result : US.Unbounded_String := US.Null_Unbounded_String;
+      Route_Count : constant Path_Route_Step_Count :=
+        Object_Path_Route_Counts (Index);
+   begin
+      if Route_Count = 0 then
+         return "";
+      end if;
+
+      for Step in 1 .. Natural (Route_Count) loop
+         if Step > 1 then
+            US.Append (Result, ",");
+         end if;
+
+         US.Append
+           (Result,
+            Fixed_Float
+              (Object_Path_Routes (Index)
+                 (Path_Route_Step_Index (Step)).Pause));
+      end loop;
+
+      return US.To_String (Result);
+   end Object_Path_Pause_Summary;
+
+   function Object_Path_Mode_Text
+     (Index : Level.Object_Index) return String is
+   begin
+      return Path_Mode_Code (Object_Path_Modes (Index));
+   end Object_Path_Mode_Text;
+
+   procedure Configure_Selected_Path_Timing
+     (Travel_Time  : Float;
+      Playback     : String;
+      Route_Order  : String;
+      Route_Pauses : String;
+      Changed      : out Boolean;
+      Valid        : out Boolean;
+      Message      : out US.Unbounded_String) is
+      Selected_Index : constant Natural := Selected_Object_Index;
+      Index          : Level.Object_Index;
+      Mode           : Path_Mode_Kind;
+      Steps          : Path_Route_Step_Array;
+      Step_Count     : Path_Route_Step_Count;
+      Pause_Valid    : Boolean;
+      Pause_Message  : US.Unbounded_String;
+   begin
+      Changed := False;
+      Valid := False;
+      Message := US.Null_Unbounded_String;
+
+      if Selected_Index = 0 then
+         Message := US.To_Unbounded_String ("Select an object first.");
+         return;
+      end if;
+
+      Index := Level.Object_Index (Selected_Index);
+      if Object_Path_Counts (Index) < 2 then
+         Message := US.To_Unbounded_String
+           ("Create a path before editing its timing.");
+         return;
+      end if;
+
+      if Travel_Time < 0.10 then
+         Message := US.To_Unbounded_String
+           ("Travel time must be at least 0.10 seconds.");
+         return;
+      end if;
+
+      Mode := Parse_Path_Mode (Playback);
+      if Mode = No_Path then
+         Message := US.To_Unbounded_String
+           ("Playback must be ONCE, LOOP, or PINGPONG.");
+         return;
+      end if;
+
+      Parse_Route_Order
+        (Text       => Route_Order,
+         Node_Count => Object_Path_Counts (Index),
+         Steps      => Steps,
+         Step_Count => Step_Count,
+         Valid      => Valid,
+         Message    => Message);
+
+      if not Valid then
+         return;
+      end if;
+
+      if Steps (Path_Route_Step_Index'First).Node /=
+        Path_Node_Index'First
+        or else Steps (Path_Route_Step_Index (Step_Count)).Node /=
+          Path_Node_Index (Object_Path_Counts (Index))
+      then
+         Valid := False;
+         Message := US.To_Unbounded_String
+           ("The route must begin at START and finish at END.");
+         return;
+      end if;
+
+      Parse_Route_Pauses
+        (Text       => Route_Pauses,
+         Step_Count => Step_Count,
+         Steps      => Steps,
+         Valid      => Pause_Valid,
+         Message    => Pause_Message);
+
+      if not Pause_Valid then
+         Valid := False;
+         Message := Pause_Message;
+         return;
+      end if;
+
+      Object_Path_Travel_Times (Index) := Travel_Time;
+      Object_Path_Modes (Index) := Mode;
+      Object_Path_Easings (Index) := Linear_Ease;
+      Object_Path_Route_Counts (Index) := Step_Count;
+      Object_Path_Routes (Index) := Steps;
+      Dirty := True;
+
+      if Path_Edit_Is_Active then
+         Path_Edit_Changed := True;
+      else
+         Store_Current_Snapshot;
+      end if;
+
+      Changed := True;
+      Valid := True;
+      Message := US.To_Unbounded_String
+        ("Timing updated. Movement stays constant between route visits.");
+   end Configure_Selected_Path_Timing;
+
+   procedure Reset_Selected_Path_Timing
+     (Changed : out Boolean) is
+      Selected_Index : constant Natural := Selected_Object_Index;
+      Index          : Level.Object_Index;
+   begin
+      Changed := False;
+      if Selected_Index = 0 then
+         return;
+      end if;
+
+      Index := Level.Object_Index (Selected_Index);
+      if Object_Path_Counts (Index) < 2 then
+         return;
+      end if;
+
+      Build_Simple_Route (Index);
+      Object_Path_Travel_Times (Index) :=
+        Default_Travel_Time (Current_Objects (Index).Kind);
+      Object_Path_Modes (Index) := Pingpong_Path;
+      Object_Path_Easings (Index) := Linear_Ease;
+      Dirty := True;
+
+      if Path_Edit_Is_Active then
+         Path_Edit_Changed := True;
+      else
+         Store_Current_Snapshot;
+      end if;
+
+      Changed := True;
+   end Reset_Selected_Path_Timing;
 
    function Tool_Name return String is
    begin
